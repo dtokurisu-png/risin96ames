@@ -15,17 +15,25 @@
         <span class="brand-name">RISIN96AMES</span>
       </a>
 
-      <div class="nav-links">
-        <a href="#games">Juegos</a>
-        <a href="#reviews">Reseñas</a>
-        <a href="#community">Comunidad</a>
-        <button class="ghost-button disabled" type="button" title="Disponible en una futura versión">Subir juego · Próximamente</button>
+      <div class="nav-right">
+        <div class="nav-links">
+          <a href="#games">Juegos</a>
+          <a href="#reviews">Reseñas</a>
+          <a href="#community">Comunidad</a>
+          <button class="ghost-button disabled" type="button" title="Disponible en una futura versión">Subir juego · Próximamente</button>
+        </div>
+
+        <div class="nav-stats" aria-label="Resumen del sitio">
+          <span><strong>v0.4</strong></span>
+          <span>Juegos <strong id="gamesCount">...</strong></span>
+          <span>Reseñas <strong id="reviewsCount">...</strong></span>
+        </div>
       </div>
     </nav>
   </header>
 
   <main id="home">
-    <section class="hero">
+    <section class="hero section-block section-hero">
       <div class="hero-content">
         <p class="eyebrow">Beta games in development</p>
         <h1>Prueba betas jugables y ayuda a construir mejores juegos.</h1>
@@ -36,107 +44,116 @@
 
         <div class="hero-actions">
           <a class="primary-button" href="#games">Explorar juegos</a>
-          <a class="secondary-button" href="#reviews">Dejar feedback</a>
-        </div>
-      </div>
-
-      <div class="hero-panel" aria-label="Panel resumen de RISIN96AMES">
-        <div class="stat-card">
-          <span class="stat-number">v0.3</span>
-          <span class="stat-label">Game Details</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-number" id="gamesCount">...</span>
-          <span class="stat-label">Juegos activos</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-number" id="reviewsCount">...</span>
-          <span class="stat-label">Reseñas visibles</span>
         </div>
       </div>
     </section>
 
-    <section id="games" class="section">
-      <div class="section-header">
+    <section id="games" class="section section-block">
+      <div class="section-header section-divider">
         <p class="eyebrow">Playable betas</p>
-        <h2>Juegos disponibles</h2>
+        <h2>Explorar juegos</h2>
         <p>
-          Las tarjetas se cargan desde <strong>data/games.json</strong>.
-          Cada juego ahora puede abrir una página de detalle con descripción larga, controles y changelog.
+          Esta sección muestra las betas disponibles en formato carrusel horizontal.
+          Desliza hacia la derecha o izquierda para ir viendo los juegos publicados.
         </p>
       </div>
 
-      <div id="gamesGrid" class="games-grid">
-        <p>Cargando juegos...</p>
+      <div class="games-carousel-shell">
+        <div id="gamesGrid" class="games-grid games-carousel">
+          <p>Cargando juegos...</p>
+        </div>
       </div>
     </section>
 
-    <section id="reviews" class="section split-section">
-      <div>
+    <section id="reviews" class="section section-block">
+      <div class="section-header section-divider">
         <p class="eyebrow">Feedback loop</p>
         <h2>Reseñas y comentarios</h2>
         <p>
-          Las reseñas visibles se cargan desde <strong>data/reviews.json</strong>.
-          El formulario funciona como vista previa local, y el botón de GitHub Issue sirve para enviar feedback real.
+          Aquí se muestran las reseñas visibles del proyecto. El formulario funciona como vista previa local,
+          y el botón de GitHub Issue sirve para enviar feedback real.
         </p>
-
-        <div id="latestReviews" class="latest-reviews">
-          <p>Cargando reseñas...</p>
-        </div>
       </div>
 
-      <form id="reviewForm" class="review-form">
-        <label>
-          Alias
-          <input type="text" id="reviewName" placeholder="Tester96" required />
-        </label>
+      <div class="reviews-layout">
+        <div class="reviews-panel">
+          <div id="latestReviews" class="latest-reviews">
+            <p>Cargando reseñas...</p>
+          </div>
+        </div>
 
-        <label>
-          Juego
-          <select id="reviewGame" required>
-            <option value="">Cargando juegos...</option>
-          </select>
-        </label>
+        <form id="reviewForm" class="review-form">
+          <label>
+            Alias
+            <input type="text" id="reviewName" placeholder="Tester96" required />
+          </label>
 
-        <label>
-          Valoración
-          <select id="reviewRating" required>
-            <option value="5">5 - Excelente</option>
-            <option value="4">4 - Muy bueno</option>
-            <option value="3">3 - Interesante</option>
-            <option value="2">2 - Necesita trabajo</option>
-            <option value="1">1 - No me gustó</option>
-          </select>
-        </label>
+          <label>
+            Juego
+            <select id="reviewGame" required>
+              <option value="">Cargando juegos...</option>
+            </select>
+          </label>
 
-        <label>
-          Dispositivo
-          <select id="reviewDevice" required>
-            <option value="PC">PC</option>
-            <option value="Mobile">Mobile</option>
-            <option value="Tablet">Tablet</option>
-            <option value="Other">Other</option>
-          </select>
-        </label>
+          <label>
+            Valoración
+            <select id="reviewRating" required>
+              <option value="5">5 - Excelente</option>
+              <option value="4">4 - Muy bueno</option>
+              <option value="3">3 - Interesante</option>
+              <option value="2">2 - Necesita trabajo</option>
+              <option value="1">1 - No me gustó</option>
+            </select>
+          </label>
 
-        <label>
-          Comentario
-          <textarea id="reviewComment" placeholder="Cuéntanos qué te gustó, qué falló o qué mejorarías." required></textarea>
-        </label>
+          <label>
+            Dispositivo
+            <select id="reviewDevice" required>
+              <option value="PC">PC</option>
+              <option value="Mobile">Mobile</option>
+              <option value="Tablet">Tablet</option>
+              <option value="Other">Other</option>
+            </select>
+          </label>
 
-        <button class="primary-button" type="submit">Previsualizar reseña</button>
-        <a id="githubIssueButton" class="secondary-button" href="#" target="_blank" rel="noopener">Enviar por GitHub Issue</a>
-        <p id="reviewMessage" class="form-message" aria-live="polite"></p>
-      </form>
+          <label>
+            Comentario
+            <textarea id="reviewComment" placeholder="Cuéntanos qué te gustó, qué falló o qué mejorarías." required></textarea>
+          </label>
+
+          <div class="review-actions">
+            <button class="primary-button" type="submit">Previsualizar reseña</button>
+            <a id="githubIssueButton" class="secondary-button" href="#" target="_blank" rel="noopener">Enviar por GitHub Issue</a>
+          </div>
+          <p id="reviewMessage" class="form-message" aria-live="polite"></p>
+        </form>
+      </div>
     </section>
 
-    <section id="community" class="section community-section">
-      <p class="eyebrow">Coming soon</p>
-      <h2>Comunidad en preparación</h2>
-      <p>
-        Más adelante esta zona conectará Discord, videos de YouTube, devlogs, foros por juego
-        y solicitudes para subir nuevos proyectos en formato HTML comprimido.
-      </p>
+    <section id="community" class="section section-block community-section">
+      <div class="section-header">
+        <p class="eyebrow">Coming soon</p>
+        <h2>Comienzo de comunidad</h2>
+        <p>
+          Esta sección será la base de la comunidad: Discord, videos de YouTube, devlogs,
+          foros por juego y futuras solicitudes para subir nuevos proyectos.
+        </p>
+      </div>
+
+      <div class="community-cards">
+        <article class="community-card">
+          <h3>Discord</h3>
+          <p>Canales por juego, anuncios y coordinación de testers.</p>
+        </article>
+        <article class="community-card">
+          <h3>Devlogs</h3>
+          <p>Progreso, cambios y notas de desarrollo por versión.</p>
+        </article>
+        <article class="community-card">
+          <h3>Videos</h3>
+          <p>Pruebas, tutoriales, partidas y contenido de la comunidad.</p>
+        </article>
+      </div>
     </section>
   </main>
 
