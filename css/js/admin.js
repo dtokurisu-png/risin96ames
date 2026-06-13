@@ -1,15 +1,21 @@
-const ADMIN_CODE = "RISIN96ADMIN";
-const ADMIN_SESSION_KEY = "risin96ames-admin-session";
+const ADMIN_SESSION_KEY = "risin96games-admin-session";
+const ADMIN_SESSION_TOKEN_KEY = "risin96games-admin-token";
+
+function getAdminApiUrl() {
+  return String(window.R96_ADMIN_API_URL || localStorage.getItem("r96-admin-api-url") || "").replace(/\/+$/, "");
+}
 
 function isAdminLoggedIn() {
   return sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
 }
 
-function setAdminLoggedIn(value) {
+function setAdminLoggedIn(value, token = "") {
   if (value) {
     sessionStorage.setItem(ADMIN_SESSION_KEY, "true");
+    if (token) sessionStorage.setItem(ADMIN_SESSION_TOKEN_KEY, token);
   } else {
     sessionStorage.removeItem(ADMIN_SESSION_KEY);
+    sessionStorage.removeItem(ADMIN_SESSION_TOKEN_KEY);
   }
 }
 
@@ -27,6 +33,126 @@ function showAdminLogin() {
 
   if (login) login.hidden = false;
   if (panel) panel.hidden = true;
+}
+
+function setAdminMessage(text, type = "info") {
+  const message = document.getElementById("adminLoginMessage");
+  if (!message) return;
+  message.textContent = text;
+  message.dataset.type = type;
+}
+
+function getAdminCredentials() {
+  return {
+    email: document.getElementById("adminEmail")?.value.trim() || "",
+    privateCode: document.getElementById("adminPrivateCode")?.value.trim() || ""
+  };
+}
+
+function buildRedirectUrl(email = "", privateCode = "") {
+  const url = new URL(window.location.href);
+  if (email) url.searchParams.set("adminEmail", email);
+  if (privateCode) url.searchParams.set("privateCode", privateCode);
+  return url.toString();
+}
+
+async function postAdmin(path, payload) {
+  const apiUrl = getAdminApiUrl();
+
+  if (!apiUrl) {
+    throw new Error("Falta configurar js/admin-config.js con la URL del Worker.");
+  }
+
+  const response = await fetch(`${apiUrl}${path}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  let data = {};
+  try {
+    data = await response.json();
+  } catch (error) {
+    data = {};
+  }
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || "No se pudo completar la solicitud.");
+  }
+
+  return data;
+}
+
+async function requestPrivateCode() {
+  const { email } = getAdminCredentials();
+
+  if (!email) {
+    setAdminMessage("Escribe tu correo electrónico primero.", "error");
+    return;
+  }
+
+  const button = document.getElementById("requestPrivateCode");
+  if (button) button.disabled = true;
+
+  try {
+    setAdminMessage("Solicitando código privado...", "info");
+
+    await postAdmin("/request-admin-code", {
+      email,
+      redirectUrl: buildRedirectUrl(email)
+    });
+
+    setAdminMessage("Código privado enviado. Revisa tu correo.", "success");
+  } catch (error) {
+    setAdminMessage(error.message, "error");
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
+
+async function verifyAdminLogin(event) {
+  event.preventDefault();
+
+  const { email, privateCode } = getAdminCredentials();
+
+  if (!email || !privateCode) {
+    setAdminMessage("Correo electrónico y código privado son obligatorios.", "error");
+    return;
+  }
+
+  try {
+    setAdminMessage("Verificando acceso...", "info");
+
+    const data = await postAdmin("/verify-admin-login", {
+      email,
+      privateCode
+    });
+
+    setAdminLoggedIn(true, data.sessionToken || "");
+    setAdminMessage("Acceso autorizado.", "success");
+    showAdminPanel();
+  } catch (error) {
+    setAdminLoggedIn(false);
+    setAdminMessage(error.message, "error");
+  }
+}
+
+function prefillAdminFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const email = params.get("adminEmail") || "";
+  const privateCode = params.get("privateCode") || "";
+
+  const emailInput = document.getElementById("adminEmail");
+  const privateInput = document.getElementById("adminPrivateCode");
+
+  if (email && emailInput) emailInput.value = email;
+  if (privateCode && privateInput) privateInput.value = privateCode;
+
+  if (email || privateCode) {
+    setAdminMessage("Datos del enlace cargados. Entra al panel con tu código privado.", "info");
+  }
 }
 
 function slugify(value) {
@@ -48,7 +174,9 @@ function getLines(value) {
 
 function initAdminLogin() {
   const form = document.getElementById("adminLoginForm");
-  const message = document.getElementById("adminLoginMessage");
+  const requestButton = document.getElementById("requestPrivateCode");
+
+  prefillAdminFromUrl();
 
   if (isAdminLoggedIn()) {
     showAdminPanel();
@@ -56,19 +184,13 @@ function initAdminLogin() {
     showAdminLogin();
   }
 
-  if (!form) return;
+  if (requestButton) {
+    requestButton.addEventListener("click", requestPrivateCode);
+  }
 
-  form.addEventListener("submit", (event) => {
-    event.preventDefault();
-    const code = document.getElementById("adminCode").value.trim();
-
-    if (code === ADMIN_CODE) {
-      setAdminLoggedIn(true);
-      showAdminPanel();
-    } else if (message) {
-      message.textContent = "Código incorrecto.";
-    }
-  });
+  if (form) {
+    form.addEventListener("submit", verifyAdminLogin);
+  }
 }
 
 function initGameForm() {
@@ -93,6 +215,7 @@ function initGameForm() {
         idInput.value = slugify(titleInput.value);
       }
     });
+
     idInput.addEventListener("input", () => {
       idInput.dataset.touched = "true";
       idInput.value = slugify(idInput.value);
@@ -128,7 +251,7 @@ function initGameForm() {
         {
           version,
           notes: changelogLines.length ? changelogLines : [
-            "Primera versión publicada en RISIN96AMES.",
+            "Primera versión publicada en RISIN96GAMES.",
             "Feedback abierto mediante GitHub Issues."
           ]
         }

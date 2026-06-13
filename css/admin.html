@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin | RISIN96AMES</title>
+  <title>Admin | RISIN96GAMES</title>
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
@@ -11,7 +11,7 @@
     <nav class="nav">
       <a class="brand" href="index.html">
         <span class="brand-mark">R96</span>
-        <span class="brand-name">RISIN96AMES</span>
+        <span class="brand-name">RISIN96GAMES</span>
       </a>
 
       <div class="nav-right">
@@ -21,7 +21,11 @@
           <a href="index.html">Volver</a>
         </div>
         <div class="settings-menu">
-          <button id="settingsToggle" class="menu-button" type="button" aria-label="Abrir settings">☰</button>
+          <button id="settingsToggle" class="menu-button" type="button" aria-label="Abrir menú">
+              <span class="hamb-line"></span>
+              <span class="hamb-line"></span>
+              <span class="hamb-line"></span>
+            </button>
           <div id="settingsPanel" class="settings-panel" hidden>
             <button id="themeToggle" class="settings-option" type="button">
               <span id="themeIcon">☾</span>
@@ -41,16 +45,31 @@
           <p class="eyebrow">Private gate</p>
           <h1>Iniciar como administrador</h1>
           <p>
-            Esta entrada bloquea la herramienta visual de administración. La publicación real sigue protegida porque solo quien tenga acceso al repo puede hacer commit y push.
+            Esta entrada valida tu correo electrónico y un código privado temporal enviado por email. El código privado se solicita por correo y vence en pocos minutos.
           </p>
 
-          <form id="adminLoginForm" class="review-form">
+          <form id="adminLoginForm" class="review-form admin-login-grid">
             <label>
-              Código de administrador
-              <input type="password" id="adminCode" placeholder="Código privado" required />
+              Correo electrónico
+              <input type="email" id="adminEmail" placeholder="tu-correo@dominio.com" autocomplete="email" required />
             </label>
-            <button class="primary-button" type="submit">Entrar al panel</button>
-            <p id="adminLoginMessage" class="form-message"></p>
+
+            <label>
+              Código privado
+              <input type="text" id="adminPrivateCode" placeholder="R96-000000" autocomplete="one-time-code" inputmode="text" required />
+            </label>
+
+            <div class="admin-login-actions">
+              <button id="requestPrivateCode" class="secondary-button" type="button">Solicitar tu código privado</button>
+              <button class="primary-button" type="submit">Entrar al panel</button>
+            </div>
+
+            <p id="adminLoginMessage" class="form-message" aria-live="polite"></p>
+
+            <div class="admin-hint-box">
+              <strong>Flujo privado:</strong> escribe tu correo electrónico, solicita el código privado,
+              revisa tu correo y entra al panel con ese código.
+            </div>
           </form>
         </div>
 
@@ -133,7 +152,7 @@
 
             <label class="wide-field">
               Changelog inicial
-              <textarea id="gameChangelog" placeholder="Primera versión publicada en RISIN96AMES.&#10;Feedback abierto por GitHub Issues."></textarea>
+              <textarea id="gameChangelog" placeholder="Primera versión publicada en RISIN96GAMES.&#10;Feedback abierto por GitHub Issues."></textarea>
             </label>
 
             <div class="wide-field review-actions">
@@ -156,6 +175,7 @@
   </main>
 
   <script src="js/settings.js"></script>
+  <script src="js/admin-config.js"></script>
   <script src="js/admin.js"></script>
 </body>
 </html>

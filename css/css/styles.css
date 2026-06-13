@@ -640,3 +640,188 @@ body.r96-dev-mode .r96-dev-selectable:hover {
 }
 
 /* ===== FIN R96 · LAYOUT BLOQUEADO ===== */
+
+/* =========================================================
+   R96 · ADMIN PRIVATE ACCESS
+   Login con correo, código administrador y código privado.
+   ========================================================= */
+
+.admin-login-grid {
+  display: grid !important;
+  gap: 16px !important;
+}
+
+.admin-login-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  align-items: center !important;
+}
+
+.admin-hint-box {
+  margin-top: 16px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--radius-lg) !important;
+  background: rgba(0,0,0,.18) !important;
+  padding: 14px 16px !important;
+  color: var(--muted) !important;
+  line-height: 1.65 !important;
+  font-size: .95rem !important;
+}
+
+.admin-hint-box strong {
+  color: var(--accent) !important;
+}
+
+.admin-panel {
+  width: 100% !important;
+}
+
+.admin-panel[hidden],
+#adminLogin[hidden] {
+  display: none !important;
+}
+
+/* ===== FIN R96 · ADMIN PRIVATE ACCESS ===== */
+
+/* =========================================================
+   R96 · POSICIONES APROBADAS POR USUARIO · NO TOCAR
+   Copiado desde Vista de desarrollador. Este bloque debe ir al final.
+   ========================================================= */
+
+/* R96 · CSS generado por Vista de desarrollador */
+main > section.section-band.hero-band:nth-of-type(1) > div.section-inner.hero-inner > div.hero-copy:nth-of-type(1) > p.eyebrow {
+  position: relative;
+  left: -224px;
+  top: -378px;
+  width: 855px;
+  height: 17px;
+  font-size: 80px;
+}
+main > section.section-band.hero-band:nth-of-type(1) > div.section-inner.hero-inner > div.hero-copy:nth-of-type(1) > h1.hero-title {
+  position: relative;
+  left: -226px;
+  top: -131px;
+  width: 1042px;
+  height: 15px;
+  font-size: 120px;
+}
+main > section.section-band.hero-band:nth-of-type(1) > div.section-inner.hero-inner > div.hero-side:nth-of-type(2) > a.primary-button {
+  position: relative;
+  left: 3px;
+  top: 104px;
+  width: 220px;
+  height: 49px;
+  font-size: 20px;
+}
+main > section.section-band.games-band:nth-of-type(2) > div.full-bleed-carousel:nth-of-type(2) {
+  position: relative;
+  left: -243px;
+  top: 26px;
+  width: 1500px;
+  height: 728px;
+  font-size: 16px;
+}
+#reviewForm {
+  position: relative;
+  left: 132px;
+  top: 1px;
+  width: 865px;
+  height: 712px;
+  font-size: 16px;
+}
+main > section.section-band.reviews-band:nth-of-type(3) > div.section-inner.reviews-layout:nth-of-type(2) > form.review-form > label:nth-of-type(1) {
+  position: relative;
+  left: 0px;
+  top: 0px;
+  width: 815px;
+  height: 79px;
+  font-size: 16px;
+}
+main > section.section-band.hero-band:nth-of-type(1) > div.section-inner.hero-inner > div.hero-copy:nth-of-type(1) {
+  position: relative;
+  left: 0px;
+  top: 0px;
+  width: 855px;
+  height: 44px;
+  font-size: 120px;
+}
+main > section.section-band.hero-band:nth-of-type(1) > div.section-inner.hero-inner > div.hero-side:nth-of-type(2) > p {
+  position: relative;
+  left: 0px;
+  top: 0px;
+  width: 498px;
+  height: 102px;
+  font-size: 25px;
+}
+main > section.section-band.hero-band:nth-of-type(1) > div.section-inner.hero-inner > div.hero-side:nth-of-type(2) {
+  position: relative;
+  left: 0px;
+  top: 0px;
+  width: 558px;
+  height: 257px;
+  font-size: 16px;
+}
+main > section.section-band.hero-band:nth-of-type(1) {
+  position: relative;
+  left: 0px;
+  top: 0px;
+  width: 2161px;
+  height: 1052px;
+  font-size: 16px;
+}
+#gamesGrid {
+  position: relative;
+  left: 0px;
+  top: -1px;
+  width: 2000px;
+  height: 728px;
+  font-size: 16px;
+}
+#games {
+  position: relative;
+  left: 0px;
+  top: 0px;
+  width: 2161px;
+  height: 1197px;
+  font-size: 16px;
+}
+
+/* ===== FIN R96 · POSICIONES APROBADAS POR USUARIO ===== */
+
+/* =========================================================
+   R96 · PARCHE PEQUEÑO · FUENTE BRAND RACING GAMES
+   Fuente gamer para R96 / RISIN96GAMES.
+   ========================================================= */
+
+@import url("https://fonts.googleapis.com/css2?family=Audiowide&family=Orbitron:wght@800;900&display=swap");
+
+.brand-mark,
+.brand-name {
+  font-family: "Audiowide", "Orbitron", "Michroma", "Rajdhani", "Arial Black", system-ui, sans-serif !important;
+  text-transform: uppercase !important;
+}
+
+.brand-mark {
+  font-size: 1.02rem !important;
+  letter-spacing: -0.08em !important;
+  font-variant-numeric: lining-nums tabular-nums !important;
+  transform: skewX(-5deg) !important;
+}
+
+.brand-name {
+  font-size: 1.02rem !important;
+  letter-spacing: .045em !important;
+  font-weight: 900 !important;
+  transform: skewX(-4deg) !important;
+  text-shadow:
+    0 0 10px rgba(0,255,223,.18),
+    0 0 18px rgba(141,92,255,.16) !important;
+}
+
+.settings-panel .brand-name,
+.layout-dev-panel .brand-name {
+  transform: none !important;
+}
+
+/* ===== FIN R96 · PARCHE PEQUEÑO · FUENTE BRAND ===== */
