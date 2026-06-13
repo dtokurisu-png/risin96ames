@@ -1,0 +1,11 @@
+[
+  {
+    "id": "review-demo-001",
+    "gameId": "demo-game",
+    "userName": "Tester96",
+    "rating": 5,
+    "comment": "Primera reseña demo para probar la estructura de RISIN96AMES.",
+    "device": "PC",
+    "createdAt": "2026-06-13"
+  }
+]

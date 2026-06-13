@@ -1,0 +1,25 @@
+risin96ames/
+├── index.html
+├── README.md
+├── css/
+│   └── styles.css
+├── js/
+│   ├── app.js
+│   ├── firebase.js
+│   ├── games.js
+│   └── reviews.js
+├── assets/
+│   ├── images/
+│   │   ├── logo.png
+│   │   ├── placeholder-game.webp
+│   │   └── banners/
+│   └── icons/
+├── games/
+│   ├── hallvalla/
+│   │   └── index.html
+│   └── rocklight/
+│       └── index.html
+└── docs/
+    ├── roadmap.md
+    ├── database-structure.md
+    └── upload-rules.md

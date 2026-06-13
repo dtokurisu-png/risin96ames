@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RISIN96AMES | Betas jugables</title>
+  <meta name="description" content="RISIN96AMES es una plataforma para probar juegos beta, dejar reseñas y ayudar a mejorar proyectos en desarrollo." />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav">
+      <div class="nav-left">
+        <div class="settings-menu">
+          <button id="settingsToggle" class="menu-button" type="button" aria-label="Abrir menú">
+            <span class="hamb-line"></span>
+            <span class="hamb-line"></span>
+            <span class="hamb-line"></span>
+          </button>
+          <div id="settingsPanel" class="settings-panel" hidden>
+            <button id="themeToggle" class="settings-option" type="button">
+              <span id="themeIcon">☾</span>
+              <span id="themeLabel">Tema claro</span>
+            </button>
+            <button id="layoutDevToggle" class="settings-option" type="button">Vista de desarrollador</button>
+            <a class="settings-option" href="admin.html">Iniciar como administrador</a>
+            <a class="settings-option" href="request-game.html">Solicitar subir juego</a>
+          </div>
+        </div>
+
+        <a class="brand" href="#home" aria-label="RISIN96AMES Home">
+          <span class="brand-mark">R96</span>
+          <span class="brand-name">RISIN96AMES</span>
+        </a>
+      </div>
+
+      <div class="nav-right">
+        <div class="nav-links">
+          <a href="#games">Juegos</a>
+          <a href="#reviews">Reseñas</a>
+          <a href="#community">Comunidad</a>
+          <a href="request-game.html">Solicitar subir juego</a>
+        </div>
+
+        <div class="nav-stats" aria-label="Resumen del sitio">
+          <span><strong>v0.5</strong></span>
+          <span>Juegos <strong id="gamesCount">...</strong></span>
+          <span>Reseñas <strong id="reviewsCount">...</strong></span>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main id="home">
+    <section class="section-band hero-band">
+      <div class="section-inner hero-inner">
+        <div class="hero-copy">
+          <p class="eyebrow">Beta games in development</p>
+          <h1 class="hero-title">Prueba betas jugables y ayuda a construir mejores juegos.</h1>
+        </div>
+
+        <div class="hero-side">
+          <p>
+            RISIN96AMES es una plataforma para publicar versiones beta, recibir feedback,
+            acumular reseñas y preparar una comunidad alrededor de cada juego.
+          </p>
+          <a class="primary-button" href="#games">Explorar juegos</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="games" class="section-band games-band">
+      <div class="section-inner section-title-row">
+        <div>
+          <p class="eyebrow">Playable betas</p>
+          <h2>Explorar juegos</h2>
+        </div>
+        <p>
+          Las betas se muestran como una vitrina horizontal. Desliza de izquierda a derecha
+          para recorrer los juegos publicados.
+        </p>
+      </div>
+
+      <div class="full-bleed-carousel">
+        <div id="gamesGrid" class="games-grid games-carousel">
+          <p>Cargando juegos...</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="reviews" class="section-band reviews-band">
+      <div class="section-inner section-title-row">
+        <div>
+          <p class="eyebrow">Feedback loop</p>
+          <h2>Reseñas y comentarios</h2>
+        </div>
+        <p>
+          Las reseñas visibles se cargan desde JSON. El feedback real se envía mediante GitHub Issues,
+          sin usar bases de datos de pago.
+        </p>
+      </div>
+
+      <div class="section-inner reviews-layout">
+        <div class="reviews-panel">
+          <div id="latestReviews" class="latest-reviews">
+            <p>Cargando reseñas...</p>
+          </div>
+        </div>
+
+        <form id="reviewForm" class="review-form">
+          <label>
+            Alias
+            <input type="text" id="reviewName" placeholder="Tester96" required />
+          </label>
+
+          <label>
+            Juego
+            <select id="reviewGame" required>
+              <option value="">Cargando juegos...</option>
+            </select>
+          </label>
+
+          <label>
+            Valoración
+            <select id="reviewRating" required>
+              <option value="5">5 - Excelente</option>
+              <option value="4">4 - Muy bueno</option>
+              <option value="3">3 - Interesante</option>
+              <option value="2">2 - Necesita trabajo</option>
+              <option value="1">1 - No me gustó</option>
+            </select>
+          </label>
+
+          <label>
+            Dispositivo
+            <select id="reviewDevice" required>
+              <option value="PC">PC</option>
+              <option value="Mobile">Mobile</option>
+              <option value="Tablet">Tablet</option>
+              <option value="Other">Other</option>
+            </select>
+          </label>
+
+          <label>
+            Comentario
+            <textarea id="reviewComment" placeholder="Cuéntanos qué te gustó, qué falló o qué mejorarías." required></textarea>
+          </label>
+
+          <div class="review-actions">
+            <button class="primary-button" type="submit">Previsualizar reseña</button>
+            <a id="githubIssueButton" class="secondary-button" href="#" target="_blank" rel="noopener">Enviar por GitHub Issue</a>
+          </div>
+          <p id="reviewMessage" class="form-message" aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+
+    <section id="community" class="section-band community-band">
+      <div class="section-inner section-title-row">
+        <div>
+          <p class="eyebrow">Coming soon</p>
+          <h2>Comienzo de comunidad</h2>
+        </div>
+        <p>
+          Esta será la base para Discord, videos, devlogs, foros por juego y solicitudes
+          de nuevos proyectos.
+        </p>
+      </div>
+
+      <div class="section-inner community-cards">
+        <article class="community-card">
+          <h3>Discord</h3>
+          <p>Canales por juego, anuncios y coordinación de testers.</p>
+        </article>
+        <article class="community-card">
+          <h3>Devlogs</h3>
+          <p>Progreso, cambios y notas de desarrollo por versión.</p>
+        </article>
+        <article class="community-card">
+          <h3>Videos</h3>
+          <p>Pruebas, tutoriales, partidas y contenido de la comunidad.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <aside id="layoutDevPanel" class="layout-dev-panel" hidden aria-label="Vista de desarrollador">
+    <div class="dev-toolbar-left">
+      <strong>Vista de desarrollador</strong>
+      <span id="layoutDevSelectedName">Click sobre cualquier texto, botón o contenedor</span>
+    </div>
+
+    <div class="dev-toolbar-controls">
+      <label>X <input id="devX" data-dev-prop="x" type="number" step="1" /></label>
+      <label>Y <input id="devY" data-dev-prop="y" type="number" step="1" /></label>
+      <label>Ancho <input id="devW" data-dev-prop="w" type="number" step="1" /></label>
+      <label>Alto <input id="devH" data-dev-prop="h" type="number" step="1" /></label>
+      <label>Texto <input id="devFont" data-dev-prop="font" type="number" step="1" /></label>
+      <label>Línea <input id="devLine" data-dev-prop="line" type="number" step=".05" /></label>
+      <label>Espaciado <input id="devLetter" data-dev-prop="letter" type="number" step=".01" /></label>
+      <label>Padding <input id="devPadding" data-dev-prop="padding" type="number" step="1" /></label>
+      <label>Margen sup. <input id="devMarginTop" data-dev-prop="marginTop" type="number" step="1" /></label>
+      <label>Margen inf. <input id="devMarginBottom" data-dev-prop="marginBottom" type="number" step="1" /></label>
+      <label>Gap <input id="devGap" data-dev-prop="gap" type="number" step="1" /></label>
+      <label>Opacidad <input id="devOpacity" data-dev-prop="opacity" type="number" step=".05" min="0" max="1" /></label>
+    </div>
+
+    <div class="dev-toolbar-actions">
+      <button id="layoutDevApply" type="button">Aplicar</button>
+      <button id="layoutDevResetOne" type="button">Reset elem.</button>
+      <button id="layoutDevResetAll" type="button">Reset todo</button>
+      <button id="layoutDevCopy" type="button">Copiar CSS</button>
+      <button id="layoutDevClose" type="button">Cerrar</button>
+    </div>
+    <p id="layoutDevMsg" class="layout-dev-msg"></p>
+  </aside>
+
+
+<footer class="site-footer">
+    <p>RISIN96AMES · Plataforma de betas jugables.</p>
+    <p class="footer-note">GitHub Pages para hosting gratuito · JSON para datos temporales.</p>
+  </footer>
+
+  <script src="js/settings.js"></script>
+  <script src="js/layout-dev.js"></script>
+  <script src="js/games.js"></script>
+  <script src="js/reviews.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

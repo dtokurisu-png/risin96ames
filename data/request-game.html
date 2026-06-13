@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Solicitar subir juego | RISIN96AMES</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">R96</span>
+        <span class="brand-name">RISIN96AMES</span>
+      </a>
+
+      <div class="nav-right">
+        <div class="nav-links">
+          <a href="index.html#games">Juegos</a>
+          <a href="index.html#reviews">Reseñas</a>
+          <a href="index.html#community">Comunidad</a>
+          <a href="admin.html">Admin</a>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="section-band admin-band">
+      <div class="section-inner admin-shell">
+        <div class="section-title-row">
+          <div>
+            <p class="eyebrow">Game submission</p>
+            <h1>Solicitar agregar juego</h1>
+          </div>
+          <p>
+            Esta sección no sube el juego directamente. Crea una solicitud para revisar el proyecto.
+            Si se aprueba, el admin lo publicará manualmente en RISIN96AMES.
+          </p>
+        </div>
+
+        <form id="requestGameForm" class="admin-form-grid">
+          <label>
+            Nombre del juego
+            <input type="text" id="requestTitle" placeholder="Nombre del juego" required />
+          </label>
+
+          <label>
+            Creador o estudio
+            <input type="text" id="requestCreator" placeholder="Nombre del creador" required />
+          </label>
+
+          <label>
+            Género
+            <input type="text" id="requestGenre" placeholder="Roguelite, estrategia, arcade..." required />
+          </label>
+
+          <label>
+            Estado
+            <select id="requestStatus">
+              <option value="Prototype">Prototype</option>
+              <option value="Alpha">Alpha</option>
+              <option value="Beta">Beta</option>
+              <option value="Demo">Demo</option>
+            </select>
+          </label>
+
+          <label class="wide-field">
+            Descripción
+            <textarea id="requestDescription" placeholder="Explica de qué va el juego." required></textarea>
+          </label>
+
+          <label class="wide-field">
+            Link al ZIP o build
+            <input type="text" id="requestBuildUrl" placeholder="Google Drive, GitHub release u otro link de revisión" />
+          </label>
+
+          <label class="wide-field">
+            Comentarios para revisión
+            <textarea id="requestNotes" placeholder="Controles, cosas que revisar, bugs conocidos, etc."></textarea>
+          </label>
+
+          <div class="wide-field review-actions">
+            <button class="primary-button" type="submit">Preparar solicitud</button>
+            <a id="requestIssueButton" class="secondary-button" href="#" target="_blank" rel="noopener">Enviar solicitud por GitHub Issue</a>
+          </div>
+
+          <p id="requestMessage" class="form-message"></p>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/request-game.js"></script>
+</body>
+</html>
