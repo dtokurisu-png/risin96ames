@@ -24,7 +24,7 @@
         </div>
 
         <div class="nav-stats" aria-label="Resumen del sitio">
-          <span><strong>v0.4</strong></span>
+          <span><strong>v0.4.2</strong></span>
           <span>Juegos <strong id="gamesCount">...</strong></span>
           <span>Reseñas <strong id="reviewsCount">...</strong></span>
         </div>
@@ -33,49 +33,55 @@
   </header>
 
   <main id="home">
-    <section class="hero section-block section-hero">
-      <div class="hero-content">
-        <p class="eyebrow">Beta games in development</p>
-        <h1>Prueba betas jugables y ayuda a construir mejores juegos.</h1>
-        <p class="hero-text">
-          RISIN96AMES es una plataforma para publicar versiones beta, recibir feedback,
-          acumular reseñas y preparar una comunidad alrededor de cada juego.
-        </p>
+    <section class="section-band hero-band">
+      <div class="section-inner hero-inner">
+        <div class="hero-copy">
+          <p class="eyebrow">Beta games in development</p>
+          <h1>Prueba betas jugables y ayuda a construir mejores juegos.</h1>
+        </div>
 
-        <div class="hero-actions">
+        <div class="hero-side">
+          <p>
+            RISIN96AMES es una plataforma para publicar versiones beta, recibir feedback,
+            acumular reseñas y preparar una comunidad alrededor de cada juego.
+          </p>
           <a class="primary-button" href="#games">Explorar juegos</a>
         </div>
       </div>
     </section>
 
-    <section id="games" class="section section-block">
-      <div class="section-header section-divider">
-        <p class="eyebrow">Playable betas</p>
-        <h2>Explorar juegos</h2>
+    <section id="games" class="section-band games-band">
+      <div class="section-inner section-title-row">
+        <div>
+          <p class="eyebrow">Playable betas</p>
+          <h2>Explorar juegos</h2>
+        </div>
         <p>
-          Esta sección muestra las betas disponibles en formato carrusel horizontal.
-          Desliza hacia la derecha o izquierda para ir viendo los juegos publicados.
+          Las betas se muestran como una vitrina horizontal. Desliza de izquierda a derecha
+          para recorrer los juegos publicados.
         </p>
       </div>
 
-      <div class="games-carousel-shell">
+      <div class="full-bleed-carousel">
         <div id="gamesGrid" class="games-grid games-carousel">
           <p>Cargando juegos...</p>
         </div>
       </div>
     </section>
 
-    <section id="reviews" class="section section-block">
-      <div class="section-header section-divider">
-        <p class="eyebrow">Feedback loop</p>
-        <h2>Reseñas y comentarios</h2>
+    <section id="reviews" class="section-band reviews-band">
+      <div class="section-inner section-title-row">
+        <div>
+          <p class="eyebrow">Feedback loop</p>
+          <h2>Reseñas y comentarios</h2>
+        </div>
         <p>
-          Aquí se muestran las reseñas visibles del proyecto. El formulario funciona como vista previa local,
-          y el botón de GitHub Issue sirve para enviar feedback real.
+          Las reseñas visibles se cargan desde JSON. El feedback real se envía mediante GitHub Issues,
+          sin usar bases de datos de pago.
         </p>
       </div>
 
-      <div class="reviews-layout">
+      <div class="section-inner reviews-layout">
         <div class="reviews-panel">
           <div id="latestReviews" class="latest-reviews">
             <p>Cargando reseñas...</p>
@@ -130,17 +136,19 @@
       </div>
     </section>
 
-    <section id="community" class="section section-block community-section">
-      <div class="section-header">
-        <p class="eyebrow">Coming soon</p>
-        <h2>Comienzo de comunidad</h2>
+    <section id="community" class="section-band community-band">
+      <div class="section-inner section-title-row">
+        <div>
+          <p class="eyebrow">Coming soon</p>
+          <h2>Comienzo de comunidad</h2>
+        </div>
         <p>
-          Esta sección será la base de la comunidad: Discord, videos de YouTube, devlogs,
-          foros por juego y futuras solicitudes para subir nuevos proyectos.
+          Esta será la base para Discord, videos, devlogs, foros por juego y solicitudes
+          de nuevos proyectos.
         </p>
       </div>
 
-      <div class="community-cards">
+      <div class="section-inner community-cards">
         <article class="community-card">
           <h3>Discord</h3>
           <p>Canales por juego, anuncios y coordinación de testers.</p>
