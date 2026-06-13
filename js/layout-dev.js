@@ -1,17 +1,17 @@
 
 (function () {
-  const STORAGE_KEY = "r96-layout-dev-values";
+  const STORAGE_KEY = "r96-visual-editor-styles";
+  const DEV_CLASS = "r96-dev-mode";
+  const SELECTABLE_CLASS = "r96-dev-selectable";
+  const SELECTED_CLASS = "r96-dev-selected";
 
-  const cssUnit = {
-    "--r96-hero-copy-w": "px",
-    "--r96-hero-title-size": "",
-    "--r96-hero-gap": "px",
-    "--r96-hero-side-x": "px",
-    "--r96-section-title-gap": "px",
-    "--r96-game-card-w": "px",
-    "--r96-reviews-gap": "px",
-    "--r96-community-gap": "px"
-  };
+  let selected = null;
+  let drag = null;
+  let saved = readSaved();
+
+  function $(id) {
+    return document.getElementById(id);
+  }
 
   function readSaved() {
     try {
@@ -21,122 +21,302 @@
     }
   }
 
-  function save(values) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(values));
+  function writeSaved() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
   }
 
-  function setVar(name, value) {
-    const unit = cssUnit[name] || "px";
-    document.documentElement.style.setProperty(name, `${value}${unit}`);
-  }
+  function pathFor(el) {
+    if (!el) return "";
+    if (el.id) return "#" + el.id;
 
-  function collectValues() {
-    const values = {};
-    document.querySelectorAll("[data-layout-var]").forEach((input) => {
-      values[input.dataset.layoutVar] = input.value;
-    });
-    return values;
-  }
+    const parts = [];
+    let node = el;
+    while (node && node.nodeType === 1 && node !== document.body) {
+      let part = node.tagName.toLowerCase();
+      const classList = Array.from(node.classList || [])
+        .filter((cls) => !cls.startsWith("r96-dev"))
+        .slice(0, 2);
+      if (classList.length) part += "." + classList.join(".");
 
-  function applyValues(values) {
-    Object.entries(values).forEach(([name, value]) => setVar(name, value));
-    document.querySelectorAll("[data-layout-var]").forEach((input) => {
-      if (values[input.dataset.layoutVar] !== undefined) {
-        input.value = values[input.dataset.layoutVar];
-      }
-    });
-  }
-
-  function copyCss(values) {
-    const lines = [":root {"];
-    Object.entries(values).forEach(([name, value]) => {
-      const unit = cssUnit[name] || "px";
-      lines.push(`  ${name}: ${value}${unit};`);
-    });
-    lines.push("}");
-    return lines.join("\n");
-  }
-
-  function initLayoutDevPanel() {
-    const panel = document.getElementById("layoutDevPanel");
-    const toggle = document.getElementById("layoutDevToggle");
-    const close = document.getElementById("layoutDevClose");
-    const reset = document.getElementById("layoutDevReset");
-    const copy = document.getElementById("layoutDevCopy");
-    const msg = document.getElementById("layoutDevMsg");
-
-    if (!panel || !toggle) return;
-
-    const defaults = collectValues();
-    const saved = readSaved();
-    applyValues({ ...defaults, ...saved });
-
-    toggle.addEventListener("click", () => {
-      panel.hidden = !panel.hidden;
-      const settingsPanel = document.getElementById("settingsPanel");
-      if (settingsPanel) settingsPanel.hidden = true;
-    });
-
-    if (close) {
-      close.addEventListener("click", () => {
-        panel.hidden = true;
-      });
-    }
-
-    document.querySelectorAll("[data-layout-var]").forEach((input) => {
-      input.addEventListener("input", () => {
-        const values = collectValues();
-        applyValues(values);
-        save(values);
-        if (msg) msg.textContent = "Guardado en este navegador.";
-      });
-    });
-
-    if (reset) {
-      reset.addEventListener("click", () => {
-        localStorage.removeItem(STORAGE_KEY);
-        applyValues(defaults);
-        if (msg) msg.textContent = "Controles reiniciados.";
-      });
-    }
-
-    if (copy) {
-      copy.addEventListener("click", async () => {
-        const values = collectValues();
-        const text = copyCss(values);
-        try {
-          await navigator.clipboard.writeText(text);
-          if (msg) msg.textContent = "CSS copiado.";
-        } catch (error) {
-          if (msg) msg.textContent = text;
+      const parent = node.parentElement;
+      if (parent) {
+        const siblings = Array.from(parent.children).filter((child) => child.tagName === node.tagName);
+        if (siblings.length > 1) {
+          part += `:nth-of-type(${siblings.indexOf(node) + 1})`;
         }
-      });
+      }
+
+      parts.unshift(part);
+      node = parent;
     }
+
+    return parts.join(" > ");
   }
 
-  function hardenSettingsMenu() {
-    const toggle = document.getElementById("settingsToggle");
-    const panel = document.getElementById("settingsPanel");
+  function cleanName(el) {
+    if (!el) return "Selecciona un elemento";
+    const text = (el.innerText || el.textContent || "").trim().replace(/\s+/g, " ");
+    const label = text ? text.slice(0, 44) : pathFor(el);
+    return `${el.tagName.toLowerCase()} · ${label}`;
+  }
+
+  function getNumber(value, fallback = 0) {
+    const n = parseFloat(String(value || "").replace("px", ""));
+    return Number.isFinite(n) ? n : fallback;
+  }
+
+  function ensureEditableBase(el) {
+    const cs = getComputedStyle(el);
+    if (cs.position === "static") {
+      el.style.position = "relative";
+    }
+    if (!el.style.left) el.style.left = "0px";
+    if (!el.style.top) el.style.top = "0px";
+  }
+
+  function applyStyle(el, data) {
+    if (!el || !data) return;
+    ensureEditableBase(el);
+
+    if (data.x !== undefined) el.style.left = `${data.x}px`;
+    if (data.y !== undefined) el.style.top = `${data.y}px`;
+    if (data.w !== undefined && data.w > 0) el.style.width = `${data.w}px`;
+    if (data.h !== undefined && data.h > 0) el.style.height = `${data.h}px`;
+    if (data.font !== undefined && data.font > 0) el.style.fontSize = `${data.font}px`;
+  }
+
+  function saveElement(el) {
+    if (!el) return;
+    const key = pathFor(el);
+    const data = readControls();
+    saved[key] = data;
+    writeSaved();
+  }
+
+  function applySaved() {
+    Object.entries(saved).forEach(([selector, data]) => {
+      try {
+        const el = document.querySelector(selector);
+        if (el) applyStyle(el, data);
+      } catch (error) {}
+    });
+  }
+
+  function readControls() {
+    return {
+      x: getNumber($("devX")?.value, 0),
+      y: getNumber($("devY")?.value, 0),
+      w: getNumber($("devW")?.value, 0),
+      h: getNumber($("devH")?.value, 0),
+      font: getNumber($("devFont")?.value, 0)
+    };
+  }
+
+  function fillControls(el) {
+    const rect = el.getBoundingClientRect();
+    const cs = getComputedStyle(el);
+    $("devX").value = Math.round(getNumber(el.style.left, 0));
+    $("devY").value = Math.round(getNumber(el.style.top, 0));
+    $("devW").value = Math.round(rect.width);
+    $("devH").value = Math.round(rect.height);
+    $("devFont").value = Math.round(getNumber(cs.fontSize, 16));
+    $("layoutDevSelectedName").textContent = cleanName(el);
+  }
+
+  function selectElement(el) {
+    if (!el || el.closest(".layout-dev-panel") || el.closest(".site-header")) return;
+
+    if (selected) selected.classList.remove(SELECTED_CLASS);
+    selected = el;
+    selected.classList.add(SELECTED_CLASS);
+    ensureEditableBase(selected);
+    fillControls(selected);
+  }
+
+  function activateSelectables() {
+    const candidates = document.querySelectorAll(
+      "main section, main div, main article, main form, main h1, main h2, main h3, main p, main a, main button, main input, main select, main textarea, footer, footer p"
+    );
+
+    candidates.forEach((el) => {
+      if (!el.closest(".layout-dev-panel")) el.classList.add(SELECTABLE_CLASS);
+    });
+  }
+
+  function deactivateSelectables() {
+    document.querySelectorAll("." + SELECTABLE_CLASS).forEach((el) => el.classList.remove(SELECTABLE_CLASS));
+    if (selected) selected.classList.remove(SELECTED_CLASS);
+    selected = null;
+  }
+
+  function openPanel() {
+    const panel = $("layoutDevPanel");
+    if (panel) panel.hidden = false;
+    document.body.classList.add(DEV_CLASS);
+    activateSelectables();
+    $("layoutDevMsg").textContent = "Click en un texto, botón o contenedor. Arrastra para moverlo.";
+  }
+
+  function closePanel() {
+    const panel = $("layoutDevPanel");
+    if (panel) panel.hidden = true;
+    document.body.classList.remove(DEV_CLASS);
+    deactivateSelectables();
+  }
+
+  function togglePanel() {
+    if (document.body.classList.contains(DEV_CLASS)) closePanel();
+    else openPanel();
+  }
+
+  function bindMenu() {
+    const toggle = $("settingsToggle");
+    const panel = $("settingsPanel");
     if (!toggle || !panel) return;
 
     toggle.addEventListener("click", (event) => {
+      event.preventDefault();
       event.stopPropagation();
       panel.hidden = !panel.hidden;
     });
 
-    panel.addEventListener("click", (event) => {
-      event.stopPropagation();
-    });
+    panel.addEventListener("click", (event) => event.stopPropagation());
 
     document.addEventListener("click", (event) => {
       if (!panel.hidden && !event.target.closest(".settings-menu")) {
         panel.hidden = true;
       }
     });
+
+    const devToggle = $("layoutDevToggle");
+    if (devToggle) {
+      devToggle.addEventListener("click", () => {
+        panel.hidden = true;
+        togglePanel();
+      });
+    }
+  }
+
+  function bindEditor() {
+    document.addEventListener("click", (event) => {
+      if (!document.body.classList.contains(DEV_CLASS)) return;
+      if (event.target.closest(".layout-dev-panel") || event.target.closest(".site-header")) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      selectElement(event.target);
+    }, true);
+
+    document.addEventListener("pointerdown", (event) => {
+      if (!document.body.classList.contains(DEV_CLASS)) return;
+      if (!selected || event.target !== selected) return;
+      if (event.target.closest(".layout-dev-panel") || event.target.closest(".site-header")) return;
+
+      ensureEditableBase(selected);
+      drag = {
+        el: selected,
+        startX: event.clientX,
+        startY: event.clientY,
+        left: getNumber(selected.style.left, 0),
+        top: getNumber(selected.style.top, 0)
+      };
+      selected.setPointerCapture?.(event.pointerId);
+      event.preventDefault();
+      event.stopPropagation();
+    }, true);
+
+    document.addEventListener("pointermove", (event) => {
+      if (!drag) return;
+      const dx = event.clientX - drag.startX;
+      const dy = event.clientY - drag.startY;
+      drag.el.style.left = `${Math.round(drag.left + dx)}px`;
+      drag.el.style.top = `${Math.round(drag.top + dy)}px`;
+      fillControls(drag.el);
+      event.preventDefault();
+    }, true);
+
+    document.addEventListener("pointerup", () => {
+      if (drag) {
+        saveElement(drag.el);
+        drag = null;
+        $("layoutDevMsg").textContent = "Posición guardada.";
+      }
+    }, true);
+
+    ["devX", "devY", "devW", "devH", "devFont"].forEach((id) => {
+      const input = $(id);
+      if (!input) return;
+      input.addEventListener("input", () => {
+        if (!selected) return;
+        applyStyle(selected, readControls());
+        saveElement(selected);
+      });
+    });
+
+    $("layoutDevApply")?.addEventListener("click", () => {
+      if (!selected) return;
+      applyStyle(selected, readControls());
+      saveElement(selected);
+      $("layoutDevMsg").textContent = "Aplicado.";
+    });
+
+    $("layoutDevResetOne")?.addEventListener("click", () => {
+      if (!selected) return;
+      const key = pathFor(selected);
+      delete saved[key];
+      writeSaved();
+      selected.style.left = "";
+      selected.style.top = "";
+      selected.style.width = "";
+      selected.style.height = "";
+      selected.style.fontSize = "";
+      selected.style.position = "";
+      fillControls(selected);
+      $("layoutDevMsg").textContent = "Elemento reiniciado.";
+    });
+
+    $("layoutDevResetAll")?.addEventListener("click", () => {
+      localStorage.removeItem(STORAGE_KEY);
+      saved = {};
+      document.querySelectorAll("." + SELECTABLE_CLASS).forEach((el) => {
+        el.style.left = "";
+        el.style.top = "";
+        el.style.width = "";
+        el.style.height = "";
+        el.style.fontSize = "";
+        el.style.position = "";
+      });
+      if (selected) fillControls(selected);
+      $("layoutDevMsg").textContent = "Todo reiniciado.";
+    });
+
+    $("layoutDevClose")?.addEventListener("click", closePanel);
+
+    $("layoutDevCopy")?.addEventListener("click", async () => {
+      const lines = ["/* R96 · CSS generado por Vista de desarrollador */"];
+      Object.entries(saved).forEach(([selector, data]) => {
+        lines.push(`${selector} {`);
+        lines.push("  position: relative;");
+        if (data.x !== undefined) lines.push(`  left: ${data.x}px;`);
+        if (data.y !== undefined) lines.push(`  top: ${data.y}px;`);
+        if (data.w) lines.push(`  width: ${data.w}px;`);
+        if (data.h) lines.push(`  height: ${data.h}px;`);
+        if (data.font) lines.push(`  font-size: ${data.font}px;`);
+        lines.push("}");
+      });
+      const text = lines.join("\n");
+      try {
+        await navigator.clipboard.writeText(text);
+        $("layoutDevMsg").textContent = "CSS copiado.";
+      } catch (error) {
+        $("layoutDevMsg").textContent = "No pude copiar. Revisa permisos del navegador.";
+      }
+    });
   }
 
   document.addEventListener("DOMContentLoaded", () => {
-    hardenSettingsMenu();
-    initLayoutDevPanel();
+    applySaved();
+    bindMenu();
+    bindEditor();
   });
 })();

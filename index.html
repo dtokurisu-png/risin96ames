@@ -22,7 +22,7 @@
               <span id="themeIcon">☾</span>
               <span id="themeLabel">Tema claro</span>
             </button>
-            <button id="layoutDevToggle" class="settings-option" type="button">Modo visual de layout</button>
+            <button id="layoutDevToggle" class="settings-option" type="button">Vista de desarrollador</button>
             <a class="settings-option" href="admin.html">Iniciar como administrador</a>
             <a class="settings-option" href="request-game.html">Solicitar subir juego</a>
           </div>
@@ -184,49 +184,32 @@
     </section>
   </main>
 
-
-  <aside id="layoutDevPanel" class="layout-dev-panel" hidden aria-label="Panel visual de layout">
-    <div class="layout-dev-head">
-      <strong>Visual layout</strong>
-      <button id="layoutDevClose" type="button" aria-label="Cerrar panel visual">×</button>
+  <aside id="layoutDevPanel" class="layout-dev-panel" hidden aria-label="Vista de desarrollador">
+    <div class="dev-toolbar-left">
+      <strong>Vista de desarrollador</strong>
+      <span id="layoutDevSelectedName">Selecciona un elemento</span>
     </div>
 
-    <div class="layout-dev-grid">
-      <label>Hero ancho texto
-        <input data-layout-var="--r96-hero-copy-w" type="range" min="520" max="1180" value="980" />
-      </label>
-      <label>Hero título tamaño
-        <input data-layout-var="--r96-hero-title-size" type="range" min="62" max="142" value="118" />
-      </label>
-      <label>Hero separación
-        <input data-layout-var="--r96-hero-gap" type="range" min="30" max="180" value="110" />
-      </label>
-      <label>Bloque derecho X
-        <input data-layout-var="--r96-hero-side-x" type="range" min="-80" max="120" value="0" />
-      </label>
-      <label>Explorar margen Y
-        <input data-layout-var="--r96-section-title-gap" type="range" min="20" max="90" value="46" />
-      </label>
-      <label>Tarjeta juego ancho
-        <input data-layout-var="--r96-game-card-w" type="range" min="310" max="470" value="400" />
-      </label>
-      <label>Reseñas gap
-        <input data-layout-var="--r96-reviews-gap" type="range" min="24" max="110" value="72" />
-      </label>
-      <label>Comunidad gap
-        <input data-layout-var="--r96-community-gap" type="range" min="16" max="60" value="34" />
-      </label>
+    <div class="dev-toolbar-controls">
+      <label>X <input id="devX" type="number" step="1" /></label>
+      <label>Y <input id="devY" type="number" step="1" /></label>
+      <label>W <input id="devW" type="number" step="1" /></label>
+      <label>H <input id="devH" type="number" step="1" /></label>
+      <label>Font <input id="devFont" type="number" step="1" /></label>
     </div>
 
-    <div class="layout-dev-actions">
-      <button id="layoutDevReset" type="button">Reset</button>
-      <button id="layoutDevCopy" type="button">Copiar controles CSS</button>
+    <div class="dev-toolbar-actions">
+      <button id="layoutDevApply" type="button">Aplicar</button>
+      <button id="layoutDevResetOne" type="button">Reset elem.</button>
+      <button id="layoutDevResetAll" type="button">Reset todo</button>
+      <button id="layoutDevCopy" type="button">Copiar CSS</button>
+      <button id="layoutDevClose" type="button">Cerrar</button>
     </div>
     <p id="layoutDevMsg" class="layout-dev-msg"></p>
   </aside>
 
 
-  <footer class="site-footer">
+<footer class="site-footer">
     <p>RISIN96AMES · Plataforma de betas jugables.</p>
     <p class="footer-note">GitHub Pages para hosting gratuito · JSON para datos temporales.</p>
   </footer>

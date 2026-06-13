@@ -1,5 +1,5 @@
 function initSettingsMenu() {
-  /* Menú endurecido en js/layout-dev.js para evitar doble toggle. */
+  /* Menú controlado por js/layout-dev.js para evitar doble apertura/cierre. */
 }
 
 function applyTheme(theme) {
