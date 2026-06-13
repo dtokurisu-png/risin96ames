@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RISIN96AMES | Betas jugables</title>
+  <meta name="description" content="RISIN96AMES es una plataforma para probar juegos beta, dejar reseñas y ayudar a mejorar proyectos en desarrollo." />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav">
+      <a class="brand" href="#home" aria-label="RISIN96AMES Home">
+        <span class="brand-mark">R96</span><span class="brand-name">RISIN96AMES</span>
+      </a>
+      <div class="nav-links">
+        <a href="#games">Juegos</a>
+        <a href="#reviews">Reseñas</a>
+        <a href="#community">Comunidad</a>
+        <button class="ghost-button disabled" type="button" title="Disponible en una futura versión">Subir juego · Próximamente</button>
+      </div>
+    </nav>
+  </header>
+  <main id="home">
+    <section class="hero">
+      <div class="hero-content">
+        <p class="eyebrow">Beta games in development</p>
+        <h1>Prueba betas jugables y ayuda a construir mejores juegos.</h1>
+        <p class="hero-text">RISIN96AMES es una plataforma para publicar versiones beta, recibir feedback, acumular reseñas y preparar una comunidad alrededor de cada juego.</p>
+        <div class="hero-actions"><a class="primary-button" href="#games">Explorar juegos</a><a class="secondary-button" href="#reviews">Dejar feedback</a></div>
+      </div>
+      <div class="hero-panel" aria-label="Panel resumen de RISIN96AMES">
+        <div class="stat-card"><span class="stat-number">v0.1</span><span class="stat-label">Starter build</span></div>
+        <div class="stat-card"><span class="stat-number">1</span><span class="stat-label">Juego demo</span></div>
+        <div class="stat-card"><span class="stat-number">∞</span><span class="stat-label">Betas futuras</span></div>
+      </div>
+    </section>
+    <section id="games" class="section">
+      <div class="section-header"><p class="eyebrow">Playable betas</p><h2>Juegos disponibles</h2><p>Esta primera versión usa una tarjeta genérica. Cada juego nuevo podrá actualizar su imagen, descripción, versión, género y enfoque de prueba.</p></div>
+      <div id="gamesGrid" class="games-grid"></div>
+    </section>
+    <section id="reviews" class="section split-section">
+      <div><p class="eyebrow">Feedback loop</p><h2>Reseñas y comentarios</h2><p>En la versión final, estas reseñas se guardarán en Firebase. Por ahora este formulario funciona como maqueta visual para definir el flujo.</p></div>
+      <form id="reviewForm" class="review-form">
+        <label>Alias<input type="text" id="reviewName" placeholder="Tester96" required /></label>
+        <label>Juego<select id="reviewGame" required><option value="demo-game">Beta Test Game</option></select></label>
+        <label>Valoración<select id="reviewRating" required><option value="5">5 - Excelente</option><option value="4">4 - Muy bueno</option><option value="3">3 - Interesante</option><option value="2">2 - Necesita trabajo</option><option value="1">1 - No me gustó</option></select></label>
+        <label>Comentario<textarea id="reviewComment" placeholder="Cuéntanos qué te gustó, qué falló o qué mejorarías." required></textarea></label>
+        <button class="primary-button" type="submit">Guardar reseña demo</button><p id="reviewMessage" class="form-message" aria-live="polite"></p>
+      </form>
+    </section>
+    <section id="community" class="section community-section"><p class="eyebrow">Coming soon</p><h2>Comunidad en preparación</h2><p>Más adelante esta zona conectará Discord, videos de YouTube, devlogs, foros por juego y solicitudes para subir nuevos proyectos en formato HTML comprimido.</p></section>
+  </main>
+  <footer class="site-footer"><p>RISIN96AMES · Plataforma de betas jugables.</p><p class="footer-note">GitHub para desarrollo público · Firebase para base de datos.</p></footer>
+  <script src="js/firebase.js"></script><script src="js/games.js"></script><script src="js/reviews.js"></script><script src="js/app.js"></script>
+</body>
+</html>
