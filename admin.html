@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin | RISIN96AMES</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">R96</span>
+        <span class="brand-name">RISIN96AMES</span>
+      </a>
+
+      <div class="nav-right">
+        <div class="nav-links">
+          <a href="index.html#games">Juegos</a>
+          <a href="request-game.html">Solicitudes</a>
+          <a href="index.html">Volver</a>
+        </div>
+        <div class="settings-menu">
+          <button id="settingsToggle" class="menu-button" type="button" aria-label="Abrir settings">☰</button>
+          <div id="settingsPanel" class="settings-panel" hidden>
+            <button id="themeToggle" class="settings-option" type="button">
+              <span id="themeIcon">☾</span>
+              <span id="themeLabel">Tema claro</span>
+            </button>
+            <a class="settings-option" href="index.html">Volver al inicio</a>
+          </div>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="section-band admin-band">
+      <div class="section-inner admin-shell">
+        <div id="adminLogin" class="admin-card">
+          <p class="eyebrow">Private gate</p>
+          <h1>Iniciar como administrador</h1>
+          <p>
+            Esta entrada bloquea la herramienta visual de administración. La publicación real sigue protegida porque solo quien tenga acceso al repo puede hacer commit y push.
+          </p>
+
+          <form id="adminLoginForm" class="review-form">
+            <label>
+              Código de administrador
+              <input type="password" id="adminCode" placeholder="Código privado" required />
+            </label>
+            <button class="primary-button" type="submit">Entrar al panel</button>
+            <p id="adminLoginMessage" class="form-message"></p>
+          </form>
+        </div>
+
+        <div id="adminPanel" class="admin-panel" hidden>
+          <div class="section-title-row">
+            <div>
+              <p class="eyebrow">Admin tools</p>
+              <h1>Cargar nuevo juego</h1>
+            </div>
+            <p>
+              Esta herramienta genera la ficha JSON del juego y la ruta recomendada. Luego tú copias el juego dentro de <strong>games/id-del-juego/</strong>, actualizas <strong>data/games.json</strong>, haces commit y push.
+            </p>
+          </div>
+
+          <form id="gameAdminForm" class="admin-form-grid">
+            <label>
+              ID del juego
+              <input type="text" id="gameId" placeholder="duel-of-conquerors" required />
+            </label>
+
+            <label>
+              Nombre del juego
+              <input type="text" id="gameTitle" placeholder="Duel of Conquerors" required />
+            </label>
+
+            <label>
+              Estado
+              <select id="gameStatus">
+                <option value="Alpha">Alpha</option>
+                <option value="Beta" selected>Beta</option>
+                <option value="Demo">Demo</option>
+                <option value="Prototype">Prototype</option>
+              </select>
+            </label>
+
+            <label>
+              Versión
+              <input type="text" id="gameVersion" placeholder="0.1.0" value="0.1.0" required />
+            </label>
+
+            <label>
+              Género
+              <input type="text" id="gameGenre" placeholder="Estrategia táctica" required />
+            </label>
+
+            <label>
+              Controles
+              <input type="text" id="gameControls" placeholder="Mouse y teclado" />
+            </label>
+
+            <label class="wide-field">
+              Descripción corta
+              <textarea id="gameShortDescription" placeholder="Resumen breve para la tarjeta del juego." required></textarea>
+            </label>
+
+            <label class="wide-field">
+              Descripción larga
+              <textarea id="gameLongDescription" placeholder="Descripción completa para la página de detalles." required></textarea>
+            </label>
+
+            <label class="wide-field">
+              En prueba
+              <textarea id="gameTestFocus" placeholder="Movimiento, combate, IA, balance, rendimiento..." required></textarea>
+            </label>
+
+            <label>
+              Imagen miniatura
+              <input type="text" id="gameThumbnail" placeholder="assets/images/duel-thumb.webp" />
+            </label>
+
+            <label>
+              Imagen banner
+              <input type="text" id="gameBanner" placeholder="assets/images/banners/duel-banner.webp" />
+            </label>
+
+            <label>
+              Link Drive del ZIP
+              <input type="text" id="gameDriveZipUrl" placeholder="pendiente" />
+            </label>
+
+            <label class="wide-field">
+              Changelog inicial
+              <textarea id="gameChangelog" placeholder="Primera versión publicada en RISIN96AMES.&#10;Feedback abierto por GitHub Issues."></textarea>
+            </label>
+
+            <div class="wide-field review-actions">
+              <button class="primary-button" type="submit">Generar ficha JSON</button>
+              <button id="logoutAdmin" class="secondary-button" type="button">Cerrar sesión admin</button>
+            </div>
+          </form>
+
+          <div class="admin-output-shell">
+            <h2>Resultado para data/games.json</h2>
+            <p>Copia este bloque y agrégalo como un nuevo objeto dentro del arreglo de <strong>data/games.json</strong>.</p>
+            <pre id="gameJsonOutput" class="code-output">Aquí aparecerá la ficha del juego.</pre>
+
+            <h2>Ruta recomendada</h2>
+            <pre id="gamePathOutput" class="code-output">games/id-del-juego/index.html</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/settings.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
