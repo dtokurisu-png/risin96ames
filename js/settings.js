@@ -1,18 +1,5 @@
 function initSettingsMenu() {
-  const toggle = document.getElementById("settingsToggle");
-  const panel = document.getElementById("settingsPanel");
-
-  if (!toggle || !panel) return;
-
-  toggle.addEventListener("click", () => {
-    panel.hidden = !panel.hidden;
-  });
-
-  document.addEventListener("click", (event) => {
-    if (!panel.hidden && !event.target.closest(".settings-menu")) {
-      panel.hidden = true;
-    }
-  });
+  /* Menú endurecido en js/layout-dev.js para evitar doble toggle. */
 }
 
 function applyTheme(theme) {

@@ -199,19 +199,41 @@ textarea { min-height: 120px; resize: vertical; }
 
 /* =========================================================
    R96 · LAYOUT BLOQUEADO · HOME Y LANDING
-   No tocar en parches de admin, códigos privados o juegos.
-   Este bloque corrige distribución visual de header, home,
-   explorar juegos, reseñas y comunidad.
+   NO TOCAR EN CAMBIOS DE ADMIN, CORREO, CÓDIGO PRIVADO O JUEGOS.
+   Header real, menú desplegable, home ancho, secciones ordenadas
+   y panel visual de desarrollador.
    ========================================================= */
 
-/* HEADER LIMPIO: hamburguesa pegada al R96, no flotando a la derecha. */
+:root {
+  --r96-header-h: 72px;
+  --r96-menu-x: 0px;
+  --r96-menu-y: 0px;
+  --r96-logo-gap: 12px;
+
+  --r96-hero-copy-w: 980px;
+  --r96-hero-title-size: 118px;
+  --r96-hero-gap: 110px;
+  --r96-hero-side-x: 0px;
+
+  --r96-section-title-gap: 46px;
+  --r96-game-card-w: 400px;
+  --r96-reviews-gap: 72px;
+  --r96-community-gap: 34px;
+}
+
+/* HEADER: hamburguesa, logo y nombre, de izquierda a derecha. */
 .site-header {
-  z-index: 1000 !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 3000 !important;
+  min-height: var(--r96-header-h) !important;
 }
 
 .nav {
-  min-height: 64px !important;
-  padding: 0 clamp(18px, 3vw, 56px) !important;
+  width: 100% !important;
+  min-height: var(--r96-header-h) !important;
+  height: var(--r96-header-h) !important;
+  padding: 0 clamp(16px, 3vw, 56px) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
@@ -219,23 +241,118 @@ textarea { min-height: 120px; resize: vertical; }
 }
 
 .nav-left {
+  height: var(--r96-header-h) !important;
   display: flex !important;
   align-items: center !important;
-  gap: 12px !important;
+  justify-content: flex-start !important;
+  gap: var(--r96-logo-gap) !important;
+  flex: 0 0 auto !important;
   min-width: max-content !important;
 }
 
 .nav-left .settings-menu {
-  order: 0 !important;
   position: relative !important;
-  flex: 0 0 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 34px !important;
+  height: var(--r96-header-h) !important;
+  transform: translate(var(--r96-menu-x), var(--r96-menu-y)) !important;
+  order: 0 !important;
+  flex: 0 0 34px !important;
 }
 
 .nav-left .brand {
   order: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  flex: 0 0 auto !important;
+}
+
+.brand-mark {
+  width: 46px !important;
+  height: 46px !important;
+  flex: 0 0 46px !important;
+}
+
+.brand-name {
+  display: inline-flex !important;
+  align-items: center !important;
+  min-height: 46px !important;
+  line-height: 1 !important;
+}
+
+/* Botón hamburguesa real: sin cuadrito fijo, sin caja chueca. */
+.menu-button {
+  width: 28px !important;
+  height: 28px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+  color: var(--text) !important;
+  cursor: pointer !important;
+  display: grid !important;
+  align-content: center !important;
+  justify-items: stretch !important;
+  gap: 5px !important;
+  position: relative !important;
+}
+
+.menu-button:hover {
+  transform: none !important;
+}
+
+.menu-button .hamb-line {
+  display: block !important;
+  width: 26px !important;
+  height: 2px !important;
+  border-radius: 999px !important;
+  background: var(--text) !important;
+  box-shadow: 0 0 8px rgba(0,255,223,.22) !important;
+  pointer-events: none !important;
+}
+
+/* Panel desplegable: aparece solo al tocar el botón. */
+.settings-panel[hidden] {
+  display: none !important;
+}
+
+.settings-panel {
+  position: absolute !important;
+  top: calc(50% + 28px) !important;
+  left: 0 !important;
+  right: auto !important;
+  min-width: 275px !important;
+  z-index: 5000 !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 20px !important;
+  background: color-mix(in srgb, var(--bg) 94%, white 6%) !important;
+  box-shadow: var(--shadow) !important;
+  padding: 12px !important;
+  display: grid !important;
+  gap: 8px !important;
+  transform: none !important;
+}
+
+.settings-option {
+  width: 100% !important;
+  min-height: 46px !important;
+  padding: 0 14px !important;
+  border-radius: 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  text-align: left !important;
+  gap: 10px !important;
 }
 
 .nav-right {
+  height: var(--r96-header-h) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: flex-end !important;
@@ -244,38 +361,18 @@ textarea { min-height: 120px; resize: vertical; }
   min-width: 0 !important;
 }
 
-.menu-button {
-  width: 42px !important;
-  height: 42px !important;
-  display: grid !important;
-  place-items: center !important;
-  border-radius: 999px !important;
-  font-size: 1.35rem !important;
-  line-height: 1 !important;
+.nav-links {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 16px !important;
 }
 
-.settings-panel {
-  top: calc(100% + 12px) !important;
-  left: 0 !important;
-  right: auto !important;
-  min-width: 260px !important;
-  padding: 12px !important;
-  border-radius: 22px !important;
-  transform: none !important;
-}
-
-.settings-option {
-  justify-content: flex-start !important;
-  min-height: 48px !important;
-  padding: 0 14px !important;
-  line-height: 1.1 !important;
-}
-
-/* HERO: título ancho, no cascada de palabras. */
+/* HOME: título extendido, no columna de palabras. */
 .hero-band {
-  min-height: calc(100vh - 64px) !important;
-  padding-top: clamp(88px, 10vh, 140px) !important;
-  padding-bottom: clamp(88px, 10vh, 140px) !important;
+  min-height: calc(100vh - var(--r96-header-h)) !important;
+  padding-top: clamp(82px, 9vh, 130px) !important;
+  padding-bottom: clamp(82px, 9vh, 130px) !important;
 }
 
 .section-inner {
@@ -284,24 +381,32 @@ textarea { min-height: 120px; resize: vertical; }
 
 .hero-inner {
   display: grid !important;
-  grid-template-columns: minmax(640px, 1.15fr) minmax(380px, .85fr) !important;
-  gap: clamp(70px, 7vw, 150px) !important;
+  grid-template-columns: minmax(620px, 1.18fr) minmax(380px, .82fr) !important;
+  gap: var(--r96-hero-gap) !important;
   align-items: center !important;
 }
 
 .hero-copy {
-  max-width: 980px !important;
+  width: min(var(--r96-hero-copy-w), 100%) !important;
+  max-width: var(--r96-hero-copy-w) !important;
+  min-width: 0 !important;
 }
 
+.hero-title,
 .hero-copy h1 {
-  max-width: 980px !important;
-  font-size: clamp(4.8rem, 7.15vw, 8.8rem) !important;
-  line-height: .98 !important;
-  letter-spacing: -.07em !important;
+  width: 100% !important;
+  max-width: var(--r96-hero-copy-w) !important;
+  font-size: clamp(64px, calc(var(--r96-hero-title-size) * 1px), 144px) !important;
+  line-height: .97 !important;
+  letter-spacing: -.075em !important;
   text-wrap: balance !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+  hyphens: none !important;
 }
 
 .hero-side {
+  transform: translateX(var(--r96-hero-side-x)) !important;
   max-width: 560px !important;
   align-self: center !important;
   border-left: 1px solid var(--line) !important;
@@ -309,51 +414,41 @@ textarea { min-height: 120px; resize: vertical; }
 }
 
 .hero-side p {
-  font-size: clamp(1rem, 1.1vw, 1.22rem) !important;
-  line-height: 1.75 !important;
+  font-size: clamp(1rem, 1.1vw, 1.2rem) !important;
+  line-height: 1.76 !important;
 }
 
 .hero-side .primary-button {
-  margin-top: 20px !important;
+  margin-top: 22px !important;
 }
 
-/* FILAS DE TÍTULO: todo alineado con intención. */
+/* Títulos y secciones ordenadas. */
 .section-band {
-  padding-top: clamp(96px, 10vw, 150px) !important;
-  padding-bottom: clamp(96px, 10vw, 150px) !important;
+  padding-top: clamp(92px, 10vw, 148px) !important;
+  padding-bottom: clamp(92px, 10vw, 148px) !important;
 }
 
 .section-title-row {
   display: grid !important;
-  grid-template-columns: minmax(460px, .95fr) minmax(430px, .9fr) !important;
-  gap: clamp(60px, 7vw, 150px) !important;
+  grid-template-columns: minmax(460px, .96fr) minmax(420px, .88fr) !important;
+  gap: clamp(58px, 7vw, 140px) !important;
   align-items: end !important;
-  margin-bottom: clamp(30px, 4vw, 54px) !important;
-}
-
-.section-title-row > div {
-  min-width: 0 !important;
+  margin-bottom: var(--r96-section-title-gap) !important;
 }
 
 .section-title-row h2 {
-  max-width: 760px !important;
-  font-size: clamp(3.4rem, 5.2vw, 6.2rem) !important;
+  font-size: clamp(54px, 5.35vw, 96px) !important;
   line-height: .98 !important;
   text-wrap: balance !important;
 }
 
 .section-title-row > p {
-  max-width: 560px !important;
+  max-width: 590px !important;
   justify-self: start !important;
-  font-size: clamp(1rem, 1.08vw, 1.18rem) !important;
   line-height: 1.75 !important;
 }
 
-/* EXPLORAR JUEGOS: tarjeta y texto con aire, no tirados al azar. */
-.games-band {
-  min-height: 78vh !important;
-}
-
+/* Playable betas / Explorar juegos */
 .full-bleed-carousel {
   width: min(1440px, 100%) !important;
   margin: 0 auto !important;
@@ -364,16 +459,16 @@ textarea { min-height: 120px; resize: vertical; }
   display: flex !important;
   gap: clamp(26px, 3vw, 42px) !important;
   overflow-x: auto !important;
-  padding: 0 0 22px 0 !important;
-  scroll-padding-left: 0 !important;
+  padding: 4px 0 24px 0 !important;
 }
 
 .games-grid.games-carousel > * {
-  flex: 0 0 clamp(330px, 23vw, 420px) !important;
+  flex: 0 0 min(var(--r96-game-card-w), 88vw) !important;
+  scroll-snap-align: start !important;
 }
 
 .game-card {
-  min-height: 560px !important;
+  min-height: 548px !important;
   display: grid !important;
   grid-template-rows: 190px 1fr !important;
 }
@@ -385,10 +480,7 @@ textarea { min-height: 120px; resize: vertical; }
   padding: 24px !important;
 }
 
-.game-description {
-  margin: 0 !important;
-}
-
+.game-description,
 .game-meta {
   margin: 0 !important;
 }
@@ -397,25 +489,17 @@ textarea { min-height: 120px; resize: vertical; }
   margin-top: auto !important;
 }
 
-/* RESEÑAS: dos columnas estables y respiradas. */
+/* Reseñas */
 .reviews-layout {
   display: grid !important;
-  grid-template-columns: minmax(390px, .9fr) minmax(520px, 1.1fr) !important;
-  gap: clamp(44px, 5vw, 86px) !important;
+  grid-template-columns: minmax(380px, .9fr) minmax(520px, 1.1fr) !important;
+  gap: var(--r96-reviews-gap) !important;
   align-items: start !important;
 }
 
 .reviews-panel,
 .review-form {
-  min-height: 0 !important;
-}
-
-.reviews-panel {
-  padding: clamp(22px, 2vw, 34px) !important;
-}
-
-.review-form {
-  padding: clamp(24px, 2.4vw, 38px) !important;
+  padding: clamp(24px, 2.35vw, 38px) !important;
 }
 
 .latest-reviews {
@@ -426,38 +510,109 @@ textarea { min-height: 120px; resize: vertical; }
   padding: 22px !important;
 }
 
-/* COMUNIDAD: tarjetas alineadas como bloque editorial. */
-.community-band {
-  min-height: 70vh !important;
-}
-
+/* Comunidad */
 .community-cards {
   display: grid !important;
-  grid-template-columns: repeat(3, minmax(260px, 1fr)) !important;
-  gap: clamp(24px, 2.4vw, 38px) !important;
-  align-items: stretch !important;
+  grid-template-columns: repeat(3, minmax(250px, 1fr)) !important;
+  gap: var(--r96-community-gap) !important;
 }
 
 .community-card {
-  min-height: 150px !important;
+  min-height: 152px !important;
   padding: 28px !important;
   display: grid !important;
-  align-content: start !important;
   gap: 14px !important;
+  align-content: start !important;
 }
 
-/* Tarjetas y formularios más consistentes visualmente. */
-.game-card,
-.review-form,
-.reviews-panel,
-.community-card {
-  backdrop-filter: blur(14px) !important;
+/* Panel visual de desarrollador */
+.layout-dev-panel[hidden] {
+  display: none !important;
 }
 
-/* RESPONSIVE: mantener composición sin destruir el diseño. */
+.layout-dev-panel {
+  position: fixed !important;
+  right: 18px !important;
+  bottom: 18px !important;
+  width: min(390px, calc(100vw - 36px)) !important;
+  max-height: min(72vh, 680px) !important;
+  overflow: auto !important;
+  z-index: 7000 !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 22px !important;
+  background: color-mix(in srgb, var(--bg) 94%, white 6%) !important;
+  box-shadow: var(--shadow) !important;
+  padding: 14px !important;
+}
+
+.layout-dev-head {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  margin-bottom: 12px !important;
+}
+
+.layout-dev-head strong {
+  color: var(--accent) !important;
+  text-transform: uppercase !important;
+  letter-spacing: .12em !important;
+  font-size: .82rem !important;
+}
+
+#layoutDevClose {
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 999px !important;
+  border: 1px solid var(--line) !important;
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  cursor: pointer !important;
+}
+
+.layout-dev-grid {
+  display: grid !important;
+  gap: 12px !important;
+}
+
+.layout-dev-grid label {
+  display: grid !important;
+  gap: 7px !important;
+  font-size: .78rem !important;
+  color: var(--muted) !important;
+}
+
+.layout-dev-grid input[type="range"] {
+  padding: 0 !important;
+}
+
+.layout-dev-actions {
+  display: flex !important;
+  gap: 8px !important;
+  margin-top: 14px !important;
+}
+
+.layout-dev-actions button {
+  flex: 1 !important;
+  min-height: 38px !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--line) !important;
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  cursor: pointer !important;
+  font-weight: 800 !important;
+}
+
+.layout-dev-msg {
+  min-height: 18px !important;
+  margin: 10px 0 0 !important;
+  color: var(--warning) !important;
+  font-size: .78rem !important;
+}
+
+/* Responsive sin romper header */
 @media (max-width: 1180px) {
   .nav {
-    align-items: center !important;
     flex-direction: row !important;
   }
 
@@ -473,27 +628,26 @@ textarea { min-height: 120px; resize: vertical; }
   .section-title-row,
   .reviews-layout {
     grid-template-columns: 1fr !important;
-    gap: 32px !important;
+    gap: 34px !important;
   }
 
+  .hero-copy,
+  .hero-title,
   .hero-copy h1 {
-    font-size: clamp(3.8rem, 11vw, 6.6rem) !important;
+    max-width: min(920px, 100%) !important;
+  }
+
+  .hero-title,
+  .hero-copy h1 {
+    font-size: clamp(56px, 10vw, 98px) !important;
   }
 
   .hero-side {
+    transform: none !important;
     border-left: 0 !important;
     border-top: 1px solid var(--line) !important;
     padding-left: 0 !important;
     padding-top: 28px !important;
-    max-width: 720px !important;
-  }
-
-  .section-title-row {
-    margin-bottom: 32px !important;
-  }
-
-  .section-title-row h2 {
-    font-size: clamp(3rem, 9vw, 5rem) !important;
   }
 
   .community-cards {
@@ -502,36 +656,36 @@ textarea { min-height: 120px; resize: vertical; }
 }
 
 @media (max-width: 720px) {
+  :root {
+    --r96-header-h: 64px;
+  }
+
   .brand-name {
     display: none !important;
   }
 
   .nav {
-    gap: 12px !important;
+    padding: 0 16px !important;
+    gap: 10px !important;
   }
 
   .nav-stats {
     padding: 7px 10px !important;
-    gap: 8px !important;
-    font-size: .76rem !important;
+    font-size: .74rem !important;
   }
 
   .settings-panel {
-    min-width: min(280px, calc(100vw - 36px)) !important;
+    min-width: min(290px, calc(100vw - 32px)) !important;
   }
 
+  .hero-title,
   .hero-copy h1 {
-    font-size: clamp(3.2rem, 15vw, 4.5rem) !important;
-    letter-spacing: -.06em !important;
+    font-size: clamp(46px, 14vw, 66px) !important;
   }
 
   .section-band {
     padding-left: 20px !important;
     padding-right: 20px !important;
-  }
-
-  .games-grid.games-carousel > * {
-    flex-basis: min(340px, 88vw) !important;
   }
 }
 
