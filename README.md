@@ -1,3 +1,12 @@
+## R96 Version Lock
+
+- Versión actual: v0.6.4
+- Último parche: Version bump + RISIN96AMES name lock
+- Fecha: 2026-06-13
+- Nombre visible correcto: RISIN96AMES
+- Regla: cada ZIP/parche entregado debe subir versión.
+
+
 # RISIN96AMES
 
 Plataforma web para publicar juegos beta, permitir pruebas jugables, recibir reseñas y construir comunidad alrededor de proyectos en desarrollo.

@@ -1,13 +1,16 @@
 {
-  "platformVersion": "0.6.3",
-  "patchName": "Admin one code + private email code",
+  "platformVersion": "0.6.4",
+  "patchName": "Version bump + RISIN96AMES name lock",
   "updatedAt": "2026-06-13",
-  "adminCodeMode": "single-admin-code-plus-private-email-code",
-  "adminMasterCode": "R96-ADMIN-9633",
+  "brandName": "RISIN96AMES",
+  "rules": [
+    "Cada ZIP/parche entregado debe subir la versión.",
+    "El nombre visible debe ser RISIN96AMES, todo pegado.",
+    "El 96 hace el papel visual de la G."
+  ],
   "notes": [
-    "Se restauró un código de administrador único.",
-    "El código privado sigue llegando por email.",
-    "El código de administrador no está en js/admin.js.",
-    "Nombre visible conservado como RISIN96AMES."
+    "Corrección global del nombre visible.",
+    "Actualización de nota de versión a v0.6.4.",
+    "Se mantiene el sistema de código administrador único + código privado por email."
   ]
 }

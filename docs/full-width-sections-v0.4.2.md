@@ -1,4 +1,4 @@
-# RISIN96AMES Full Width Sections v0.4.2
+# RISIN96AMES Full Width Sections v0.6.4
 
 Esta versión convierte la home en bandas horizontales que ocupan todo el ancho de la pantalla.
 
