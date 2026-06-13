@@ -1,0 +1,18 @@
+[
+  {
+    "id": "demo-game",
+    "title": "Beta Test Game",
+    "slug": "demo-game",
+    "shortDescription": "Una experiencia beta genérica para comprobar la estructura inicial de RISIN96AMES antes de cargar juegos reales.",
+    "longDescription": "Este juego demo confirma que la plataforma puede mostrar tarjetas, abrir juegos HTML y recibir feedback visual.",
+    "genre": "Experimental",
+    "status": "Beta",
+    "version": "0.1.0",
+    "testFocus": "Flujo de juego, botón jugar y reseñas demo",
+    "rating": "Pendiente",
+    "reviews": 1,
+    "playUrl": "games/demo-game/index.html",
+    "driveZipUrl": "pendiente",
+    "isActive": true
+  }
+]
