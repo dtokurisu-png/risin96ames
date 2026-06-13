@@ -1,0 +1,12 @@
+Nombre del juego
+
+Prueba una versión temprana del juego, explora sus mecánicas principales y comparte tu opinión para ayudar a mejorar futuras versiones.
+
+Estado: Beta
+Versión: 0.1.0
+Género: Experimental
+En prueba: Jugabilidad principal
+Reseñas: 0
+Valoración: Pendiente
+
+[Ver detalles] [Jugar]

@@ -1,0 +1,16 @@
+name = "r96-admin"
+main = "worker/admin-worker.js"
+compatibility_date = "2025-01-01"
+
+kv_namespaces = [
+  { binding = "ADMIN_CODES", id = "PON_AQUI_TU_KV_NAMESPACE_ID" }
+]
+
+[vars]
+ADMIN_EMAILS = "tu@email.com"
+ADMIN_MASTER_CODE = "cambia-este-codigo"
+PRIVATE_CODE_SECRET = "cambia-esta-frase-secreta-larga"
+PRIVATE_CODE_TTL_SECONDS = "900"
+SITE_ORIGIN = "https://tuusuario.github.io"
+ADMIN_PAGE_URL = "https://tuusuario.github.io/tu-repo/admin.html"
+RESEND_FROM = "RISIN96AMES <admin@tudominio.com>"
