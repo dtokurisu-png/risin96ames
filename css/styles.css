@@ -1,4 +1,4 @@
-/* R96 · VERSION ACTUAL: v0.6.4 · Version bump + RISIN96AMES name lock · 2026-06-13 */
+/* R96 · VERSION ACTUAL: v0.6.6 · Integrate Duel of Conquerors and R.O.K Lite · 2026-06-13 */
 /* RISIN96AMES Admin + Settings v0.5 */
 :root {
   --bg: #070912;
@@ -826,3 +826,65 @@ main > section.section-band.hero-band:nth-of-type(1) {
 }
 
 /* ===== FIN R96 · PARCHE PEQUEÑO · FUENTE BRAND ===== */
+
+/* =========================================================
+   R96 · UPLOAD GAME FLOW
+   Página para preparar juegos sin activar admin.
+   ========================================================= */
+
+.upload-band {
+  min-height: calc(100vh - var(--r96-header-h, 72px)) !important;
+}
+
+.upload-shell {
+  display: grid !important;
+  gap: 34px !important;
+}
+
+.upload-intro-card {
+  max-width: 980px !important;
+}
+
+.upload-panel {
+  display: block !important;
+}
+
+.upload-title-row {
+  margin-bottom: 34px !important;
+}
+
+.upload-form-grid textarea {
+  min-height: 108px !important;
+}
+
+.upload-output-shell {
+  margin-top: 28px !important;
+}
+
+.upload-output-shell .code-output {
+  max-height: 420px !important;
+  overflow: auto !important;
+}
+
+/* ===== FIN R96 · UPLOAD GAME FLOW ===== */
+
+
+/* R96 · GAME PLACEHOLDER THUMB */
+.game-thumb-placeholder {
+  min-height: 190px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-lg);
+  background: radial-gradient(circle at 20% 10%, rgba(0,255,223,.24), transparent 16rem), linear-gradient(135deg, rgba(0,255,223,.13), rgba(141,92,255,.18)), var(--panel);
+  border: 1px solid var(--line);
+}
+.game-thumb-placeholder span {
+  width: 72px;
+  height: 72px;
+  border-radius: 22px;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  color: #050812;
+  background: linear-gradient(135deg, var(--accent), #ffffff);
+}

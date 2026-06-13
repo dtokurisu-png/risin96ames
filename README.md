@@ -1,15 +1,28 @@
 ## R96 Version Lock
 
-- Versión actual: v0.6.4
-- Último parche: Version bump + RISIN96AMES name lock
+- Versión actual: v0.6.6
+- Último parche: Integrate Duel of Conquerors and R.O.K Lite
 - Fecha: 2026-06-13
 - Nombre visible correcto: RISIN96AMES
-- Regla: cada ZIP/parche entregado debe subir versión.
+
+## Juegos integrados
+
+- Duel of Conquerors: `games/duel-of-conquerors/index.html`
+- R.O.K Lite: `games/rok-lite/index.html`
 
 
-# RISIN96AMES
+## Cómo subir un juego ahora
 
-Plataforma web para publicar juegos beta, permitir pruebas jugables, recibir reseñas y construir comunidad alrededor de proyectos en desarrollo.
+1. Abre el menú de tres rayas.
+2. Toca "Subir un juego".
+3. Llena la ficha.
+4. Copia el JSON generado.
+5. Agrega ese objeto dentro de data/games.json.
+6. Coloca el juego en games/id-del-juego/index.html.
+
+Forma más rápida:
+- Pásame el ZIP del juego y yo te devuelvo el proyecto ya integrado.
+
 
 ## Stack inicial
 

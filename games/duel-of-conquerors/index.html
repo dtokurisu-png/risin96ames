@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Duel of Conquerors - v0.6.6</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="header compact-header unified-hidden-header">
+      <details class="project-info">
+        <summary>ⓘ Info</summary>
+        <div class="project-info-popover">
+          <strong>Duel of Conquerors</strong>
+          <span>v0.6.6 · ventanas de dados desplazadas</span>
+        </div>
+      </details>
+    </header>
+
+
+    <section class="top-hud compact-top-hud" aria-label="HUD del jugador">
+      <div class="turn-bar compact-turn-bar">
+        <span class="turn-player-pill"><strong>Turno:</strong> <span id="turnPlayerLabel">Jugador Azul</span></span>
+        <span><strong>Año:</strong> <span id="yearLabel">1</span></span>
+        <span><strong>Estación:</strong> <span id="seasonLabel">Primavera</span></span>
+        <div class="turn-action-cluster">
+          <div class="hud-player-tabs compact-player-tabs">
+            <button class="hud-tab active" id="hudBlueTab" disabled aria-disabled="true">Azul</button>
+            <button class="hud-tab" id="hudRedTab" disabled aria-disabled="true">Rojo</button>
+          </div>
+          <div class="hud-cards-inline">
+            <div id="hudCards" class="card-slots"></div>
+          </div>
+          <button id="payDebtBtn" class="debt-pay-hud-btn" onclick="openManualDebtPayment(currentPlayer)">Pagar deuda estatal</button>
+          <button id="nextTurnBtn" onclick="advanceTurn()">Avanzar turno / estación</button>
+        </div>
+      </div>
+      <div class="hud-grid">
+        <div class="hud-section">
+          <h3>Edificios adquiridos</h3>
+          <div id="hudBuildings" class="hud-items"></div>
+        </div>
+        <div class="hud-section">
+          <h3>Unidades en dominio</h3>
+          <div id="hudUnits" class="hud-items"></div>
+        </div>
+        <div class="hud-section">
+          <h3>Recursos</h3>
+          <div id="hudResources" class="hud-items"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="setupPanel" class="setup-panel">
+      <div class="setup-card modal-setup-card">
+        <h2 id="setupTitle">Inicio de partida</h2>
+        <p id="setupText">Pulsa para iniciar la partida.</p>
+        <div id="setupDiceBox" class="setup-dice-box hidden">
+          <p id="setupRollLabel" class="setup-roll-label"></p>
+          <div class="setup-dice-row">
+            <div id="dieOne" class="setup-die">1</div>
+            <div id="dieTwo" class="setup-die">1</div>
+          </div>
+          <p id="setupRollResult" class="setup-roll-result"></p>
+        </div>
+        <div class="setup-actions">
+          <button id="rollSetupBtn" onclick="handleSetupPrimaryAction()">Continuar</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="layout">
+      <aside id="debugPanel" class="panel sidebar debug-collapsed">
+        <button class="debug-toggle" onclick="toggleDebugPanel()">☰ Info</button>
+        <h2>Información</h2>
+        <p class="version-note"><strong>Duel of Conquerors</strong><br>v0.6.6 · ventanas de dados desplazadas</p>
+        <div id="tileInfo" class="tile-info empty">
+          <p>Haz clic en un hexágono del mapa o en un punto de movimiento.</p>
+        </div>
+
+        <div class="action-row">
+          <button id="newGameBtn">Nueva partida / redistribuir recursos</button>
+        </div>
+
+        <h3>Distribución fija de recursos</h3>
+        <div id="resourceCounts" class="counts-box"></div>
+        <p class="hint">Esta versión fuerza recursos en dominios comerciales, restaura expansión urbana con costo y agrega tradeo 4:1 al Asentamiento Urbano.</p>
+
+        <h3>Leyenda</h3>
+        <div class="legend">
+          <div class="legend-item"><span class="swatch port"></span> Puerto</div>
+          <div class="legend-item"><span class="swatch exploration"></span> Exploración</div>
+          <div class="legend-item"><span class="swatch settlement"></span> Asentamiento</div>
+          <div class="legend-item"><span class="swatch church"></span> Iglesia</div>
+          <div class="legend-item"><span class="move-dot-demo"></span> Punto de movimiento</div>
+        </div>
+
+        <div class="legend resources-grid">
+          <div class="legend-item"><img src="assets/resources/wood.png" class="legend-icon" alt="" /> Madera</div>
+          <div class="legend-item"><img src="assets/resources/stone.png" class="legend-icon" alt="" /> Piedra</div>
+          <div class="legend-item"><img src="assets/resources/gold.png" class="legend-icon" alt="" /> Oro</div>
+          <div class="legend-item"><img src="assets/resources/metal.png" class="legend-icon" alt="" /> Metales</div>
+          <div class="legend-item"><img src="assets/resources/food.png" class="legend-icon" alt="" /> Comida</div>
+        </div>
+
+        <h3>Controles visuales</h3>
+        <div class="control-group">
+          <label>Opacidad de hexágonos <span id="opacityValue">0.82</span></label>
+          <input id="opacitySlider" type="range" min="0.20" max="1.00" step="0.01" value="0.82" />
+        </div>
+        <div class="control-group check">
+          <label><input id="labelToggle" type="checkbox" checked /> Mostrar códigos de casilla</label>
+        </div>
+        <div class="control-group check">
+          <label><input id="pointToggle" type="checkbox" checked /> Mostrar puntos de movimiento</label>
+        </div>
+      </aside>
+
+      <section class="panel board-panel">
+        <div id="gameLog" class="game-log" aria-live="polite">
+          <div class="log-line">Sistema listo. Lanza los dados para iniciar.</div>
+        </div>
+        <div class="board-wrapper">
+          <img class="background-layer" src="assets/board/map-background.png" alt="Mapa base" />
+          <svg id="boardSvg" class="overlay-layer" viewBox="0 0 1254 1254" aria-label="Tablero hexagonal interactivo"></svg>
+          <div id="resourceBubbleLayer" class="resource-bubble-layer" aria-hidden="true"></div>
+          <div id="turnSweepOverlay" class="turn-sweep-overlay hidden" aria-live="polite" aria-hidden="true"></div>
+        </div>
+      </section>
+<section class="building-card-shell" aria-label="Tarjeta de información del edificio">
+                <div id="actionCard" class="mini-action-card empty-mini-card hidden-action-card">
+          <div class="mini-card-content">
+            <h2>Tarjeta de creación</h2>
+            <p>Haz clic en una opción del Asentamiento Urbano.</p>
+            <p class="mini-note">Aldeano, Casa, Mercado o expansión urbana.</p>
+          </div>
+        </div>
+        <div id="buildingCard" class="building-info-card empty-card">
+          <div class="empty-card-content">
+            <h2>Tarjeta de edificio</h2>
+            <p>Haz clic en un edificio especial del tablero.</p>
+            <p class="mini-note">Ejemplo funcional: <strong>A1 · Puerto del Norte</strong>.</p>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div id="cardInventoryModal" class="card-modal hidden" aria-hidden="true">
+    <div class="card-modal-backdrop" onclick="closeCardInventory()"></div>
+    <div class="card-modal-panel">
+      <header class="card-modal-header">
+        <div>
+          <h2 id="cardModalTitle">Cartas</h2>
+          <p id="cardModalSubtitle">Inventario del jugador</p>
+        </div>
+        <button class="card-modal-close" onclick="closeCardInventory()">Cerrar</button>
+      </header>
+      <div id="cardInventoryBody" class="card-modal-body"></div>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,16 +1,22 @@
 {
-  "platformVersion": "0.6.4",
-  "patchName": "Version bump + RISIN96AMES name lock",
+  "platformVersion": "0.6.6",
+  "patchName": "Integrate Duel of Conquerors and R.O.K Lite",
   "updatedAt": "2026-06-13",
   "brandName": "RISIN96AMES",
-  "rules": [
-    "Cada ZIP/parche entregado debe subir la versión.",
-    "El nombre visible debe ser RISIN96AMES, todo pegado.",
-    "El 96 hace el papel visual de la G."
+  "gamesIntegrated": [
+    {
+      "title": "Duel of Conquerors",
+      "slug": "duel-of-conquerors",
+      "path": "games/duel-of-conquerors/index.html"
+    },
+    {
+      "title": "R.O.K Lite",
+      "slug": "rok-lite",
+      "path": "games/rok-lite/index.html"
+    }
   ],
   "notes": [
-    "Corrección global del nombre visible.",
-    "Actualización de nota de versión a v0.6.4.",
-    "Se mantiene el sistema de código administrador único + código privado por email."
+    "Se integran dos juegos a la vitrina.",
+    "Miniaturas pendientes."
   ]
 }

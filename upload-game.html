@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Subir juego | RISIN96AMES</title>
+  <meta name="description" content="Preparar una ficha de juego para publicarla en RISIN96AMES." />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav">
+      <div class="nav-left">
+        <div class="settings-menu">
+          <button id="settingsToggle" class="menu-button" type="button" aria-label="Abrir menú">
+            <span class="hamb-line"></span>
+            <span class="hamb-line"></span>
+            <span class="hamb-line"></span>
+          </button>
+          <div id="settingsPanel" class="settings-panel" hidden>
+            <button id="themeToggle" class="settings-option" type="button">
+              <span id="themeIcon">☾</span>
+              <span id="themeLabel">Tema claro</span>
+            </button>
+            <a class="settings-option" href="upload-game.html">Subir un juego</a>
+            <a class="settings-option" href="request-game.html">Solicitar subir juego</a>
+            <a class="settings-option" href="index.html">Volver al inicio</a>
+          </div>
+        </div>
+
+        <a class="brand" href="index.html" aria-label="RISIN96AMES Home">
+          <span class="brand-mark">R96</span>
+          <span class="brand-name">RISIN96AMES</span>
+        </a>
+      </div>
+
+      <div class="nav-right">
+        <div class="nav-links">
+          <a href="index.html#games">Juegos</a>
+          <a href="index.html#reviews">Reseñas</a>
+          <a href="upload-game.html">Subir juego</a>
+          <a href="index.html">Volver</a>
+        </div>
+
+        <div class="nav-stats" aria-label="Versión del sitio">
+          <span><strong>v0.6.6</strong></span>
+          <span>Upload <strong>flow</strong></span>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="section-band admin-band upload-band">
+      <div class="section-inner admin-shell upload-shell">
+        <div class="admin-card upload-intro-card">
+          <p class="eyebrow">Upload flow</p>
+          <h1>Subir un juego</h1>
+          <p>
+            Esta página prepara la ficha del juego para que aparezca en la vitrina.
+            Por ahora no sube archivos automáticamente al servidor. La forma rápida es:
+            pásame el ZIP del juego y yo te devuelvo el proyecto ya integrado.
+          </p>
+
+          <div class="admin-hint-box">
+            <strong>Ruta recomendada:</strong>
+            <code>games/id-del-juego/index.html</code>
+            <br />
+            El juego debe ser HTML jugable. La entrada principal debe llamarse <strong>index.html</strong>.
+          </div>
+        </div>
+
+        <div class="admin-panel upload-panel">
+          <div class="section-title-row upload-title-row">
+            <div>
+              <p class="eyebrow">Game config</p>
+              <h1>Ficha del juego</h1>
+            </div>
+            <p>
+              Llena lo básico. Si no tienes miniatura todavía, déjala vacía y la tarjeta usará un placeholder.
+            </p>
+          </div>
+
+          <form id="uploadGameForm" class="admin-form-grid upload-form-grid">
+            <label>
+              Nombre del juego
+              <input type="text" id="uploadGameTitle" placeholder="Duel of Conquerors" required />
+            </label>
+
+            <label>
+              ID / carpeta
+              <input type="text" id="uploadGameId" placeholder="duel-of-conquerors" required />
+            </label>
+
+            <label>
+              Estado
+              <select id="uploadGameStatus">
+                <option value="Prototype">Prototype</option>
+                <option value="Alpha">Alpha</option>
+                <option value="Beta" selected>Beta</option>
+                <option value="Demo">Demo</option>
+              </select>
+            </label>
+
+            <label>
+              Versión
+              <input type="text" id="uploadGameVersion" placeholder="0.1.0" value="0.1.0" />
+            </label>
+
+            <label>
+              Género
+              <input type="text" id="uploadGameGenre" placeholder="Estrategia / cartas / arcade" />
+            </label>
+
+            <label>
+              Controles
+              <input type="text" id="uploadGameControls" placeholder="Mouse y teclado" />
+            </label>
+
+            <label class="wide-field">
+              Descripción corta
+              <textarea id="uploadGameShort" placeholder="Texto corto para la tarjeta de la vitrina." required></textarea>
+            </label>
+
+            <label class="wide-field">
+              Descripción larga
+              <textarea id="uploadGameLong" placeholder="Texto más completo para la página del juego."></textarea>
+            </label>
+
+            <label class="wide-field">
+              Qué quieres que prueben
+              <textarea id="uploadGameFocus" placeholder="Movimiento, combate, balance, rendimiento, bugs..."></textarea>
+            </label>
+
+            <label>
+              Miniatura
+              <input type="text" id="uploadGameThumb" placeholder="assets/images/mi-juego-thumb.webp" />
+            </label>
+
+            <label>
+              Banner
+              <input type="text" id="uploadGameBanner" placeholder="assets/images/banners/mi-juego-banner.webp" />
+            </label>
+
+            <label>
+              Link externo o Drive
+              <input type="text" id="uploadGameDrive" placeholder="Opcional" />
+            </label>
+
+            <div class="wide-field review-actions">
+              <button class="primary-button" type="submit">Generar ficha</button>
+              <button id="copyGameJson" class="secondary-button" type="button">Copiar JSON</button>
+              <a class="secondary-button" href="index.html#games">Ver vitrina</a>
+            </div>
+
+            <p id="uploadGameMessage" class="form-message" aria-live="polite"></p>
+          </form>
+
+          <div class="admin-output-shell upload-output-shell">
+            <h2>Ficha para data/games.json</h2>
+            <p>
+              Copia este objeto y agrégalo dentro del arreglo de <strong>data/games.json</strong>.
+              Si me pasas el ZIP del juego, yo puedo hacer esta parte por ti.
+            </p>
+            <pre id="uploadGameJsonOutput" class="code-output">Aquí aparecerá la ficha del juego.</pre>
+
+            <h2>Carpeta del juego</h2>
+            <pre id="uploadGamePathOutput" class="code-output">games/id-del-juego/index.html</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>RISIN96AMES · plataforma de betas jugables</span>
+    <span>v0.6.6 · Upload game flow</span>
+  </footer>
+
+  <script src="js/settings.js"></script>
+  <script src="js/upload-game.js"></script>
+</body>
+</html>

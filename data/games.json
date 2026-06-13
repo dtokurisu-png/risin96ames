@@ -1,5 +1,61 @@
 [
   {
+    "id": "duel-of-conquerors",
+    "title": "Duel of Conquerors",
+    "slug": "duel-of-conquerors",
+    "shortDescription": "Beta jugable de estrategia y conquista. Miniatura pendiente.",
+    "longDescription": "Duel of Conquerors ya está integrado como beta jugable en RISIN96AMES. La miniatura, el banner y la página detallada se pueden configurar después.",
+    "genre": "Estrategia",
+    "status": "Beta",
+    "version": "0.1.0",
+    "testFocus": "Flujo de partida, interfaz, balance inicial y errores visibles.",
+    "controls": "Mouse y teclado",
+    "thumbnailUrl": "",
+    "bannerUrl": "",
+    "rating": "Pendiente",
+    "reviews": 0,
+    "playUrl": "games/duel-of-conquerors/index.html",
+    "driveZipUrl": "integrado",
+    "isActive": true,
+    "changelog": [
+      {
+        "version": "0.1.0",
+        "notes": [
+          "Juego integrado en la vitrina.",
+          "Miniatura y banner pendientes."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rok-lite",
+    "title": "R.O.K Lite",
+    "slug": "rok-lite",
+    "shortDescription": "Beta jugable de R.O.K Lite. Miniatura pendiente.",
+    "longDescription": "R.O.K Lite ya está integrado como beta jugable en RISIN96AMES. La miniatura, el banner y la página detallada se pueden configurar después.",
+    "genre": "Cartas tácticas",
+    "status": "Beta",
+    "version": "0.1.0",
+    "testFocus": "Duelo, invocaciones, interfaz, efectos visuales y bugs de combate.",
+    "controls": "Mouse y teclado",
+    "thumbnailUrl": "",
+    "bannerUrl": "",
+    "rating": "Pendiente",
+    "reviews": 0,
+    "playUrl": "games/rok-lite/index.html",
+    "driveZipUrl": "integrado",
+    "isActive": true,
+    "changelog": [
+      {
+        "version": "0.1.0",
+        "notes": [
+          "Juego integrado en la vitrina.",
+          "Miniatura y banner pendientes."
+        ]
+      }
+    ]
+  },
+  {
     "id": "demo-game",
     "title": "Beta Test Game",
     "slug": "demo-game",

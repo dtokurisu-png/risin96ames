@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rok HTML Base</title>
+  <link id="mainStylesheet" rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+
+  <section id="patchInfoOverlay" class="patch-info-overlay" aria-hidden="true">
+    <div class="patch-info-card">
+      <button id="patchInfoCloseBtn" class="patch-info-close" type="button">×</button>
+      <h2 id="patchInfoTitle">Rok</h2>
+      <div id="patchInfoBody" class="patch-info-body"></div>
+    </div>
+  </section>
+
+  <div id="transitionOverlay" class="transition-overlay show">
+    <div id="transitionText" class="transition-card">INICIA EL DUELO</div>
+  </div>
+
+  <div id="globalFxLayer" class="global-fx-layer" aria-hidden="true"></div>
+
+  <main class="game-shell">
+    <section class="left-panel panel">
+      <button id="infoChip" class="info-chip" title="Info de versión y parche">i</button>
+      <button id="cssRefreshBtn" class="css-refresh-chip" title="Refrescar CSS sin reiniciar la partida">CSS</button>
+      <button id="visualRefreshBtn" class="visual-refresh-chip" title="Refrescar visual completo sin borrar la partida">ALL</button>
+
+      <div class="hidden-player-readout" aria-hidden="true">
+        <span id="p1Life">30</span>
+        <span id="p1ElementCount">0</span>
+      </div>
+
+      <div class="resource-title" aria-hidden="true"></div>
+      <div id="resourceBar" class="resource-bar vertical-resource-bar"></div>
+    </section>
+
+    <section class="board-panel">
+      <div id="board" class="board">
+        <div id="boardContent" class="board-content">
+          <img class="arena-img" src="assets/arena.webp" alt="Arena" />
+          <div id="enemyMiniHud" class="enemy-mini-hud" aria-label="HUD enemigo">
+            <div id="enemyMiniResources" class="enemy-mini-resources"></div>
+            <div id="enemyMiniCastQueue" class="enemy-mini-cast-queue"></div>
+          </div>
+          <div id="enemyGrid" class="grid-layer enemy-grid" aria-label="Grid enemigo"></div>
+          <div id="allyGrid" class="grid-layer ally-grid" aria-label="Grid aliado"></div>
+          <div id="spawnMarkersLayer" class="spawn-markers-layer"></div>
+          <div id="moveOptionsLayer" class="move-options-layer"></div>
+          <div id="unitsLayer" class="units-layer"></div>
+          <div id="extractionFxLayer" class="extraction-fx-layer"></div>
+          <div id="enemyRiskLine" class="arena-line risk-line risk-line-enemy"></div>
+          <div id="allyRiskLine" class="arena-line risk-line risk-line-ally"></div>
+          <div id="battleCenterLine" class="arena-line battle-center-line"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="phase-rail panel">
+      <div id="phaseBoxes" class="phase-boxes phase-boxes-vertical"></div>
+      <button id="nextPhaseBtn" class="main-button next-phase-vertical">Siguiente fase</button>
+      <div id="turnBanner" class="turn-banner turn-banner-vertical" aria-hidden="true"></div>
+      <div id="systemLog" class="system-log system-log-vertical" aria-hidden="true"></div>
+    </section>
+
+    <section class="cast-panel panel">
+      <h3>Zona de kasteo</h3>
+      <div id="castQueue" class="cast-queue"></div>
+      <p class="small-note">Las cartas en kasteo bajan al avanzar fases.</p>
+    </section>
+
+
+    <section id="cardInfoOverlay" class="card-info-overlay" aria-hidden="true">
+      <div class="card-info-box">
+        <div class="card-info-main">
+          <div id="cardInfoPreview" class="card-info-preview"></div>
+          <div class="card-info-text">
+            <h2 id="cardInfoName">Carta</h2>
+            <p id="cardInfoType">Invocación</p>
+            <div id="cardInfoMetaIcons" class="card-info-meta-icons"></div>
+            <div id="cardInfoSummaryTags" class="card-info-summary-tags"></div>
+          </div>
+        </div>
+
+        <div class="card-info-lower">
+          <div class="card-info-stats card-info-stats-grouped">
+            <div class="stat-row stat-row-damage">
+              <strong id="cardInfoDamage">0</strong>
+              <strong id="cardInfoAttackType">-</strong>
+              <strong id="cardInfoRange">-</strong>
+              <strong id="cardInfoFactors">-</strong>
+            </div>
+            <div class="stat-row stat-row-life">
+              <strong id="cardInfoLife">0</strong>
+              <strong id="cardInfoDefense">0</strong>
+            </div>
+            <div class="stat-row stat-row-cast">
+              <strong id="cardInfoCost">0</strong>
+              <strong id="cardInfoCastTime">0</strong>
+              <strong id="cardInfoRestoreTime">0</strong>
+            </div>
+            <div class="stat-row stat-row-move">
+              <strong id="cardInfoMoveType">-</strong>
+              <strong id="cardInfoMove">0</strong>
+              <strong id="cardInfoBiotype">-</strong>
+            </div>
+          </div>
+          <div id="cardInfoExtraPanel" class="card-info-extra-panel"></div>
+        </div>
+
+        <div class="card-info-actions">
+          <button id="cardInfoKastBtn" class="main-button card-info-btn">Kastear</button>
+          <button id="cardInfoCloseBtn" class="main-button card-info-btn secondary">Salir</button>
+        </div>
+      </div>
+    </section>
+
+
+    <section id="randomCostOverlay" class="random-cost-overlay" aria-hidden="true">
+      <div class="random-cost-box">
+        <button id="randomCostCancelBtn" class="meta-info-close" type="button">×</button>
+        <h2 id="randomCostTitle">Costo aleatorio</h2>
+        <div id="randomCostBody" class="random-cost-body"></div>
+        <div id="randomCostRemaining" class="random-cost-remaining">Faltan 0</div>
+        <div id="randomCostOptions" class="random-cost-options"></div>
+        <button id="randomCostConfirmBtn" class="main-button random-cost-confirm" type="button" disabled>Confirmar pago</button>
+      </div>
+    </section>
+
+    <section id="cardMetaInfoOverlay" class="meta-info-overlay" aria-hidden="true">
+      <div class="meta-info-box">
+        <button id="cardMetaInfoBackBtn" class="meta-info-back" type="button" disabled>‹ Back</button>
+        <button id="cardMetaInfoCloseBtn" class="meta-info-close" type="button">×</button>
+        <div class="meta-info-head">
+          <div id="cardMetaInfoIcon" class="meta-info-icon"></div>
+          <div>
+            <h3 id="cardMetaInfoTitle">Información</h3>
+            <p id="cardMetaInfoCategory">Categoría</p>
+          </div>
+        </div>
+        <div id="cardMetaInfoBody" class="meta-info-body"></div>
+      </div>
+    </section>
+
+    <section class="right-panel panel">
+      <div class="tab-stack" id="tabStack">
+        <button class="deck-tab active" data-tab="0">Página 1</button>
+        <button class="deck-tab" data-tab="1">Página 2</button>
+        <button class="deck-tab" data-tab="2">Página 3</button>
+      </div>
+      <div id="cardGrid" class="card-grid"></div>
+
+    </section>
+
+
+    <section class="caster-wide-panel panel">
+      <div class="caster-card-shell">
+        <div class="card caster-wide-card">
+          <img id="casterWideBg" class="card-layer card-bg" src="assets/card-bg-darkness.jpg" alt="fondo kaster">
+          <img id="casterWideArt" class="card-layer card-art caster-wide-art" src="assets/caster-hanzo.png" alt="Kaster">
+          <img id="casterWideSkin" class="card-layer card-skin" src="assets/card-skin-darkness.png" alt="skin kaster">
+        </div>
+      </div>
+
+      <div class="caster-wide-info">
+        <div class="caster-wide-title">
+          <h2 id="casterWideName">Hattori Hanzo</h2>
+          <span id="casterWideTag" class="tag">KASTER</span>
+          <div id="casterWideDomain" class="caster-wide-domain" aria-label="Dominio del Kaster"></div>
+        </div>
+
+        <div class="caster-wide-stats">
+          <div class="stats-line"><span>ATK</span><strong id="casterAtk">4</strong></div>
+          <div class="stats-line"><span>DEF</span><strong id="casterDef">3</strong></div>
+          <div class="stats-line"><span>KAST</span><strong id="casterCast">Libre</strong></div>
+          <div class="stats-line"><span>Estado</span><strong id="casterState">Listo</strong></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>
