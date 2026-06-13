@@ -31,6 +31,7 @@ function createGameCard(game) {
   const rating = escapeHtml(game.rating || "Pendiente");
   const reviews = Number(game.reviews || 0);
   const playUrl = escapeHtml(game.playUrl || "#");
+  const detailUrl = `game.html?id=${encodeURIComponent(game.id)}`;
 
   return `
     <article class="game-card">
@@ -52,7 +53,7 @@ function createGameCard(game) {
         </div>
 
         <div class="game-actions">
-          <a class="secondary-button" href="#reviews">Dejar reseña</a>
+          <a class="secondary-button" href="${detailUrl}">Ver detalles</a>
           <a class="primary-button" href="${playUrl}" target="_blank" rel="noopener">Jugar</a>
         </div>
       </div>
