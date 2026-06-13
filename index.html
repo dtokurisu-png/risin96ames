@@ -10,10 +10,24 @@
 <body>
   <header class="site-header">
     <nav class="nav">
-      <a class="brand" href="#home" aria-label="RISIN96AMES Home">
-        <span class="brand-mark">R96</span>
-        <span class="brand-name">RISIN96AMES</span>
-      </a>
+      <div class="nav-left">
+        <div class="settings-menu">
+          <button id="settingsToggle" class="menu-button" type="button" aria-label="Abrir menú">☰</button>
+          <div id="settingsPanel" class="settings-panel" hidden>
+            <button id="themeToggle" class="settings-option" type="button">
+              <span id="themeIcon">☾</span>
+              <span id="themeLabel">Tema claro</span>
+            </button>
+            <a class="settings-option" href="admin.html">Iniciar como administrador</a>
+            <a class="settings-option" href="request-game.html">Solicitar subir juego</a>
+          </div>
+        </div>
+
+        <a class="brand" href="#home" aria-label="RISIN96AMES Home">
+          <span class="brand-mark">R96</span>
+          <span class="brand-name">RISIN96AMES</span>
+        </a>
+      </div>
 
       <div class="nav-right">
         <div class="nav-links">
@@ -27,18 +41,6 @@
           <span><strong>v0.5</strong></span>
           <span>Juegos <strong id="gamesCount">...</strong></span>
           <span>Reseñas <strong id="reviewsCount">...</strong></span>
-        </div>
-
-        <div class="settings-menu">
-          <button id="settingsToggle" class="menu-button" type="button" aria-label="Abrir settings">☰</button>
-          <div id="settingsPanel" class="settings-panel" hidden>
-            <button id="themeToggle" class="settings-option" type="button">
-              <span id="themeIcon">☾</span>
-              <span id="themeLabel">Tema claro</span>
-            </button>
-            <a class="settings-option" href="admin.html">Iniciar como administrador</a>
-            <a class="settings-option" href="request-game.html">Solicitar subir juego</a>
-          </div>
         </div>
       </div>
     </nav>
@@ -69,8 +71,8 @@
           <h2>Explorar juegos</h2>
         </div>
         <p>
-          Las betas se muestran como una vitrina horizontal. Desliza de izquierda a derecha
-          para recorrer los juegos publicados.
+          Vitrina horizontal de betas publicadas. Recorre, revisa detalles y entra a jugar
+          desde una tarjeta clara.
         </p>
       </div>
 
