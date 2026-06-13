@@ -7,8 +7,7 @@ kv_namespaces = [
 ]
 
 [vars]
-ADMIN_EMAILS = "tu@email.com"
-ADMIN_MASTER_CODE = "cambia-este-codigo"
+ADMIN_MASTER_CODE = "R96-ADMIN-9633"
 PRIVATE_CODE_SECRET = "cambia-esta-frase-secreta-larga"
 PRIVATE_CODE_TTL_SECONDS = "900"
 SITE_ORIGIN = "https://tuusuario.github.io"

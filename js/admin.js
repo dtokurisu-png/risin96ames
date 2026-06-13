@@ -1,5 +1,5 @@
-const ADMIN_SESSION_KEY = "risin96games-admin-session";
-const ADMIN_SESSION_TOKEN_KEY = "risin96games-admin-token";
+const ADMIN_SESSION_KEY = "risin96ames-admin-session";
+const ADMIN_SESSION_TOKEN_KEY = "risin96ames-admin-token";
 
 function getAdminApiUrl() {
   return String(window.R96_ADMIN_API_URL || localStorage.getItem("r96-admin-api-url") || "").replace(/\/+$/, "");
@@ -254,7 +254,7 @@ function initGameForm() {
         {
           version,
           notes: changelogLines.length ? changelogLines : [
-            "Primera versión publicada en RISIN96GAMES.",
+            "Primera versión publicada en RISIN96AMES.",
             "Feedback abierto mediante GitHub Issues."
           ]
         }

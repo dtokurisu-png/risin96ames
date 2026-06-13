@@ -57,23 +57,16 @@ function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase();
 }
 
-function allowedEmails(env) {
-  return String(env.ADMIN_EMAILS || "")
-    .split(",")
-    .map((email) => normalizeEmail(email))
-    .filter(Boolean);
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || ""));
 }
 
-function isAllowedEmail(email, env) {
-  return allowedEmails(env).includes(normalizeEmail(email));
+function getAdminCode(env) {
+  return String(env.ADMIN_MASTER_CODE || "R96-ADMIN-9633");
 }
 
 function assertAdminCode(adminCode, env) {
-  if (!env.ADMIN_MASTER_CODE) {
-    throw new Error("ADMIN_MASTER_CODE no está configurado.");
-  }
-
-  if (String(adminCode || "") !== String(env.ADMIN_MASTER_CODE)) {
+  if (String(adminCode || "").trim() !== getAdminCode(env)) {
     throw new Error("Código de administrador incorrecto.");
   }
 }
@@ -118,12 +111,8 @@ async function requestAdminCode(request, env, corsHeaders) {
   const adminCode = body.adminCode;
   const redirectUrl = body.redirectUrl || env.ADMIN_PAGE_URL || "";
 
-  if (!email) {
-    throw new Error("Correo electrónico obligatorio.");
-  }
-
-  if (!isAllowedEmail(email, env)) {
-    throw new Error("Este correo no está autorizado como administrador.");
+  if (!email || !isValidEmail(email)) {
+    throw new Error("Correo electrónico inválido.");
   }
 
   assertAdminCode(adminCode, env);
@@ -163,12 +152,8 @@ async function verifyAdminLogin(request, env, corsHeaders) {
   const adminCode = body.adminCode;
   const privateCode = String(body.privateCode || "").trim();
 
-  if (!email || !adminCode || !privateCode) {
+  if (!email || !isValidEmail(email) || !adminCode || !privateCode) {
     throw new Error("Correo, código de administrador y código privado son obligatorios.");
-  }
-
-  if (!isAllowedEmail(email, env)) {
-    throw new Error("Este correo no está autorizado como administrador.");
   }
 
   assertAdminCode(adminCode, env);

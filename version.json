@@ -1,0 +1,13 @@
+{
+  "platformVersion": "0.6.3",
+  "patchName": "Admin one code + private email code",
+  "updatedAt": "2026-06-13",
+  "adminCodeMode": "single-admin-code-plus-private-email-code",
+  "adminMasterCode": "R96-ADMIN-9633",
+  "notes": [
+    "Se restauró un código de administrador único.",
+    "El código privado sigue llegando por email.",
+    "El código de administrador no está en js/admin.js.",
+    "Nombre visible conservado como RISIN96AMES."
+  ]
+}
