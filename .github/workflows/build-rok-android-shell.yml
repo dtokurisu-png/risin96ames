@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - rok-apk-builder
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -34,7 +37,14 @@ jobs:
         working-directory: android-shell
         run: gradle :app:assembleDebug --stacktrace
 
+      - name: Upload shell artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rok-shell-apk
+          path: android-shell/app/build/outputs/apk/debug/app-debug.apk
+
       - name: Publish shell APK
+        if: github.event_name == 'push'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
