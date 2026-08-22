@@ -1,0 +1,43 @@
+name: Build ROK Android shell
+
+on:
+  push:
+    branches:
+      - rok-apk-builder
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: rok-apk-builder
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK
+        run: yes | sdkmanager --licenses >/dev/null || true; sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Build shell APK
+        working-directory: android-shell
+        run: gradle :app:assembleDebug --stacktrace
+
+      - name: Publish shell APK
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cp android-shell/app/build/outputs/apk/debug/app-debug.apk rok-shell.apk
+          gh release view rok-apk-shell-v1 >/dev/null 2>&1 || gh release create rok-apk-shell-v1 --title 'ROK Android shell' --notes 'Temporary builder shell for R.O.K LITE Android packaging.'
+          gh release upload rok-apk-shell-v1 rok-shell.apk --clobber
