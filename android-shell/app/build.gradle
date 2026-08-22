@@ -1,0 +1,16 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.roklite.game'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.roklite.game'
+        minSdk 24
+        targetSdk 35
+        versionCode 945
+        versionName '9.45'
+    }
+}
