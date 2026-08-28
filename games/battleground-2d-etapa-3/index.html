@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Battleground 2.5D — Etapa 3 · Parche</title>
+  <meta name="description" content="Arena online Etapa 3 con recursos 30, cristales, spellbook, casteo e invocaciones sincronizadas." />
+  <link rel="stylesheet" href="https://battleground-2d-etapa-1.dtokurisu.chatgpt.site/assets/index-BWmT2EBw.css" />
+  <link rel="stylesheet" href="./patch.css" />
+</head>
+<body class="antialiased">
+<main class="game-shell" id="gameShell">
+  <canvas class="arena-canvas" id="arena" aria-label="Arena de combate 2.5D"></canvas>
+
+  <div class="battle-hud" aria-live="polite">
+    <div class="player-hud player-hud-left">
+      <div class="health-cluster health-left"><span>KASTER I</span><div class="health-track"><div class="health-fill" id="p1LifeFill" style="width:100%"></div></div><strong id="p1Life">20</strong></div>
+      <div class="water-meter" id="p1WaterMeter" aria-label="0 de 30 elementos de Agua"><span class="water-symbol">◆</span><div class="water-pips" id="p1Pips" aria-hidden="true"></div><strong id="p1Water">0/30</strong></div>
+    </div>
+    <div class="match-status"><span>ETAPA III</span><strong>ARENA 2.5D</strong></div>
+    <div class="player-hud player-hud-right">
+      <div class="health-cluster health-right"><span>KASTER II</span><div class="health-track"><div class="health-fill" id="p2LifeFill" style="width:100%"></div></div><strong id="p2Life">20</strong></div>
+      <div class="water-meter" id="p2WaterMeter" aria-label="0 de 30 elementos de Agua"><span class="water-symbol">◆</span><div class="water-pips" id="p2Pips" aria-hidden="true"></div><strong id="p2Water">0/30</strong></div>
+    </div>
+  </div>
+
+  <div class="room-badge" id="roomBadge" hidden></div>
+  <div class="invocation-counter" id="invocationCounter" hidden>INVOCACIONES 0/6</div>
+  <div class="resource-clock" id="resourceClock" hidden>RECARGA ◆</div>
+  <div class="stage-toast" id="toast"></div>
+
+  <section class="lobby-panel" id="lobbyPanel">
+    <div class="lobby-mark">ETAPA 3 · PARCHE</div>
+    <h1>Battleground 2.5D</h1>
+    <p>Recolecta Agua, abre tu spellbook y castea la primera invocación sincronizada.</p>
+    <button class="primary-action h-10 rounded-md px-6" id="createRoomBtn">Crear sala</button>
+    <div class="join-row">
+      <input id="roomCodeInput" class="h-9 w-full rounded-md border px-3" placeholder="CÓDIGO" aria-label="Código de sala" maxlength="6" autocomplete="off" />
+      <button id="joinRoomBtn" class="h-9 rounded-md border px-4" disabled>Unirse</button>
+    </div>
+    <small id="lobbyInfo">W/S: profundidad · D: avanzar · A: retroceder</small>
+    <small class="lobby-error" id="lobbyError"></small>
+  </section>
+
+  <button class="spellbook-toggle hidden" id="spellbookToggle">SPELLBOOK</button>
+  <section class="spellbook-panel hidden" id="spellbookPanel" aria-label="Spellbook">
+    <div class="spellbook-heading"><span>SPELLBOOK</span><small id="spellbookSlotInfo">Invocaciones 0/6</small></div>
+    <div class="spellbook-categories">
+      <button><b>1</b><span>Invocaciones</span></button>
+      <button disabled><b>2</b><span>Hechizos</span></button>
+      <button disabled><b>3</b><span>Estructuras</span></button>
+    </div>
+    <div class="spellbook-cards" style="margin-top:7px">
+      <button class="spell-card-water" id="waterInvocationCard"><b>1</b><span>Invocación de Agua</span><small>◆ 2 · Kasteo 2</small></button>
+      <button class="spell-card-empty" disabled><b>2</b><span>Vacío</span></button>
+      <button class="spell-card-empty" disabled><b>3</b><span>Vacío</span></button>
+    </div>
+    <div class="spellbook-message" id="spellbookMessage">Máximo 6 invocaciones activas en Arena.</div>
+    <div class="spellbook-footer"><small>Los huecos de Agua gastados permanecen vacíos.</small><button id="closeSpellbookBtn">Cerrar</button></div>
+  </section>
+
+  <div class="cast-strip hidden" id="castStrip"><strong id="castText">KASTEANDO</strong><div class="cast-track"><div class="cast-fill" id="castFill"></div></div></div>
+  <div class="touch-controls" id="touchControls" aria-label="Controles táctiles"><button class="touch-w" data-key="w">W</button><button class="touch-a" data-key="a">A</button><button class="touch-s" data-key="s">S</button><button class="touch-d" data-key="d">D</button></div>
+  <div class="canvas-help">◆ Cristal = +1 Agua · Recarga temporal = +1<br>Capacidad Agua: 30 · Invocaciones: 6</div>
+</main>
+<script type="module" src="./game.js"></script>
+</body>
+</html>
