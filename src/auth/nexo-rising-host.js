@@ -12,6 +12,17 @@
   frame.style.cssText = 'position:fixed;inset:0;width:100%;height:100dvh;border:0;z-index:100;background:#070912';
   let requestId = 0, sequence = 0, member = null, status = 'connecting', consumed = '', exchanging = false;
   let started = Date.now();
+  // Reserve the actual Wix banner height instead of placing the header behind it.
+  function positionFrame() {
+    const banner = document.getElementById('WIX_ADS');
+    const rect = banner?.getBoundingClientRect();
+    const offset = rect && rect.width > 0 && rect.height > 0 ? Math.max(0, Math.ceil(rect.bottom)) : 0;
+    const top = offset + 'px';
+    if (frame.style.top !== top) {
+      frame.style.top = top;
+      frame.style.height = 'calc(100dvh - ' + top + ')';
+    }
+  }
   function send() {
     if (!requestId) return;
     frame.contentWindow.postMessage({source:'r96-wix-auth',protocol:1,requestId,sequence:++sequence,status,member}, ORIGIN);
@@ -32,6 +43,7 @@
   }
   async function poll() {
     if (location.pathname.replace(/\/+$/, '') !== PATH) { cleanup(); return; }
+    positionFrame();
     const q = new URLSearchParams(location.search);
     const state = q.get('nxa');
     // Native Wix login remains visible above the product. No simulated login UI.
@@ -62,10 +74,13 @@
   }
   function cleanup() {
     clearInterval(timer); window.removeEventListener('message',receive);
+    window.removeEventListener('resize', positionFrame);
     frame.remove(); window.__nexoRisingHost = false;
   }
   window.addEventListener('message',receive);
   window.addEventListener('pagehide',cleanup,{once:true});
+  positionFrame();
+  window.addEventListener('resize', positionFrame);
   document.body.appendChild(frame);
   const timer = setInterval(poll,500);
   poll();
