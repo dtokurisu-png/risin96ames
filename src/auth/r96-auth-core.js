@@ -1,6 +1,6 @@
 import {
   R96_AUTH_CONFIG
-} from "./r96-auth-config.js?v=2.1.0";
+} from "./r96-auth-config.js?v=2.1.1";
 
 const listeners = new Set();
 
@@ -46,6 +46,16 @@ export function subscribeAuth(listener) {
   return () => listeners.delete(listener);
 }
 
+function parentOrigin() {
+  try {
+    if (document.referrer) {
+      return new URL(document.referrer).origin;
+    }
+  } catch (_) {}
+
+  return "*";
+}
+
 function postToHost(payload) {
   try {
     if (window.parent === window) return false;
@@ -53,9 +63,10 @@ function postToHost(payload) {
     window.parent.postMessage(
       {
         source: "r96-auth",
+        release: R96_AUTH_CONFIG.release,
         ...payload
       },
-      R96_AUTH_CONFIG.parentOrigin
+      parentOrigin()
     );
 
     return true;
@@ -66,7 +77,9 @@ function postToHost(payload) {
 
 function handleHostMessage(event) {
   if (event.source !== window.parent) return;
-  if (event.origin !== R96_AUTH_CONFIG.parentOrigin) return;
+
+  const expected = parentOrigin();
+  if (expected !== "*" && event.origin !== expected) return;
 
   const message = event.data || {};
   if (message.source !== "r96-wix-auth-host") return;
@@ -131,16 +144,15 @@ function announceReady() {
   const send = () => {
     attempts += 1;
 
-    const sent = postToHost({
-      type: "ready",
-      release: "2.1.0"
+    postToHost({
+      type: "ready"
     });
 
     if (
       state.status === "booting" &&
-      attempts < 12
+      attempts < 14
     ) {
-      readyTimer = setTimeout(send, sent ? 500 : 900);
+      readyTimer = setTimeout(send, 500);
     }
   };
 
@@ -164,10 +176,10 @@ export async function bootstrapAuth() {
         status: "error",
         member: null,
         error:
-          "No se pudo conectar con el host de autenticación de Wix."
+          "No se pudo conectar con el adaptador de autenticación de Wix."
       });
     }
-  }, 8000);
+  }, 9000);
 
   return state;
 }

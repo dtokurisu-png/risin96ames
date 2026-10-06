@@ -2,7 +2,7 @@ import {
   subscribeAuth,
   signInWithGoogle,
   signOut
-} from "./r96-auth-core.js?v=2.1.0";
+} from "./r96-auth-core.js?v=2.1.1";
 
 let menu = null;
 let shell = null;

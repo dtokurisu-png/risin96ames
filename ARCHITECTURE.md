@@ -18,7 +18,7 @@ Stage 1 remains locked.
 
 ## Stage 2 — Authentication
 
-**Status: ACTIVE — 2.1.0 candidate.**
+**Status: ACTIVE — 2.1.1 candidate.**
 
 R96 authentication uses the Wix page as the identity host and the R96 iframe as a presentation client.
 
@@ -57,3 +57,8 @@ No Headless OAuth, PKCE, callback page, custom R96 token, Nexo session, or Nexo 
 4. Developer invitations.
 5. Game project and build management.
 6. Reviews / sessions / community features.
+
+
+### Wix page adapter
+
+The Wix-side adapter is page-local to **Risin96ames** and contains only native member authentication plus the HTML Component message bridge. It does not import or modify Mi Espacio/Nexo modules.
