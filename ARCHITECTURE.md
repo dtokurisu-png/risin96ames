@@ -9,59 +9,51 @@ R96 is developed as an independent product. It must not import, modify, call, or
 **Status: LOCKED — release 1.0.0.**
 
 Canonical files:
-- `index.html`: semantic page composition and module inclusion points.
-- `src/visual/r96-visual.css`: visual tokens, layout, responsive rules, light/dark appearance.
-- `src/visual/r96-visual.js`: visual-only interactions: theme toggle and navigation menu.
-- `src/visual/r96-yester-symbols.svg`: canonical vector lettering generated from the supplied YESTER typeface.
+- `index.html`
+- `src/visual/r96-visual.css`
+- `src/visual/r96-visual.js`
+- `src/visual/r96-yester-symbols.svg`
 
-Stage 1 internals remain locked. Stage 2 may only attach behavior to the existing account/login controls through its own module.
+Stage 1 remains locked.
 
 ## Stage 2 — Authentication
 
-**Status: ACTIVE — 2.0.3 candidate.**
+**Status: ACTIVE — 2.1.0 candidate.**
 
-Authentication is isolated under `src/auth/` and uses a dedicated Wix Headless OAuth client named **R96 Headless Auth**.
+R96 authentication uses the Wix page as the identity host and the R96 iframe as a presentation client.
+
+### R96 iframe module
 
 Files:
-- `src/auth/r96-auth-config.js`: public client/site identifiers and R96-only URLs/storage keys.
-- `src/auth/r96-auth-core.js`: OAuth state, token lifecycle, Google sign-in, current-member retrieval, logout.
-- `src/auth/r96-auth-ui.js`: adapter between auth state and the locked Stage 1 account controls.
-- `src/auth/r96-auth-entry.js`: Stage 2 bootstrap only.
-- `src/auth/r96-auth.css`: authentication-specific account menu/avatar states.
-- `auth/callback.html`: OAuth callback and token exchange.
-- `auth/logout.html`: R96 auth-storage cleanup and return path.
+- `src/auth/r96-auth-config.js`
+- `src/auth/r96-auth-core.js`
+- `src/auth/r96-auth-ui.js`
+- `src/auth/r96-auth-entry.js`
+- `src/auth/r96-auth.css`
 
-Public contract:
-- `window.R96Auth.getState()`
-- `window.R96Auth.subscribe(listener)`
-- `window.R96Auth.signIn()`
-- `window.R96Auth.signOut()`
-- browser event `r96:auth-state`
+The iframe never owns Wix credentials or Wix member tokens. It only sends:
+- `ready`
+- `login`
+- `logout`
 
-Storage namespace:
-- `r96.auth.tokens.v1`
-- `r96.auth.oauth.v1`
-- `r96.auth.return.v1`
+and receives:
+- `signedOut`
+- `signingIn`
+- `signedIn + member`
+- `signingOut`
+- `error`
 
-Stage 2 does **not** use Nexo sessions, Nexo backend methods, Nexo CMS, Wix page-member state, parent-page bridges, or R96 legacy authentication. When R96 is embedded in Wix, Google authentication uses Wix OAuth \`web_message\` response mode. Wix returns the authorization code and state directly to the same R96 iframe that generated the PKCE data, so the token exchange never depends on cross-context browser storage.
+### Wix host module
+
+The single R96 custom embed on the Wix page owns authentication. It uses Wix site-member APIs directly and is isolated from Mi Espacio/Nexo code.
+
+No Headless OAuth, PKCE, callback page, custom R96 token, Nexo session, or Nexo CMS is part of Stage 2.
 
 ## Stage boundaries
 
-Each functional stage lives in its own module directory and communicates with locked stages only through documented interfaces.
-
-Planned sequence:
 1. **Visual — LOCKED.**
 2. **Authentication — ACTIVE.**
 3. Authorization / roles.
 4. Developer invitations.
 5. Game project and build management.
 6. Reviews / sessions / community features.
-
-## Wix boundary
-
-R96 uses its own Wix Headless OAuth client. This creates an R96-specific session flow even though the identity is a Wix site member. No Mi Espacio/Nexo runtime authentication code is reused.
-
-
-### Cache integrity
-
-Every import inside the auth module is version-pinned to the same Stage 2 release. This prevents browsers or CDN caches from mixing a new entrypoint with an older core/config implementation during OAuth.
