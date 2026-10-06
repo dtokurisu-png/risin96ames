@@ -83,6 +83,12 @@
     history.replaceState(history.state, "", url.href);
   }
 
+  function clearResultState() {
+    const url = new URL(location.href);
+    ["nxa", "nxav", "nxb"].forEach((key) => url.searchParams.delete(key));
+    history.replaceState(history.state, "", url.href);
+  }
+
   function openProfile() {
     const url = new URL("/my-site-1/blank-8", location.origin);
     url.searchParams.set("nxoProfile", "settings");
@@ -140,9 +146,11 @@
     if (state === "SIGNED_OUT") {
       status = "signedOut";
       member = null;
+      clearResultState();
     } else if (state === "FAILED") {
       status = "error";
       member = null;
+      clearResultState();
     } else if (state === "LOGIN") {
       status = "signingIn";
       member = null;
@@ -191,6 +199,7 @@
         status = "error";
         member = null;
       } finally {
+        clearResultState();
         exchanging = false;
       }
     } else if (
