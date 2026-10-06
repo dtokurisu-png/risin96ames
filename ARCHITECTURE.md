@@ -1,59 +1,23 @@
 # R96 architecture
 
-## Rule zero
+## Scope
 
-R96 is developed as an independent product. It must not import, modify, call, or depend on Mi Espacio, Nexo Group runtime code, Numa, Nexo CMS collections, Nexo session helpers, or any legacy R96 implementation.
+R96 source code is independent of Mi Espacio, Numa, Nexo runtime helpers and CMS. Native Wix Members sessions are site-scoped: code separation alone does not create a separate login identity. See AUTH_REPAIR.md for the unresolved independent-site requirement.
 
 ## Stage 1 — Visual
 
-**Status: LOCKED — 1.0.0.**
-
-Canonical visual files:
-- `index.html`
-- `src/visual/r96-visual.css`
-- `src/visual/r96-visual.js`
-- `src/visual/r96-yester-symbols.svg`
+Visual layout remains in index.html and src/visual/. Existing theme, menu, SVG assets and card layout are preserved. Authentication uses the existing account and hero controls, stable element IDs and an accessible status message.
 
 ## Stage 2 — Authentication
 
-**Status: REBUILT FROM CLEAN BASELINE — 3.0.0 candidate.**
+Status: 3.1.0 candidate; controlled tests pass, publication and live login are pending.
 
-There is exactly one R96 auth frontend file:
+Exactly one frontend: src/auth/r96-native-auth.js.
+Exactly one page adapter: src/pages/Risin96ames.br8x2.js in the Wix repo.
+Exactly one real Wix HTML Component: #r96App. Never inject a replacement iframe with Custom Code.
 
-- `src/auth/r96-native-auth.js`
+The page adapter owns native Wix login and the real member state. The iframe owns presentation only. Messages have a fixed origin, protocol, request ID and increasing sequence. Missing responses time out with a retry, cancellations restore both buttons, and late state replies cannot overwrite newer operations.
 
-Its only responsibilities are:
-- request the current Wix member state;
-- request native Wix login;
-- render signed-out / signing-in / signed-in state in the existing visual account controls.
+No OAuth, PKCE, custom Google code, token storage, callback pages, redirects, global scripts or Nexo authentication helpers. No developer authorization, invitations or backend access is implemented at this stage. Displaying a member is not authorization.
 
-There is no URL navigation in R96 authentication.
-
-The Wix page adapter is:
-- `src/pages/Risin96ames.br8x2.js`
-
-Its only responsibilities are:
-- `currentMember.getMember()`;
-- `authentication.promptLogin()`;
-- send the normalized member state to the R96 HTML Component.
-
-Explicitly absent:
-- hardcoded Wix page paths;
-- `r96login`, `r96state`, `r96ab` query parameters;
-- OAuthStrategy / Headless OAuth;
-- PKCE;
-- callback pages;
-- custom Google code;
-- token storage;
-- backend auth/session helpers;
-- Nexo/Mi Espacio auth code;
-- developer authorization and invitations.
-
-## Stage boundaries
-
-1. **Visual — LOCKED.**
-2. **Authentication — ACTIVE.**
-3. Authorization / roles.
-4. Developer invitations.
-5. Game project and build management.
-6. Reviews / sessions / community features.
+See AUTH_REPAIR.md before merging or publishing. Do not publish the old pinned Wix UI 403.

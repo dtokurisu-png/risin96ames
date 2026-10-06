@@ -1,190 +1,109 @@
 (() => {
   "use strict";
+  const RELEASE = "3.1.0";
+  const HOST_ORIGIN = "https://dtokurisu.wixstudio.com";
+  const SOURCE = "r96-wix-auth";
+  const PROTOCOL = 1;
+  const REQUEST_TIMEOUT = 12000;
+  let account;
+  let hero;
+  let notice;
+  let state = "connecting";
+  let requestId = 0;
+  let timeout;
+  let retry;
+  let attempts = 0;
+  let lastSequence = -1;
 
-  const RELEASE = "3.0.0";
-  let accountState = "booting";
-  let bridgeOrigin = "*";
-
-  function detectBridgeOrigin() {
-    try {
-      if (document.referrer) {
-        bridgeOrigin = new URL(document.referrer).origin;
-      }
-    } catch (_) {
-      bridgeOrigin = "*";
-    }
+  function render(next, member, message = "") {
+    state = next;
+    const busy = next === "connecting" || next === "signingIn";
+    const signedIn = next === "signedIn";
+    const name = String(member?.displayName || "Mi cuenta");
+    const label = signedIn ? name : busy ? (next === "connecting" ? "Conectando…" : "Iniciando sesión…") : "Iniciar sesión";
+    account.disabled = busy || signedIn;
+    account.dataset.r96AuthState = next;
+    account.setAttribute("aria-busy", String(busy));
+    account.querySelector(".r96-account-copy strong").textContent = label;
+    account.querySelector(".r96-account-copy small").textContent = signedIn ? "Sesión iniciada" : "Tu cuenta de Rising";
+    account.querySelector(".r96-account-icon").textContent = signedIn ? name.charAt(0).toUpperCase() : "R";
+    hero.disabled = busy || signedIn;
+    hero.textContent = signedIn ? "Sesión iniciada" : label;
+    notice.textContent = message;
+    notice.hidden = !message;
   }
 
-  function accountButton() {
-    return document.querySelector(".r96-account-visual");
+  function stopTimers() {
+    clearTimeout(timeout);
+    clearTimeout(retry);
   }
 
-  function heroButton() {
-    return Array.from(
-      document.querySelectorAll(".r96-actions .r96-secondary")
-    ).find((button) => {
-      const text = String(button.textContent || "").trim();
-      return text === "Iniciar sesión" || text === "Sesión iniciada";
-    }) || null;
+  function send(type, action) {
+    window.parent.postMessage({source: "r96-auth", protocol: PROTOCOL, release: RELEASE, type, action, requestId}, HOST_ORIGIN);
   }
 
-  function setSignedOut() {
-    accountState = "signedOut";
-
-    const button = accountButton();
-    if (button) {
-      button.disabled = false;
-      button.removeAttribute("aria-disabled");
-      button.removeAttribute("title");
-      button.dataset.r96AuthState = "signedOut";
-
-      const icon = button.querySelector(".r96-account-icon");
-      const strong = button.querySelector(".r96-account-copy strong");
-      const small = button.querySelector(".r96-account-copy small");
-
-      if (icon) icon.textContent = "R";
-      if (strong) strong.textContent = "Iniciar sesión";
-      if (small) small.textContent = "Continuar con Google";
-    }
-
-    const hero = heroButton();
-    if (hero) {
-      hero.disabled = false;
-      hero.removeAttribute("aria-disabled");
-      hero.textContent = "Iniciar sesión";
-    }
+  function fail(message) {
+    stopTimers();
+    render("error", null, message);
   }
 
-  function setSigningIn() {
-    accountState = "signingIn";
-
-    const button = accountButton();
-    if (button) {
-      button.disabled = true;
-      button.dataset.r96AuthState = "signingIn";
-
-      const strong = button.querySelector(".r96-account-copy strong");
-      const small = button.querySelector(".r96-account-copy small");
-
-      if (strong) strong.textContent = "Iniciando sesión…";
-      if (small) small.textContent = "Wix";
-    }
-
-    const hero = heroButton();
-    if (hero) {
-      hero.disabled = true;
-      hero.textContent = "Iniciando sesión…";
-    }
-  }
-
-  function setSignedIn(member) {
-    accountState = "signedIn";
-
-    const name = String(member?.displayName || "Mi cuenta").trim();
-    const email = String(member?.email || "").trim();
-
-    const button = accountButton();
-    if (button) {
-      button.disabled = false;
-      button.removeAttribute("aria-disabled");
-      button.removeAttribute("title");
-      button.dataset.r96AuthState = "signedIn";
-
-      const icon = button.querySelector(".r96-account-icon");
-      const strong = button.querySelector(".r96-account-copy strong");
-      const small = button.querySelector(".r96-account-copy small");
-
-      if (icon) icon.textContent = (name || email || "R").charAt(0).toUpperCase();
-      if (strong) strong.textContent = name;
-      if (small) small.textContent = email || "Sesión iniciada";
-    }
-
-    const hero = heroButton();
-    if (hero) {
-      hero.disabled = true;
-      hero.textContent = "Sesión iniciada";
-    }
-  }
-
-  function send(payload) {
-    try {
-      if (window.parent === window) return false;
-
-      window.parent.postMessage(
-        {
-          source: "r96-auth",
-          release: RELEASE,
-          ...payload
-        },
-        bridgeOrigin
-      );
-
-      return true;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  function requestLogin() {
-    if (accountState === "signingIn" || accountState === "signedIn") {
+  function connect() {
+    stopTimers();
+    if (window.parent === window) {
+      fail("El inicio de sesión está disponible dentro de la página de Rising en Wix.");
       return;
     }
-
-    setSigningIn();
-
-    if (!send({
-      type: "r96-account-action",
-      action: "login"
-    })) {
-      setSignedOut();
-    }
+    requestId++;
+    attempts = 0;
+    render("connecting");
+    timeout = setTimeout(() => fail("No se pudo conectar el inicio de sesión. Pulsa Iniciar sesión para reintentar."), REQUEST_TIMEOUT);
+    const probe = () => {
+      send("r96-account-ready");
+      if (++attempts < 6) retry = setTimeout(probe, 1500);
+    };
+    probe();
   }
 
-  function handleMessage(event) {
-    if (event.source !== window.parent) return;
-    if (bridgeOrigin !== "*" && event.origin !== bridgeOrigin) return;
+  function login() {
+    if (state === "error") { connect(); return; }
+    if (state !== "signedOut") return;
+    stopTimers();
+    requestId++;
+    render("signingIn");
+    timeout = setTimeout(() => fail("No se pudo abrir el acceso. Pulsa Iniciar sesión para reintentar."), REQUEST_TIMEOUT);
+    send("r96-account-action", "login");
+  }
 
-    const message = event.data || {};
-
-    if (message.type !== "r96-account-state") return;
-
-    if (message.data?.member?.id) {
-      setSignedIn(message.data.member);
-    } else {
-      setSignedOut();
+  function receive(event) {
+    if (event.source !== window.parent || event.origin !== HOST_ORIGIN) return;
+    const data = event.data;
+    if (!data || data.source !== SOURCE || data.protocol !== PROTOCOL || data.requestId !== requestId) return;
+    if (!Number.isSafeInteger(data.sequence) || data.sequence <= lastSequence) return;
+    if (!["signedOut", "signedIn", "signingIn", "error"].includes(data.status)) return;
+    if (data.status === "signedIn" && !data.member?.id) return;
+    lastSequence = data.sequence;
+    stopTimers();
+    if (data.status === "signingIn") {
+      render("signingIn");
+      timeout = setTimeout(() => fail("El acceso sigue pendiente. Puedes volver a intentarlo."), 180000);
+      return;
     }
+    const message = data.status === "error" ? "No se pudo completar el acceso. Vuelve a intentarlo." : "";
+    render(data.status, data.member, message);
   }
 
   function bind() {
-    detectBridgeOrigin();
-    window.addEventListener("message", handleMessage);
-
-    const button = accountButton();
-    const hero = heroButton();
-
-    if (button) {
-      button.addEventListener("click", requestLogin);
-    }
-
-    if (hero) {
-      hero.addEventListener("click", requestLogin);
-    }
-
-    // Start from a neutral state, then ask Wix for the real member state.
-    setSignedOut();
-
-    [0, 180, 600, 1400, 2600].forEach((delay) => {
-      setTimeout(() => {
-        send({
-          type: "r96-account-ready"
-        });
-      }, delay);
-    });
+    account = document.querySelector(".r96-account-visual");
+    hero = document.querySelector("#r96-login");
+    notice = document.querySelector("#r96-auth-status");
+    if (!account || !hero || !notice) return;
+    window.addEventListener("message", receive);
+    window.addEventListener("pagehide", stopTimers);
+    window.addEventListener("pageshow", event => { if (event.persisted) connect(); });
+    account.addEventListener("click", login);
+    hero.addEventListener("click", login);
+    connect();
   }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", bind, { once: true });
-  } else {
-    bind();
-  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind, {once: true});
+  else bind();
 })();
