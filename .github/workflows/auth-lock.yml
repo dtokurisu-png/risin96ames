@@ -1,3 +1,4 @@
+# Owner-locked authentication guard. Do not disable without explicit owner instruction.
 name: Authentication Lock
 
 on:
