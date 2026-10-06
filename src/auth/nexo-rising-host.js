@@ -1,95 +1,193 @@
 (() => {
-  'use strict';
-  const PATH = '/my-site-1/blank-9';
-  if (location.pathname.replace(/\/+$/, '') !== PATH || window.__nexoRisingHost) return;
-  // Old Wix test-site links select different page code and cannot run this live bridge.
-  // Normalize only Rising, preserving the requested native login and product URL.
+  "use strict";
+
+  const PATH = "/my-site-1/blank-9";
+  const CENTRAL_PATH = "/my-site-1/";
+
+  if (
+    location.pathname.replace(/\/+$/, "") !== PATH ||
+    window.__nexoRisingHost
+  ) {
+    return;
+  }
+
   const entry = new URL(location.href);
-  if (entry.searchParams.get('rc') === 'test-site') {
-    ['rc', 'nxb', 'nxa', 'nxav'].forEach(key => entry.searchParams.delete(key));
+  if (entry.searchParams.get("rc") === "test-site") {
+    ["rc", "nxb", "nxa", "nxav"].forEach((key) =>
+      entry.searchParams.delete(key)
+    );
     location.replace(entry.href);
     return;
   }
+
   window.__nexoRisingHost = true;
-  const ORIGIN = 'https://dtokurisu-png.github.io';
-  const frame = document.createElement('iframe');
-  frame.id = 'nexo-rising-app';
-  frame.title = 'Rising Games · Nexo Group';
-  frame.src = ORIGIN + '/risin96ames/?v=4.0.0';
-  frame.referrerPolicy = 'no-referrer';
-  frame.style.cssText = 'position:fixed;inset:0;width:100%;height:100dvh;border:0;z-index:100;background:#070912';
-  let requestId = 0, sequence = 0, member = null, status = 'connecting', consumed = '', exchanging = false;
-  let started = Date.now();
-  // Reserve the actual Wix banner height instead of placing the header behind it.
+
+  const ORIGIN = "https://dtokurisu-png.github.io";
+  const frame = document.createElement("iframe");
+  frame.id = "nexo-rising-app";
+  frame.title = "Rising Games · Nexo Group";
+  frame.src = ORIGIN + "/risin96ames/?v=5.0.0";
+  frame.referrerPolicy = "no-referrer";
+  frame.style.cssText =
+    "position:fixed;inset:0;width:100%;height:100dvh;border:0;z-index:100;background:#070912";
+
+  let requestId = 0;
+  let sequence = 0;
+  let member = null;
+  let status = "connecting";
+  let consumed = "";
+  let exchanging = false;
+  const started = Date.now();
+
   function positionFrame() {
-    const banner = document.getElementById('WIX_ADS');
+    const banner = document.getElementById("WIX_ADS");
     const rect = banner?.getBoundingClientRect();
-    const offset = rect && rect.width > 0 && rect.height > 0 ? Math.max(0, Math.ceil(rect.bottom)) : 0;
-    const top = offset + 'px';
+    const offset =
+      rect && rect.width > 0 && rect.height > 0
+        ? Math.max(0, Math.ceil(rect.bottom))
+        : 0;
+    const top = offset + "px";
+
     if (frame.style.top !== top) {
       frame.style.top = top;
-      frame.style.height = 'calc(100dvh - ' + top + ')';
+      frame.style.height = "calc(100dvh - " + top + ")";
     }
   }
+
   function send() {
     if (!requestId) return;
-    frame.contentWindow.postMessage({source:'r96-wix-auth',protocol:1,requestId,sequence:++sequence,status,member}, ORIGIN);
+
+    frame.contentWindow.postMessage(
+      {
+        source: "r96-wix-auth",
+        protocol: 1,
+        requestId,
+        sequence: ++sequence,
+        status,
+        member
+      },
+      ORIGIN
+    );
   }
-  function goLogin() {
-    const url = new URL(location.href);
-    ['rc','nxb','nxa','nxav','nexoReturn'].forEach(k=>url.searchParams.delete(k));
-    url.searchParams.set('nexoAuth','login');
+
+  function goCentralAccess() {
+    const url = new URL(CENTRAL_PATH, location.origin);
+    url.searchParams.set("nexoAuth", "login");
+    url.searchParams.set("nexoReturn", "rising");
     location.assign(url.href);
   }
+
   function receive(event) {
     if (event.source !== frame.contentWindow || event.origin !== ORIGIN) return;
-    const d = event.data;
-    if (!d || d.source !== 'r96-auth' || d.protocol !== 1 || !Number.isSafeInteger(d.requestId)) return;
-    requestId = d.requestId;
-    if (d.type === 'r96-account-action' && d.action === 'login') { goLogin(); return; }
-    if (d.type === 'r96-account-ready') send();
+
+    const data = event.data;
+    if (
+      !data ||
+      data.source !== "r96-auth" ||
+      data.protocol !== 1 ||
+      !Number.isSafeInteger(data.requestId)
+    ) {
+      return;
+    }
+
+    requestId = data.requestId;
+
+    if (data.type === "r96-account-action" && data.action === "login") {
+      goCentralAccess();
+      return;
+    }
+
+    if (data.type === "r96-account-ready") send();
   }
+
   async function poll() {
-    if (location.pathname.replace(/\/+$/, '') !== PATH) { cleanup(); return; }
+    if (location.pathname.replace(/\/+$/, "") !== PATH) {
+      cleanup();
+      return;
+    }
+
     positionFrame();
-    const q = new URLSearchParams(location.search);
-    const state = q.get('nxa');
-    // Native Wix login remains visible above the product. No simulated login UI.
-    frame.style.visibility = state === 'LOGIN' ? 'hidden' : 'visible';
-    if (state === 'SIGNED_OUT') { status = 'signedOut'; member = null; }
-    else if (state === 'FAILED') { status = 'error'; member = null; }
-    else if (state === 'LOGIN') status = 'signingIn';
-    else if (state === 'READY' && q.get('nxb') && q.get('nxb') !== consumed && !exchanging) {
-      const token = q.get('nxb'); consumed = token; exchanging = true;
-      // Remove one-use boot credential immediately. Never send it to the iframe.
-      const clean = new URL(location.href); clean.searchParams.delete('nxb');
-      history.replaceState(history.state, '', clean.href);
+
+    const query = new URLSearchParams(location.search);
+    const state = query.get("nxa");
+
+    if (state === "FAILED") {
+      status = "error";
+      member = null;
+    } else if (
+      state === "READY" &&
+      query.get("nxb") &&
+      query.get("nxb") !== consumed &&
+      !exchanging
+    ) {
+      const token = query.get("nxb");
+      consumed = token;
+      exchanging = true;
+
+      const clean = new URL(location.href);
+      clean.searchParams.delete("nxb");
+      history.replaceState(history.state, "", clean.href);
+
       try {
         const controller = new AbortController();
-        const deadline = setTimeout(()=>controller.abort(),15000);
+        const deadline = setTimeout(() => controller.abort(), 15000);
         let response;
-        try { response = await fetch('/my-site-1/_functions/nexoRisingUi', {
-          method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',
-          body:JSON.stringify({action:'exchange',bootToken:token}),signal:controller.signal
-        }); } finally { clearTimeout(deadline); }
+
+        try {
+          response = await fetch("/my-site-1/_functions/nexoRisingUi", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            cache: "no-store",
+            body: JSON.stringify({
+              action: "exchange",
+              bootToken: token
+            }),
+            signal: controller.signal
+          });
+        } finally {
+          clearTimeout(deadline);
+        }
+
         const data = await response.json();
-        if (!response.ok || !data.ok || !data.member?.id) throw new Error('AUTH_REQUIRED');
-        member = data.member; status = 'signedIn';
-      } catch (_) { status = 'error'; member = null; }
-      finally { exchanging = false; }
-    } else if (status === 'connecting' && Date.now()-started > 25000) status = 'error';
+        if (!response.ok || !data.ok || !data.member?.id) {
+          throw new Error("AUTH_REQUIRED");
+        }
+
+        member = data.member;
+        status = "signedIn";
+      } catch (_) {
+        status = "error";
+        member = null;
+      } finally {
+        exchanging = false;
+      }
+    } else if (
+      state === "CHECKING_MEMBER" ||
+      state === "CREATING_SESSION"
+    ) {
+      status = "connecting";
+    } else if (status === "connecting" && Date.now() - started > 25000) {
+      status = "error";
+    }
+
     send();
   }
+
   function cleanup() {
-    clearInterval(timer); window.removeEventListener('message',receive);
-    window.removeEventListener('resize', positionFrame);
-    frame.remove(); window.__nexoRisingHost = false;
+    clearInterval(timer);
+    window.removeEventListener("message", receive);
+    window.removeEventListener("resize", positionFrame);
+    frame.remove();
+    window.__nexoRisingHost = false;
   }
-  window.addEventListener('message',receive);
-  window.addEventListener('pagehide',cleanup,{once:true});
+
+  window.addEventListener("message", receive);
+  window.addEventListener("pagehide", cleanup, { once: true });
+  window.addEventListener("resize", positionFrame);
+
   positionFrame();
-  window.addEventListener('resize', positionFrame);
   document.body.appendChild(frame);
-  const timer = setInterval(poll,500);
+
+  const timer = setInterval(poll, 500);
   poll();
 })();
