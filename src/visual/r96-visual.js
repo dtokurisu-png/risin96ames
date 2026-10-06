@@ -64,4 +64,13 @@
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") setMenu(false);
   });
+
+  if (!document.querySelector('script[data-r96-developer-ui]')) {
+    const developerScript = document.createElement("script");
+    developerScript.src = "./src/developer/r96-developer-ui.js?v=1.0.0";
+    developerScript.defer = true;
+    developerScript.dataset.r96DeveloperUi = "1";
+    document.head.appendChild(developerScript);
+  }
+
 })();
