@@ -7,144 +7,144 @@
   <meta name="theme-color" content="#070912">
   <title>R96 · Plataforma de juegos</title>
   <meta name="description" content="Interfaz visual de R96. Etapa 1: presentación sin autenticación ni backend.">
-  <link rel="stylesheet" href="./src/visual/r99-visual.css">
-  <script src="./src/visual/r99-visual.js" defer></script>
+  <link rel="stylesheet" href="./src/visual/r96-visual.css">
+  <script src="./src/visual/r96-visual.js" defer></script>
 </head>
 <body>
-  <div class="r99-app" data-theme="dark">
-    <header class="r99-header">
-      <nav class="r99-nav" aria-label="Navegación principal">
-        <div class="r99-nav-left">
-          <div class="r99-menu-wrap">
-            <button class="r99-menu" id="r99-menu" type="button" aria-label="Abrir menú" aria-expanded="false">
+  <div class="r96-app" data-theme="dark">
+    <header class="r96-header">
+      <nav class="r96-nav" aria-label="Navegación principal">
+        <div class="r96-nav-left">
+          <div class="r96-menu-wrap">
+            <button class="r96-menu" id="r96-menu" type="button" aria-label="Abrir menú" aria-expanded="false">
               <span></span><span></span><span></span>
             </button>
-            <div class="r99-menu-panel" id="r99-menu-panel" hidden>
+            <div class="r96-menu-panel" id="r96-menu-panel" hidden>
               <a href="#games">Explorar juegos</a>
               <a href="#reviews">Reseñas</a>
               <a href="#community">Comunidad</a>
             </div>
           </div>
 
-          <a class="r99-brand" href="#home" aria-label="R99 inicio">
-            <span class="r99-mark">R96</span>
-            <span class="r99-name">R96 GAMES</span>
+          <a class="r96-brand" href="#home" aria-label="R99 inicio">
+            <span class="r96-mark">R96</span>
+            <span class="r96-name">R96 GAMES</span>
           </a>
         </div>
 
-        <div class="r99-nav-right">
-          <div class="r99-links" aria-label="Secciones">
+        <div class="r96-nav-right">
+          <div class="r96-links" aria-label="Secciones">
             <a href="#games">Juegos</a>
             <a href="#reviews">Reseñas</a>
             <a href="#community">Comunidad</a>
           </div>
 
-          <div class="r99-stats" aria-label="Resumen visual">
+          <div class="r96-stats" aria-label="Resumen visual">
             <span>Juegos <strong>—</strong></span>
             <span>Reseñas <strong>—</strong></span>
           </div>
 
-          <button class="r99-theme-toggle" id="r99-theme-toggle" type="button" aria-label="Cambiar tema"></button>
+          <button class="r96-theme-toggle" id="r96-theme-toggle" type="button" aria-label="Cambiar tema"></button>
 
-          <button class="r99-account-visual" type="button" aria-disabled="true" title="Se habilitará en la etapa de autenticación">
-            <span class="r99-account-icon">R</span>
-            <span class="r99-account-copy">
+          <button class="r96-account-visual" type="button" aria-disabled="true" title="Se habilitará en la etapa de autenticación">
+            <span class="r96-account-icon">R</span>
+            <span class="r96-account-copy">
               <strong>Iniciar sesión</strong>
               <small>Próxima etapa</small>
             </span>
-            <span class="r99-account-caret">⌄</span>
+            <span class="r96-account-caret">⌄</span>
           </button>
         </div>
       </nav>
     </header>
 
     <main id="home">
-      <section class="r99-band r99-hero">
-        <div class="r99-orb r99-orb-cyan" aria-hidden="true"></div>
-        <div class="r99-orb r99-orb-violet" aria-hidden="true"></div>
+      <section class="r96-band r96-hero">
+        <div class="r96-orb r96-orb-cyan" aria-hidden="true"></div>
+        <div class="r96-orb r96-orb-violet" aria-hidden="true"></div>
 
-        <div class="r99-inner r99-hero-grid">
-          <div class="r99-hero-copy">
-            <p class="r99-eyebrow">Playable development builds</p>
-            <h1 class="r99-h1">Prueba juegos.<br>Impulsa ideas.<br>Construye mejor.</h1>
+        <div class="r96-inner r96-hero-grid">
+          <div class="r96-hero-copy">
+            <p class="r96-eyebrow">Playable development builds</p>
+            <h1 class="r96-h1">Prueba juegos.<br>Impulsa ideas.<br>Construye mejor.</h1>
           </div>
 
-          <div class="r99-hero-side">
-            <p class="r99-copy">
+          <div class="r96-hero-side">
+            <p class="r96-copy">
               R96 será un espacio para descubrir builds jugables, seguir proyectos en desarrollo
               y convertir cada prueba en información útil para sus creadores.
             </p>
-            <div class="r99-actions">
-              <a class="r99-primary" href="#games">Explorar juegos</a>
-              <button class="r99-secondary" type="button" aria-disabled="true">Iniciar sesión</button>
+            <div class="r96-actions">
+              <a class="r96-primary" href="#games">Explorar juegos</a>
+              <button class="r96-secondary" type="button" aria-disabled="true">Iniciar sesión</button>
             </div>
 
-            <div class="r99-visual-note" aria-label="Estado de la etapa">
-              <span class="r99-dot"></span>
+            <div class="r96-visual-note" aria-label="Estado de la etapa">
+              <span class="r96-dot"></span>
               <span>Etapa 1 · Interfaz visual aislada</span>
             </div>
           </div>
         </div>
       </section>
 
-      <section id="games" class="r99-band r99-games">
-        <div class="r99-inner r99-title-row">
+      <section id="games" class="r96-band r96-games">
+        <div class="r96-inner r96-title-row">
           <div>
-            <p class="r99-eyebrow">Playable betas</p>
-            <h2 class="r99-h2">Explorar juegos</h2>
+            <p class="r96-eyebrow">Playable betas</p>
+            <h2 class="r96-h2">Explorar juegos</h2>
           </div>
-          <p class="r99-copy">
+          <p class="r96-copy">
             El catálogo está representado con tarjetas visuales de muestra. Todavía no existe
             carga de datos, publicación ni sistema de juegos.
           </p>
         </div>
 
-        <div class="r99-inner">
-          <div class="r99-carousel" aria-label="Muestras de tarjetas de juego">
-            <article class="r99-card">
-              <div class="r99-thumb r99-thumb-one">
-                <span class="r99-thumb-code">01</span>
-                <span class="r99-thumb-label">Build preview</span>
+        <div class="r96-inner">
+          <div class="r96-carousel" aria-label="Muestras de tarjetas de juego">
+            <article class="r96-card">
+              <div class="r96-thumb r96-thumb-one">
+                <span class="r96-thumb-code">01</span>
+                <span class="r96-thumb-label">Build preview</span>
               </div>
-              <div class="r99-card-body">
-                <div><span class="r99-status">Concept</span></div>
-                <h3 class="r99-h3">Proyecto 01</h3>
-                <p class="r99-desc">Tarjeta visual preparada para portada, estado, descripción y metadatos.</p>
-                <div class="r99-meta"><span><strong>Género:</strong> Por definir</span></div>
-                <div class="r99-card-actions">
-                  <button class="r99-primary" type="button" aria-disabled="true">Ver juego</button>
+              <div class="r96-card-body">
+                <div><span class="r96-status">Concept</span></div>
+                <h3 class="r96-h3">Proyecto 01</h3>
+                <p class="r96-desc">Tarjeta visual preparada para portada, estado, descripción y metadatos.</p>
+                <div class="r96-meta"><span><strong>Género:</strong> Por definir</span></div>
+                <div class="r96-card-actions">
+                  <button class="r96-primary" type="button" aria-disabled="true">Ver juego</button>
                 </div>
               </div>
             </article>
 
-            <article class="r99-card">
-              <div class="r99-thumb r99-thumb-two">
-                <span class="r99-thumb-code">02</span>
-                <span class="r99-thumb-label">Prototype slot</span>
+            <article class="r96-card">
+              <div class="r96-thumb r96-thumb-two">
+                <span class="r96-thumb-code">02</span>
+                <span class="r96-thumb-label">Prototype slot</span>
               </div>
-              <div class="r99-card-body">
-                <div><span class="r99-status">Prototype</span></div>
-                <h3 class="r99-h3">Proyecto 02</h3>
-                <p class="r99-desc">La misma estructura admite futuras builds sin cambiar el sistema visual.</p>
-                <div class="r99-meta"><span><strong>Género:</strong> Por definir</span></div>
-                <div class="r99-card-actions">
-                  <button class="r99-primary" type="button" aria-disabled="true">Ver juego</button>
+              <div class="r96-card-body">
+                <div><span class="r96-status">Prototype</span></div>
+                <h3 class="r96-h3">Proyecto 02</h3>
+                <p class="r96-desc">La misma estructura admite futuras builds sin cambiar el sistema visual.</p>
+                <div class="r96-meta"><span><strong>Género:</strong> Por definir</span></div>
+                <div class="r96-card-actions">
+                  <button class="r96-primary" type="button" aria-disabled="true">Ver juego</button>
                 </div>
               </div>
             </article>
 
-            <article class="r99-card">
-              <div class="r99-thumb r99-thumb-three">
-                <span class="r99-thumb-code">03</span>
-                <span class="r99-thumb-label">Future release</span>
+            <article class="r96-card">
+              <div class="r96-thumb r96-thumb-three">
+                <span class="r96-thumb-code">03</span>
+                <span class="r96-thumb-label">Future release</span>
               </div>
-              <div class="r99-card-body">
-                <div><span class="r99-status">Planned</span></div>
-                <h3 class="r99-h3">Proyecto 03</h3>
-                <p class="r99-desc">La composición queda lista para integrar datos solo cuando esa etapa se abra.</p>
-                <div class="r99-meta"><span><strong>Género:</strong> Por definir</span></div>
-                <div class="r99-card-actions">
-                  <button class="r99-primary" type="button" aria-disabled="true">Ver juego</button>
+              <div class="r96-card-body">
+                <div><span class="r96-status">Planned</span></div>
+                <h3 class="r96-h3">Proyecto 03</h3>
+                <p class="r96-desc">La composición queda lista para integrar datos solo cuando esa etapa se abra.</p>
+                <div class="r96-meta"><span><strong>Género:</strong> Por definir</span></div>
+                <div class="r96-card-actions">
+                  <button class="r96-primary" type="button" aria-disabled="true">Ver juego</button>
                 </div>
               </div>
             </article>
@@ -152,77 +152,77 @@
         </div>
       </section>
 
-      <section id="reviews" class="r99-band r99-reviews">
-        <div class="r99-inner r99-title-row">
+      <section id="reviews" class="r96-band r96-reviews">
+        <div class="r96-inner r96-title-row">
           <div>
-            <p class="r99-eyebrow">Feedback loop</p>
-            <h2 class="r99-h2">Reseñas y comentarios</h2>
+            <p class="r96-eyebrow">Feedback loop</p>
+            <h2 class="r96-h2">Reseñas y comentarios</h2>
           </div>
-          <p class="r99-copy">
+          <p class="r96-copy">
             Esta sección conserva la arquitectura para feedback futuro, pero por ahora no lee,
             escribe ni envía ningún dato.
           </p>
         </div>
 
-        <div class="r99-inner r99-two">
-          <article class="r99-panel r99-panel-featured">
-            <div class="r99-panel-icon">★</div>
+        <div class="r96-inner r96-two">
+          <article class="r96-panel r96-panel-featured">
+            <div class="r96-panel-icon">★</div>
             <div>
-              <p class="r99-eyebrow">Community signal</p>
-              <h3 class="r99-h3">Reseñas recientes</h3>
-              <p class="r99-desc">Aquí aparecerán opiniones asociadas a versiones concretas cuando construyamos esa etapa.</p>
+              <p class="r96-eyebrow">Community signal</p>
+              <h3 class="r96-h3">Reseñas recientes</h3>
+              <p class="r96-desc">Aquí aparecerán opiniones asociadas a versiones concretas cuando construyamos esa etapa.</p>
             </div>
           </article>
 
-          <article class="r99-panel">
-            <div class="r99-panel-icon">↗</div>
+          <article class="r96-panel">
+            <div class="r96-panel-icon">↗</div>
             <div>
-              <p class="r99-eyebrow">Post-session</p>
-              <h3 class="r99-h3">Juega primero</h3>
-              <p class="r99-desc">La interfaz reserva un espacio claro para la evaluación posterior a una sesión jugada.</p>
+              <p class="r96-eyebrow">Post-session</p>
+              <h3 class="r96-h3">Juega primero</h3>
+              <p class="r96-desc">La interfaz reserva un espacio claro para la evaluación posterior a una sesión jugada.</p>
             </div>
           </article>
         </div>
       </section>
 
-      <section id="community" class="r99-band r99-community">
-        <div class="r99-inner r99-title-row">
+      <section id="community" class="r96-band r96-community">
+        <div class="r96-inner r96-title-row">
           <div>
-            <p class="r99-eyebrow">Community</p>
-            <h2 class="r99-h2">Comunidad</h2>
+            <p class="r96-eyebrow">Community</p>
+            <h2 class="r96-h2">Comunidad</h2>
           </div>
-          <p class="r99-copy">
+          <p class="r96-copy">
             La base visual contempla crecimiento futuro sin mezclarlo con autenticación,
             administración o publicación.
           </p>
         </div>
 
-        <div class="r99-inner r99-community-grid">
-          <article class="r99-panel">
-            <span class="r99-number">01</span>
-            <h3 class="r99-h3">Devlogs</h3>
-            <p class="r99-desc">Historial visual para versiones, avances y notas del proyecto.</p>
+        <div class="r96-inner r96-community-grid">
+          <article class="r96-panel">
+            <span class="r96-number">01</span>
+            <h3 class="r96-h3">Devlogs</h3>
+            <p class="r96-desc">Historial visual para versiones, avances y notas del proyecto.</p>
           </article>
-          <article class="r99-panel">
-            <span class="r99-number">02</span>
-            <h3 class="r99-h3">Feedback</h3>
-            <p class="r99-desc">Espacio futuro para comentarios ligados a builds específicas.</p>
+          <article class="r96-panel">
+            <span class="r96-number">02</span>
+            <h3 class="r96-h3">Feedback</h3>
+            <p class="r96-desc">Espacio futuro para comentarios ligados a builds específicas.</p>
           </article>
-          <article class="r99-panel">
-            <span class="r99-number">03</span>
-            <h3 class="r99-h3">Desarrolladores</h3>
-            <p class="r99-desc">Área reservada visualmente para herramientas que se construirán en etapas independientes.</p>
+          <article class="r96-panel">
+            <span class="r96-number">03</span>
+            <h3 class="r96-h3">Desarrolladores</h3>
+            <p class="r96-desc">Área reservada visualmente para herramientas que se construirán en etapas independientes.</p>
           </article>
         </div>
       </section>
 
-      <section class="r99-band r99-stage-lock">
-        <div class="r99-inner r99-stage-card">
+      <section class="r96-band r96-stage-lock">
+        <div class="r96-inner r96-stage-card">
           <div>
-            <p class="r99-eyebrow">Architecture lock</p>
-            <h2 class="r99-h2">Visual primero. Funciones después.</h2>
+            <p class="r96-eyebrow">Architecture lock</p>
+            <h2 class="r96-h2">Visual primero. Funciones después.</h2>
           </div>
-          <p class="r99-copy">
+          <p class="r96-copy">
             Esta versión no conoce usuarios, sesiones, roles, invitaciones, CMS ni APIs.
             Es una capa visual independiente que podremos congelar antes de construir autenticación.
           </p>
@@ -230,11 +230,11 @@
       </section>
     </main>
 
-    <footer class="r99-footer">
-      <div class="r99-inner r99-footer-inner">
-        <div class="r99-brand r99-footer-brand">
-          <span class="r99-mark">R96</span>
-          <span class="r99-name">R96 GAMES</span>
+    <footer class="r96-footer">
+      <div class="r96-inner r96-footer-inner">
+        <div class="r96-brand r96-footer-brand">
+          <span class="r96-mark">R96</span>
+          <span class="r96-name">R96 GAMES</span>
         </div>
         <p>Etapa 1 · Visual standalone · Sin autenticación ni backend</p>
       </div>
