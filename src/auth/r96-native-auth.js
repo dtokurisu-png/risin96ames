@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const RELEASE = "6.0.1";
+  const RELEASE = "6.0.2";
   const HOST_ORIGIN = "https://dtokurisu.wixstudio.com";
   const PUBLISHED_RISING =
     "https://dtokurisu.wixstudio.com/my-site-1/blank-9?nexoAuth=login";
@@ -82,7 +82,7 @@
     menu.setAttribute("role", "menu");
     menu.style.cssText =
       "position:absolute;right:0;top:calc(100% + 10px);min-width:210px;padding:8px;" +
-      "border:1px solid var(--r96-line);border-radius:16px;background:var(--r96-panel);" +
+      "border:1px solid var(--r96-line);border-radius:16px;background:var(--r96-bg-2);" +
       "box-shadow:0 18px 50px rgba(0,0,0,.28);z-index:500;";
 
     menu.innerHTML =
@@ -200,6 +200,12 @@
     }
 
     if (action === "logout") {
+      if (
+        typeof window.confirm === "function" &&
+        !window.confirm("¿Quieres cerrar sesión de Nexo Group?")
+      ) {
+        return;
+      }
       render("connecting");
       send("r96-account-action", "logout");
     }
