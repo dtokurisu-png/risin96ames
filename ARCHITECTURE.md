@@ -16,15 +16,15 @@ Canonical files:
 
 ## Stage 2 — Authentication
 
-**Status: REBUILDING — 2.2.1 / login trigger only.**
+**Status: REBUILDING — 2.2.2 / login trigger only.**
 
 The failed Headless OAuth implementation was completely removed before this rebuild.
 
 Current scope is intentionally minimal:
 
-- `src/auth/r96-login-trigger.js` only navigates the top-level browser to the R96 Wix page with `r96login=1`.
-- `src/pages/Risin96ames.br8x2.js` on Wix owns the actual member login using Wix native member APIs.
-- After the native login finishes or is cancelled, Wix returns to clean `/blank-9`.
+- `src/auth/r96-login-trigger.js` receives the real current Wix page URL from the host and adds only `r96login=1`.
+- `src/pages/Risin96ames.br8x2.js` owns the native Wix member login.
+- After login or cancel, Wix removes `r96login` from the current URL without navigating to a hardcoded page path.
 
 Not present in 2.2.0:
 - OAuthStrategy
