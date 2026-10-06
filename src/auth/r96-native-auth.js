@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const RELEASE = "6.0.2";
+  const RELEASE = "6.0.3";
   const HOST_ORIGIN = "https://dtokurisu.wixstudio.com";
   const PUBLISHED_RISING =
     "https://dtokurisu.wixstudio.com/my-site-1/blank-9?nexoAuth=login";
