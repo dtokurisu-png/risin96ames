@@ -15,6 +15,8 @@
     canInvite: false,
     isDeveloper: false
   };
+  let readyRetry = null;
+  let readyAttempts = 0;
 
   function post(type, payload = {}) {
     if (window.parent === window) return;
@@ -407,6 +409,8 @@
     if (!data || data.source !== SOURCE_HOST || data.protocol !== PROTOCOL) return;
 
     if (data.type === "status") {
+      clearInterval(readyRetry);
+      readyRetry = null;
       setAccess(data.data || {});
       return;
     }
@@ -458,7 +462,18 @@
     ensureStyles();
     window.addEventListener("message", receive);
     window.addEventListener("message", receiveAuth);
-    post("ready");
+
+    const announceReady = () => {
+      post("ready");
+      readyAttempts += 1;
+      if (readyAttempts >= 8) {
+        clearInterval(readyRetry);
+        readyRetry = null;
+      }
+    };
+
+    announceReady();
+    readyRetry = setInterval(announceReady, 1000);
   }
 
   if (document.readyState === "loading") {
