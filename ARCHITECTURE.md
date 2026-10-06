@@ -4,11 +4,11 @@
 
 R96 is developed as an independent product. It must not import, modify, call, or depend on Mi Espacio, Nexo Group runtime code, Numa, Nexo CMS collections, Nexo session helpers, or any legacy R96 implementation.
 
-## Stage 1 — Visual layer
+## Stage 1 — Visual
 
-**Status: LOCKED — release 1.0.0.**
+**Status: LOCKED — 1.0.0.**
 
-Canonical files:
+Canonical visual files:
 - `index.html`
 - `src/visual/r96-visual.css`
 - `src/visual/r96-visual.js`
@@ -16,33 +16,43 @@ Canonical files:
 
 ## Stage 2 — Authentication
 
-**Status: REBUILDING — 2.2.2 / login trigger only.**
+**Status: REBUILT FROM CLEAN BASELINE — 3.0.0 candidate.**
 
-The failed Headless OAuth implementation was completely removed before this rebuild.
+There is exactly one R96 auth frontend file:
 
-Current scope is intentionally minimal:
+- `src/auth/r96-native-auth.js`
 
-- `src/auth/r96-login-trigger.js` receives the real current Wix page URL from the host and adds only `r96login=1`.
-- `src/pages/Risin96ames.br8x2.js` owns the native Wix member login.
-- After login or cancel, Wix removes `r96login` from the current URL without navigating to a hardcoded page path.
+Its only responsibilities are:
+- request the current Wix member state;
+- request native Wix login;
+- render signed-out / signing-in / signed-in state in the existing visual account controls.
 
-Not present in 2.2.0:
-- OAuthStrategy
-- PKCE
-- Google SDK/API code
-- callback pages
-- local token storage
-- popup windows
-- iframe account-state bridge
-- role or developer logic
-- Nexo backend/session code
+There is no URL navigation in R96 authentication.
 
-Account state display is deliberately postponed until this login path is confirmed working.
+The Wix page adapter is:
+- `src/pages/Risin96ames.br8x2.js`
+
+Its only responsibilities are:
+- `currentMember.getMember()`;
+- `authentication.promptLogin()`;
+- send the normalized member state to the R96 HTML Component.
+
+Explicitly absent:
+- hardcoded Wix page paths;
+- `r96login`, `r96state`, `r96ab` query parameters;
+- OAuthStrategy / Headless OAuth;
+- PKCE;
+- callback pages;
+- custom Google code;
+- token storage;
+- backend auth/session helpers;
+- Nexo/Mi Espacio auth code;
+- developer authorization and invitations.
 
 ## Stage boundaries
 
 1. **Visual — LOCKED.**
-2. **Authentication — REBUILDING.**
+2. **Authentication — ACTIVE.**
 3. Authorization / roles.
 4. Developer invitations.
 5. Game project and build management.
