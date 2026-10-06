@@ -91,7 +91,7 @@ button[aria-disabled="true"]:active{transform:none!important}
   font-weight:400;
   font-style:normal;
   letter-spacing:.055em;
-  text-transform:uppercase;
+  text-transform:none;
 }
 .r96-name.r96-wordmark{
   font-size:1.34rem;
