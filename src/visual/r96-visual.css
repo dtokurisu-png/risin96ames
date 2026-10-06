@@ -78,12 +78,19 @@ button[aria-disabled="true"]:active{transform:none!important}
   display:grid;
   place-items:center;
   flex:0 0 42px;
+  padding:5px;
+  overflow:hidden;
   border-radius:13px;
   background:linear-gradient(135deg,var(--r96-accent),#d8fff9 48%,var(--r96-accent-2));
   color:#071017;
-  font-size:.77rem;
-  font-weight:1000;
   box-shadow:0 0 34px rgba(0,255,223,.16);
+}
+.r96-mark-svg{
+  display:block;
+  width:100%;
+  height:auto;
+  max-height:100%;
+  fill:currentColor;
 }
 .r96-name{white-space:nowrap;font-size:.93rem}
 .r96-wordmark{
@@ -278,6 +285,26 @@ button[aria-disabled="true"]:active{transform:none!important}
   letter-spacing:.16em;
   text-transform:uppercase;
 }
+.r96-yester-accent{
+  font-size:0;
+  letter-spacing:0;
+  text-transform:none;
+}
+.r96-accent-type-svg{
+  display:block;
+  width:auto;
+  max-width:100%;
+  height:.88rem;
+  overflow:visible;
+  fill:currentColor;
+}
+.r96-status .r96-accent-type-svg{
+  height:.72rem;
+}
+.r96-number .r96-accent-type-svg{
+  height:.92rem;
+}
+
 .r96-h1{
   max-width:860px;
   margin:0;
