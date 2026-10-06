@@ -15,6 +15,8 @@ const listeners = new Set();
 
 let popupWindow = null;
 let popupWatch = null;
+let activeOAuthData = null;
+let webMessageBound = false;
 
 let state = Object.freeze({
   status: "booting",
@@ -56,13 +58,19 @@ function loadOAuthData() {
 }
 
 function saveOAuthData(oauthData) {
-  localStorage.setItem(
-    R96_AUTH_CONFIG.oauthStorageKey,
-    JSON.stringify(oauthData)
-  );
+  activeOAuthData = oauthData;
+
+  try {
+    localStorage.setItem(
+      R96_AUTH_CONFIG.oauthStorageKey,
+      JSON.stringify(oauthData)
+    );
+  } catch (_) {}
 }
 
 export function clearAuthStorage() {
+  activeOAuthData = null;
+
   try {
     localStorage.removeItem(R96_AUTH_CONFIG.tokenStorageKey);
     localStorage.removeItem(R96_AUTH_CONFIG.oauthStorageKey);
@@ -174,6 +182,8 @@ async function emitSignedInMember() {
 }
 
 export async function bootstrapAuth() {
+  bindWebMessageHandler();
+
   emit({
     status: "booting",
     member: null,
@@ -210,11 +220,9 @@ function isEmbedded() {
 }
 
 function resolveReturnUrl() {
-  if (isEmbedded()) {
-    return R96_AUTH_CONFIG.wixPageUrl;
-  }
-
-  return R96_AUTH_CONFIG.appUrl;
+  return isEmbedded()
+    ? R96_AUTH_CONFIG.wixPageUrl
+    : R96_AUTH_CONFIG.appUrl;
 }
 
 function navigateTop(url) {
@@ -252,8 +260,37 @@ function startPopupWatch() {
   }, 500);
 }
 
-async function exchangeOAuthResult(payload) {
-  const storedOAuth = loadOAuthData();
+function normalizeWebMessage(data) {
+  if (!data || typeof data !== "object") {
+    return null;
+  }
+
+  if (
+    data.type === "authorization_response" &&
+    data.response &&
+    typeof data.response === "object"
+  ) {
+    return data.response;
+  }
+
+  if (data.response && typeof data.response === "object") {
+    if (data.response.code || data.response.error) {
+      return data.response;
+    }
+  }
+
+  if (data.code || data.error) {
+    return data;
+  }
+
+  return null;
+}
+
+async function exchangeOAuthResult(payload, oauthDataOverride = null) {
+  const storedOAuth =
+    oauthDataOverride ||
+    activeOAuthData ||
+    loadOAuthData();
 
   if (!storedOAuth) {
     throw new Error("R96_OAUTH_DATA_MISSING");
@@ -262,6 +299,7 @@ async function exchangeOAuthResult(payload) {
   if (payload?.error) {
     throw new Error(
       payload.errorDescription ||
+      payload.error_description ||
       payload.error ||
       "R96_OAUTH_PROVIDER_ERROR"
     );
@@ -284,32 +322,70 @@ async function exchangeOAuthResult(payload) {
   auth.setTokens(tokens);
   saveTokens(tokens);
 
+  activeOAuthData = null;
+
   try {
     localStorage.removeItem(R96_AUTH_CONFIG.oauthStorageKey);
     localStorage.removeItem(R96_AUTH_CONFIG.returnStorageKey);
   } catch (_) {}
 
   stopPopupWatch();
+
+  try {
+    if (popupWindow && !popupWindow.closed) {
+      popupWindow.close();
+    }
+  } catch (_) {}
+
   popupWindow = null;
 
   return emitSignedInMember();
 }
 
-export async function completePopupCallback(payload) {
+async function handleWebMessage(event) {
+  if (state.status !== "signingIn") return;
+
+  const payload = normalizeWebMessage(event.data);
+
+  if (!payload) return;
+
+  const oauthData = activeOAuthData || loadOAuthData();
+
+  if (!oauthData) return;
+
+  if (
+    payload.state &&
+    String(payload.state) !== String(oauthData.state)
+  ) {
+    return;
+  }
+
   try {
-    return await exchangeOAuthResult(payload);
+    await exchangeOAuthResult(payload, oauthData);
   } catch (error) {
+    console.error("[R96 auth] web_message exchange failed", error);
+
     emit({
       status: "error",
       member: null,
-      error: "No se pudo completar el inicio de sesión con Google."
+      error:
+        "No se pudo completar el inicio de sesión con Google (" +
+        String(error?.message || "R96_AUTH_EXCHANGE_FAILED") +
+        ")."
     });
-
-    throw error;
   }
 }
 
+function bindWebMessageHandler() {
+  if (webMessageBound) return;
+  webMessageBound = true;
+
+  window.addEventListener("message", handleWebMessage);
+}
+
 export async function signInWithGoogle() {
+  bindWebMessageHandler();
+
   emit({
     status: "signingIn",
     member: null,
@@ -347,15 +423,18 @@ export async function signInWithGoogle() {
     );
 
     saveOAuthData(oauthData);
-    localStorage.setItem(
-      R96_AUTH_CONFIG.returnStorageKey,
-      returnUrl
-    );
+
+    try {
+      localStorage.setItem(
+        R96_AUTH_CONFIG.returnStorageKey,
+        returnUrl
+      );
+    } catch (_) {}
 
     const { authUrl } = await auth.getAuthUrl(oauthData, {
       idp: "google",
       prompt: "login",
-      responseMode: "fragment"
+      responseMode: embedded ? "web_message" : "fragment"
     });
 
     if (embedded && authPopup && !authPopup.closed) {
@@ -424,7 +503,6 @@ export function exposeAuthInterface() {
     getState: getAuthState,
     subscribe: subscribeAuth,
     signIn: signInWithGoogle,
-    signOut,
-    completePopupCallback
+    signOut
   });
 }
