@@ -2,7 +2,6 @@
   "use strict";
 
   const PATH = "/my-site-1/blank-9";
-  const CENTRAL_PATH = "/my-site-1/";
 
   if (
     location.pathname.replace(/\/+$/, "") !== PATH ||
@@ -26,7 +25,7 @@
   const frame = document.createElement("iframe");
   frame.id = "nexo-rising-app";
   frame.title = "Rising Games · Nexo Group";
-  frame.src = ORIGIN + "/risin96ames/?v=5.0.0";
+  frame.src = ORIGIN + "/risin96ames/?v=6.0.0";
   frame.referrerPolicy = "no-referrer";
   frame.style.cssText =
     "position:fixed;inset:0;width:100%;height:100dvh;border:0;z-index:100;background:#070912";
@@ -70,10 +69,18 @@
     );
   }
 
-  function goCentralAccess() {
-    const url = new URL(CENTRAL_PATH, location.origin);
-    url.searchParams.set("nexoAuth", "login");
-    url.searchParams.set("nexoReturn", "rising");
+  function samePageAction(kind, value) {
+    const url = new URL(location.href);
+    ["nxb", "nxa", "nxav", "nexoAuth", "nexoAction", "nexoReturn"].forEach((key) =>
+      url.searchParams.delete(key)
+    );
+    url.searchParams.set(kind, value);
+    location.assign(url.href);
+  }
+
+  function openProfile() {
+    const url = new URL("/my-site-1/blank-8", location.origin);
+    url.searchParams.set("nxoProfile", "settings");
     location.assign(url.href);
   }
 
@@ -92,9 +99,23 @@
 
     requestId = data.requestId;
 
-    if (data.type === "r96-account-action" && data.action === "login") {
-      goCentralAccess();
-      return;
+    if (data.type === "r96-account-action") {
+      if (data.action === "login") {
+        samePageAction("nexoAuth", "login");
+        return;
+      }
+      if (data.action === "switch") {
+        samePageAction("nexoAction", "switch");
+        return;
+      }
+      if (data.action === "logout") {
+        samePageAction("nexoAction", "logout");
+        return;
+      }
+      if (data.action === "profile") {
+        openProfile();
+        return;
+      }
     }
 
     if (data.type === "r96-account-ready") send();
@@ -111,8 +132,14 @@
     const query = new URLSearchParams(location.search);
     const state = query.get("nxa");
 
-    if (state === "FAILED") {
+    if (state === "SIGNED_OUT") {
+      status = "signedOut";
+      member = null;
+    } else if (state === "FAILED") {
       status = "error";
+      member = null;
+    } else if (state === "LOGIN") {
+      status = "signingIn";
       member = null;
     } else if (
       state === "READY" &&
@@ -166,8 +193,10 @@
       state === "CREATING_SESSION"
     ) {
       status = "connecting";
+      member = null;
     } else if (status === "connecting" && Date.now() - started > 25000) {
       status = "error";
+      member = null;
     }
 
     send();
