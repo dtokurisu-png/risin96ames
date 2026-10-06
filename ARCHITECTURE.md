@@ -1,8 +1,8 @@
-# R99 architecture
+# R96 architecture
 
 ## Rule zero
 
-R99 is developed as an independent product. It must not import, modify, call, or depend on Mi Espacio, Nexo Group runtime code, Numa, Nexo CMS collections, Nexo session helpers, or any legacy R96 implementation.
+R96 is developed as an independent product. It must not import, modify, call, or depend on Mi Espacio, Nexo Group runtime code, Numa, Nexo CMS collections, Nexo session helpers, or any legacy R96 implementation.
 
 ## Stage 1 — Visual layer
 
