@@ -16,7 +16,7 @@ Canonical files:
 
 ## Stage 2 — Authentication
 
-**Status: REBUILDING — 2.2.0 / login trigger only.**
+**Status: REBUILDING — 2.2.1 / login trigger only.**
 
 The failed Headless OAuth implementation was completely removed before this rebuild.
 
