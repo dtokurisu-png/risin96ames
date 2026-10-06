@@ -2,6 +2,14 @@
   'use strict';
   const PATH = '/my-site-1/blank-9';
   if (location.pathname.replace(/\/+$/, '') !== PATH || window.__nexoRisingHost) return;
+  // Old Wix test-site links select different page code and cannot run this live bridge.
+  // Normalize only Rising, preserving the requested native login and product URL.
+  const entry = new URL(location.href);
+  if (entry.searchParams.get('rc') === 'test-site') {
+    ['rc', 'nxb', 'nxa', 'nxav'].forEach(key => entry.searchParams.delete(key));
+    location.replace(entry.href);
+    return;
+  }
   window.__nexoRisingHost = true;
   const ORIGIN = 'https://dtokurisu-png.github.io';
   const frame = document.createElement('iframe');
@@ -29,7 +37,7 @@
   }
   function goLogin() {
     const url = new URL(location.href);
-    ['nxb','nxa','nxav','nexoReturn'].forEach(k=>url.searchParams.delete(k));
+    ['rc','nxb','nxa','nxav','nexoReturn'].forEach(k=>url.searchParams.delete(k));
     url.searchParams.set('nexoAuth','login');
     location.assign(url.href);
   }
