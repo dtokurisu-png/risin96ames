@@ -87,22 +87,43 @@ button[aria-disabled="true"]:active{transform:none!important}
 }
 .r96-name{white-space:nowrap;font-size:.93rem}
 .r96-wordmark{
-  font-family:"YESTER","Arial Black","Trebuchet MS",sans-serif;
-  font-weight:400;
-  font-style:normal;
-  letter-spacing:.055em;
-  text-transform:none;
+  display:inline-flex;
+  align-items:center;
+  flex:0 0 auto;
+  color:var(--r96-text);
+  line-height:1;
+}
+.r96-wordmark-svg{
+  display:block;
+  width:100%;
+  height:auto;
+  max-height:100%;
+  fill:currentColor;
+  flex:0 0 auto;
 }
 .r96-name.r96-wordmark{
-  font-size:1.34rem;
-  line-height:1;
+  width:clamp(168px,16vw,244px);
+  height:44px;
 }
 .r96-wordmark-inline{
-  display:inline-block;
-  color:var(--r96-text);
-  font-size:1.08em;
-  line-height:1;
-  vertical-align:-.02em;
+  display:inline-flex;
+  width:144px;
+  height:1.25em;
+  vertical-align:-.25em;
+}
+.r96-footer-brand .r96-name.r96-wordmark{
+  width:205px;
+  height:36px;
+}
+@media(max-width:720px){
+  .r96-name.r96-wordmark{
+    width:clamp(112px,28vw,168px);
+    height:36px;
+  }
+  .r96-footer-brand .r96-name.r96-wordmark{
+    width:205px;
+    height:36px;
+  }
 }
 .r96-links{gap:24px;margin-left:12px}
 .r96-links a,.r96-menu-panel a{
