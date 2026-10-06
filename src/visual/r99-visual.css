@@ -37,12 +37,14 @@ button[aria-disabled="true"]:active{transform:none!important}
   --r99-bg:#f5fbff;
   --r99-bg-2:#ecf6ff;
   --r99-bg-3:#f8fbff;
-  --r99-panel:rgba(47,79,147,.075);
-  --r99-panel-strong:rgba(47,79,147,.13);
-  --r99-line:rgba(47,79,147,.16);
-  --r99-text:#11182a;
-  --r99-muted:#5e6981;
-  --r99-shadow:0 26px 70px rgba(47,79,147,.13);
+  --r99-panel:rgba(137,0,186,.065);
+  --r99-panel-strong:rgba(137,0,186,.11);
+  --r99-line:rgba(137,0,186,.16);
+  --r99-text:#171126;
+  --r99-muted:#6d5d78;
+  --r99-accent:#8900ba;
+  --r99-accent-2:#6f2ca3;
+  --r99-shadow:0 26px 70px rgba(137,0,186,.12);
 }
 
 .r99-inner{width:var(--r99-inner);margin-inline:auto}
