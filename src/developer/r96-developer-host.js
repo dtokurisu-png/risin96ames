@@ -152,4 +152,16 @@
   }
 
   window.addEventListener("message", receive);
+
+  let bootstrapAttempts = 0;
+  const bootstrapTimer = setInterval(() => {
+    bootstrapAttempts += 1;
+    if (frame()?.contentWindow) {
+      refreshStatus();
+      sendInviteIfPresent();
+      clearInterval(bootstrapTimer);
+      return;
+    }
+    if (bootstrapAttempts >= 20) clearInterval(bootstrapTimer);
+  }, 500);
 })();
