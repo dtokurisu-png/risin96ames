@@ -14,51 +14,28 @@ Canonical files:
 - `src/visual/r96-visual.js`
 - `src/visual/r96-yester-symbols.svg`
 
-Stage 1 remains locked.
+The account and login controls are visual placeholders while Stage 2 is reset.
 
 ## Stage 2 — Authentication
 
-**Status: ACTIVE — 2.1.1 candidate.**
+**Status: RESET / CLEAN BASELINE.**
 
-R96 authentication uses the Wix page as the identity host and the R96 iframe as a presentation client.
+All previous R96 authentication experiments have been removed:
+- Headless OAuth client integration
+- PKCE state
+- Google-specific OAuth code
+- callback/logout pages
+- token storage
+- popup/web_message flows
+- previous iframe auth bridge
 
-### R96 iframe module
-
-Files:
-- `src/auth/r96-auth-config.js`
-- `src/auth/r96-auth-core.js`
-- `src/auth/r96-auth-ui.js`
-- `src/auth/r96-auth-entry.js`
-- `src/auth/r96-auth.css`
-
-The iframe never owns Wix credentials or Wix member tokens. It only sends:
-- `ready`
-- `login`
-- `logout`
-
-and receives:
-- `signedOut`
-- `signingIn`
-- `signedIn + member`
-- `signingOut`
-- `error`
-
-### Wix host module
-
-The single R96 custom embed on the Wix page owns authentication. It uses Wix site-member APIs directly and is isolated from Mi Espacio/Nexo code.
-
-No Headless OAuth, PKCE, callback page, custom R96 token, Nexo session, or Nexo CMS is part of Stage 2.
+The next implementation must be built from this clean baseline and remain page-local to R96 on Wix.
 
 ## Stage boundaries
 
 1. **Visual — LOCKED.**
-2. **Authentication — ACTIVE.**
+2. **Authentication — RESET.**
 3. Authorization / roles.
 4. Developer invitations.
 5. Game project and build management.
 6. Reviews / sessions / community features.
-
-
-### Wix page adapter
-
-The Wix-side adapter is page-local to **Risin96ames** and contains only native member authentication plus the HTML Component message bridge. It does not import or modify Mi Espacio/Nexo modules.
