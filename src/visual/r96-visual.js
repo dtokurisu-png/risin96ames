@@ -67,7 +67,7 @@
 
   if (!document.querySelector('script[data-r96-developer-ui]')) {
     const developerScript = document.createElement("script");
-    developerScript.src = "./src/developer/r96-developer-ui.js?v=1.0.0";
+    developerScript.src = "./src/developer/r96-developer-ui.js?v=1.0.1";
     developerScript.defer = true;
     developerScript.dataset.r96DeveloperUi = "1";
     document.head.appendChild(developerScript);
