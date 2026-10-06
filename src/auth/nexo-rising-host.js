@@ -2,6 +2,12 @@
   "use strict";
 
   const PATH = "/my-site-1/blank-9";
+  const FRAME_ORIGIN = "https://dtokurisu-png.github.io";
+  const AUTH_ENDPOINT = "/my-site-1/_functions/nexoRisingUi";
+  const DEVELOPER_ENDPOINT = "/my-site-1/_functions/risingDeveloperAccess";
+  const AUTH_SOURCE = "r96-wix-auth";
+  const DEVELOPER_SOURCE = "r96-developer-host";
+  const PROTOCOL = 1;
 
   if (
     location.pathname.replace(/\/+$/, "") !== PATH ||
@@ -21,11 +27,10 @@
 
   window.__nexoRisingHost = true;
 
-  const ORIGIN = "https://dtokurisu-png.github.io";
   const frame = document.createElement("iframe");
   frame.id = "nexo-rising-app";
   frame.title = "Rising Games · Nexo Group";
-  frame.src = ORIGIN + "/risin96ames/?v=6.0.4";
+  frame.src = FRAME_ORIGIN + "/risin96ames/?v=6.1.0";
   frame.referrerPolicy = "no-referrer";
   frame.style.cssText =
     "position:fixed;inset:0;width:100%;height:100dvh;border:0;z-index:100;background:#070912";
@@ -37,6 +42,7 @@
   let status = "connecting";
   let consumed = "";
   let exchanging = false;
+  let risingSessionToken = "";
   const started = Date.now();
 
   function positionFrame() {
@@ -54,27 +60,46 @@
     }
   }
 
-  function send() {
-    if (!requestId) return;
+  function sendAuth() {
+    if (!requestId || !frame.contentWindow) return;
 
     frame.contentWindow.postMessage(
       {
-        source: "r96-wix-auth",
-        protocol: 1,
+        source: AUTH_SOURCE,
+        protocol: PROTOCOL,
         requestId,
         sequence: ++sequence,
         status,
         member
       },
-      ORIGIN
+      FRAME_ORIGIN
+    );
+  }
+
+  function sendDeveloper(type, payload = {}) {
+    if (!frame.contentWindow) return;
+    frame.contentWindow.postMessage(
+      {
+        source: DEVELOPER_SOURCE,
+        protocol: PROTOCOL,
+        type,
+        ...payload
+      },
+      FRAME_ORIGIN
     );
   }
 
   function samePageAction(kind, value) {
     const url = new URL(location.href);
-    ["nxb", "nxa", "nxav", "nexoAuth", "nexoAction", "nexoReturn", "nexoCommandId"].forEach((key) =>
-      url.searchParams.delete(key)
-    );
+    [
+      "nxb",
+      "nxa",
+      "nxav",
+      "nexoAuth",
+      "nexoAction",
+      "nexoReturn",
+      "nexoCommandId"
+    ].forEach((key) => url.searchParams.delete(key));
     url.searchParams.set(kind, value);
     url.searchParams.set(
       "nexoCommandId",
@@ -89,20 +114,165 @@
     history.replaceState(history.state, "", url.href);
   }
 
+  function inviteToken() {
+    return String(new URL(location.href).searchParams.get("r96Invite") || "").trim();
+  }
+
+  function cleanInviteUrl() {
+    const url = new URL(location.href);
+    if (!url.searchParams.has("r96Invite")) return;
+    url.searchParams.delete("r96Invite");
+    history.replaceState(history.state, "", url.href);
+  }
+
   function openProfile() {
     const url = new URL("/my-site-1/blank-8", location.origin);
     url.searchParams.set("nxoProfile", "settings");
     location.assign(url.href);
   }
 
-  function receive(event) {
-    if (event.source !== frame.contentWindow || event.origin !== ORIGIN) return;
+  async function postJson(endpoint, payload, signal) {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+      body: JSON.stringify(payload),
+      signal
+    });
+
+    let data = {};
+    try {
+      data = await response.json();
+    } catch (_) {}
+
+    if (!response.ok || data?.ok !== true) {
+      throw new Error(String(data?.error || "REQUEST_FAILED"));
+    }
+    return data;
+  }
+
+  async function revokeRisingSession() {
+    const token = risingSessionToken;
+    risingSessionToken = "";
+    if (!token) return;
+    try {
+      await postJson(AUTH_ENDPOINT, {
+        action: "session.revoke",
+        sessionToken: token
+      });
+    } catch (_) {}
+  }
+
+  async function developerCall(action, payload = {}) {
+    const body = {
+      action,
+      ...payload
+    };
+    if (action !== "invite.verify") {
+      body.sessionToken = risingSessionToken;
+    }
+    const response = await postJson(DEVELOPER_ENDPOINT, body);
+    return response.data;
+  }
+
+  async function refreshDeveloperStatus() {
+    if (!risingSessionToken) {
+      sendDeveloper("status", {
+        data: {
+          signedIn: false,
+          roleKey: "visitor",
+          canInvite: false,
+          isDeveloper: false
+        }
+      });
+      return;
+    }
+
+    try {
+      const data = await developerCall("status");
+      sendDeveloper("status", { data });
+    } catch (_) {
+      sendDeveloper("status", {
+        data: {
+          signedIn: false,
+          roleKey: "visitor",
+          canInvite: false,
+          isDeveloper: false
+        }
+      });
+    }
+  }
+
+  function sendInviteIfPresent() {
+    const token = inviteToken();
+    if (token) sendDeveloper("invite.token", { token });
+  }
+
+  async function handleDeveloperAction(data) {
+    const action = String(data.action || "");
+    try {
+      if (action === "invite.create") {
+        const result = await developerCall("invite.create");
+        sendDeveloper("invite.created", { data: result });
+        return;
+      }
+
+      if (action === "invite.verify") {
+        const result = await developerCall("invite.verify", {
+          token: data.token,
+          code: data.code
+        });
+        sendDeveloper("invite.verified", { data: result });
+        return;
+      }
+
+      if (action === "invite.redeem") {
+        const result = await developerCall("invite.redeem", {
+          token: data.token,
+          code: data.code
+        });
+        cleanInviteUrl();
+        sendDeveloper("invite.redeemed", { data: result });
+        await refreshDeveloperStatus();
+      }
+    } catch (error) {
+      const code = String(error?.message || "REQUEST_FAILED");
+      const messages = {
+        AUTH_REQUIRED: "Inicia sesión con tu cuenta Nexo Group para continuar.",
+        DEVELOPER_INVITE_FORBIDDEN: "Tu cuenta no tiene permiso para invitar desarrolladores.",
+        INVITE_INVALID_OR_EXPIRED: "La invitación no es válida, ya fue usada o expiró."
+      };
+      sendDeveloper("error", {
+        message: messages[code] || "No se pudo completar la operación."
+      });
+    }
+  }
+
+  async function receive(event) {
+    if (event.source !== frame.contentWindow || event.origin !== FRAME_ORIGIN) return;
 
     const data = event.data;
+    if (!data || data.protocol !== PROTOCOL) return;
+
+    if (data.source === "r96-developer-ui") {
+      if (data.type === "ready") {
+        await refreshDeveloperStatus();
+        sendInviteIfPresent();
+        return;
+      }
+      if (data.type === "refresh") {
+        await refreshDeveloperStatus();
+        return;
+      }
+      if (data.type === "action") {
+        await handleDeveloperAction(data);
+      }
+      return;
+    }
+
     if (
-      !data ||
       data.source !== "r96-auth" ||
-      data.protocol !== 1 ||
       !Number.isSafeInteger(data.requestId)
     ) {
       return;
@@ -116,10 +286,13 @@
         return;
       }
       if (data.action === "switch") {
+        await revokeRisingSession();
         samePageAction("nexoAction", "switch");
         return;
       }
       if (data.action === "logout") {
+        await revokeRisingSession();
+        await refreshDeveloperStatus();
         samePageAction("nexoAction", "logout");
         return;
       }
@@ -129,7 +302,7 @@
       }
     }
 
-    if (data.type === "r96-account-ready") send();
+    if (data.type === "r96-account-ready") sendAuth();
   }
 
   async function poll() {
@@ -146,10 +319,12 @@
     if (state === "SIGNED_OUT") {
       status = "signedOut";
       member = null;
+      risingSessionToken = "";
       clearResultState();
     } else if (state === "FAILED") {
       status = "error";
       member = null;
+      risingSessionToken = "";
       clearResultState();
     } else if (state === "LOGIN") {
       status = "signingIn";
@@ -171,33 +346,32 @@
       try {
         const controller = new AbortController();
         const deadline = setTimeout(() => controller.abort(), 15000);
-        let response;
 
         try {
-          response = await fetch("/my-site-1/_functions/nexoRisingUi", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            cache: "no-store",
-            body: JSON.stringify({
+          const data = await postJson(
+            AUTH_ENDPOINT,
+            {
               action: "exchange",
               bootToken: token
-            }),
-            signal: controller.signal
-          });
+            },
+            controller.signal
+          );
+
+          if (!data.member?.id || !data.sessionToken) {
+            throw new Error("AUTH_REQUIRED");
+          }
+
+          member = data.member;
+          risingSessionToken = data.sessionToken;
+          status = "signedIn";
+          await refreshDeveloperStatus();
         } finally {
           clearTimeout(deadline);
         }
-
-        const data = await response.json();
-        if (!response.ok || !data.ok || !data.member?.id) {
-          throw new Error("AUTH_REQUIRED");
-        }
-
-        member = data.member;
-        status = "signedIn";
       } catch (_) {
         status = "error";
         member = null;
+        risingSessionToken = "";
       } finally {
         clearResultState();
         exchanging = false;
@@ -213,7 +387,7 @@
       member = null;
     }
 
-    send();
+    sendAuth();
   }
 
   function cleanup() {
