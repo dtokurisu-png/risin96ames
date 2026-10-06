@@ -8,7 +8,7 @@
   <title>R96 · Plataforma de juegos</title>
   <meta name="description" content="Interfaz visual de R96. Etapa 1: presentación sin autenticación ni backend.">
   <link rel="stylesheet" href="./src/visual/r96-visual.css?v=1.0.0">  <script src="./src/visual/r96-visual.js?v=1.0.0" defer></script>
-  <script src="./src/auth/r96-native-auth.js?v=3.0.0" defer></script></head>
+  <script src="./src/auth/r96-native-auth.js?v=3.1.0" defer></script></head>
 <body>
 
 <div class="r96-app" data-theme="dark">
@@ -50,7 +50,7 @@
             <span class="r96-account-icon">R</span>
             <span class="r96-account-copy">
               <strong>Iniciar sesión</strong>
-              <small>Continuar con Google</small>
+              <small>Tu cuenta de Rising</small>
             </span>
             <span class="r96-account-caret">⌄</span>
           </button>
@@ -76,9 +76,10 @@
             </p>
             <div class="r96-actions">
               <a class="r96-primary" href="#games">Explorar juegos</a>
-              <button class="r96-secondary" type="button">Iniciar sesión</button>
+              <button class="r96-secondary" id="r96-login" type="button">Iniciar sesión</button>
             </div>
 
+            <p id="r96-auth-status" class="r96-copy" role="status" aria-live="polite" hidden></p>
             <div class="r96-visual-note" aria-label="Estado de la etapa">
               <span class="r96-dot"></span>
               <span>Etapa 1 · Interfaz visual aislada</span>
@@ -242,3 +243,4 @@
   </div>
 </body>
 </html>
+
