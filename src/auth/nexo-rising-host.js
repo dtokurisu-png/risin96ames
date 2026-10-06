@@ -25,7 +25,7 @@
   const frame = document.createElement("iframe");
   frame.id = "nexo-rising-app";
   frame.title = "Rising Games · Nexo Group";
-  frame.src = ORIGIN + "/risin96ames/?v=6.0.0";
+  frame.src = ORIGIN + "/risin96ames/?v=6.0.1";
   frame.referrerPolicy = "no-referrer";
   frame.style.cssText =
     "position:fixed;inset:0;width:100%;height:100dvh;border:0;z-index:100;background:#070912";
