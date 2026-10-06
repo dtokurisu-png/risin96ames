@@ -5,8 +5,10 @@ Clean rebuild of the game-development platform.
 ## Current state
 
 - **Stage 1 — Visual: LOCKED (1.0.0).**
-- **Stage 2 — Authentication: RESET / CLEAN BASELINE.**
+- **Stage 2 — Authentication: REBUILDING (2.2.0).**
 
-All failed authentication experiments have been removed. The current frontend is visual-only again while Stage 2 is rebuilt cleanly.
+Authentication was reset completely. Version 2.2.0 contains only the first clean native-login path:
 
-See `ARCHITECTURE.md`.
+R96 login button → Wix Risin96ames page → native Wix member login → clean return to R96.
+
+No Headless OAuth, callback, PKCE, Google SDK, custom token storage, roles, or account synchronization is included yet.

@@ -14,27 +14,35 @@ Canonical files:
 - `src/visual/r96-visual.js`
 - `src/visual/r96-yester-symbols.svg`
 
-The account and login controls are visual placeholders while Stage 2 is reset.
-
 ## Stage 2 — Authentication
 
-**Status: RESET / CLEAN BASELINE.**
+**Status: REBUILDING — 2.2.0 / login trigger only.**
 
-All previous R96 authentication experiments have been removed:
-- Headless OAuth client integration
-- PKCE state
-- Google-specific OAuth code
-- callback/logout pages
-- token storage
-- popup/web_message flows
-- previous iframe auth bridge
+The failed Headless OAuth implementation was completely removed before this rebuild.
 
-The next implementation must be built from this clean baseline and remain page-local to R96 on Wix.
+Current scope is intentionally minimal:
+
+- `src/auth/r96-login-trigger.js` only navigates the top-level browser to the R96 Wix page with `r96login=1`.
+- `src/pages/Risin96ames.br8x2.js` on Wix owns the actual member login using Wix native member APIs.
+- After the native login finishes or is cancelled, Wix returns to clean `/blank-9`.
+
+Not present in 2.2.0:
+- OAuthStrategy
+- PKCE
+- Google SDK/API code
+- callback pages
+- local token storage
+- popup windows
+- iframe account-state bridge
+- role or developer logic
+- Nexo backend/session code
+
+Account state display is deliberately postponed until this login path is confirmed working.
 
 ## Stage boundaries
 
 1. **Visual — LOCKED.**
-2. **Authentication — RESET.**
+2. **Authentication — REBUILDING.**
 3. Authorization / roles.
 4. Developer invitations.
 5. Game project and build management.
