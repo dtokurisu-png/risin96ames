@@ -1,0 +1,48 @@
+name: Authentication Lock
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  guard-authentication:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Reject protected auth changes without owner unlock
+        shell: bash
+        run: |
+          set -euo pipefail
+          OVERRIDE='[AUTH-UNLOCK-BY-OWNER]'
+          MESSAGE="$(git log -1 --pretty=%B)"
+          if printf '%s' "$MESSAGE" | grep -Fq "$OVERRIDE"; then
+            echo "Authentication unlock marker present."
+            exit 0
+          fi
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch origin "${{ github.base_ref }}" --depth=1
+            BASE="$(git merge-base "origin/${{ github.base_ref }}" HEAD)"
+          else
+            BASE="${{ github.event.before }}"
+            if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
+              BASE="$(git rev-parse HEAD^)"
+            fi
+          fi
+
+          CHANGED="$(git diff --name-only "$BASE" HEAD)"
+          BLOCKED=0
+          for path in             "src/auth/nexo-rising-host.js"             "src/auth/r96-native-auth.js"             "index.html"             ".github/workflows/auth-lock.yml"             "AUTH_LOCK.md"
+          do
+            if printf '%s\n' "$CHANGED" | grep -Fxq "$path"; then
+              echo "::error file=$path::Authentication is locked. Owner authorization is required."
+              BLOCKED=1
+            fi
+          done
+          if [ "$BLOCKED" -ne 0 ]; then
+            echo "Protected Rising authentication files changed without owner unlock."
+            exit 1
+          fi
