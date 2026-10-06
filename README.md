@@ -2,8 +2,12 @@
 
 Clean rebuild of the game-development platform.
 
-The repository currently contains **Stage 1 only: the visual layer**. There is no authentication, backend, CMS, invitation system, game-loading system, or Wix/Nexo dependency.
+## Current state
 
-Open `index.html` through GitHub Pages or any static web server.
+**Stage 1 — Visual: LOCKED (1.0.0).**
 
-See `ARCHITECTURE.md` for the isolation rules used for each development stage.
+The current repository is a standalone visual frontend. It contains no authentication, backend, CMS, invitation system, game-loading system, or Nexo runtime dependency.
+
+Visual brand lettering is stored as vector outlines in `src/visual/r96-yester-symbols.svg`; the browser does not substitute another font for those brand/accent elements.
+
+See `ARCHITECTURE.md` for the isolation rules and stage boundaries.

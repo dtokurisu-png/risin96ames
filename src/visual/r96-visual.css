@@ -122,16 +122,6 @@ button[aria-disabled="true"]:active{transform:none!important}
   width:205px;
   height:36px;
 }
-@media(max-width:720px){
-  .r96-name.r96-wordmark{
-    width:clamp(112px,28vw,168px);
-    height:36px;
-  }
-  .r96-footer-brand .r96-name.r96-wordmark{
-    width:205px;
-    height:36px;
-  }
-}
 .r96-links{gap:24px;margin-left:12px}
 .r96-links a,.r96-menu-panel a{
   color:var(--r96-muted);
@@ -280,15 +270,10 @@ button[aria-disabled="true"]:active{transform:none!important}
 .r96-eyebrow{
   margin:0 0 14px;
   color:var(--r96-accent);
-  font-size:.73rem;
-  font-weight:950;
-  letter-spacing:.16em;
-  text-transform:uppercase;
 }
 .r96-yester-accent{
   font-size:0;
-  letter-spacing:0;
-  text-transform:none;
+  line-height:0;
 }
 .r96-accent-type-svg{
   display:block;
@@ -471,10 +456,6 @@ button[aria-disabled="true"]:active{transform:none!important}
   border-radius:999px;
   background:color-mix(in srgb,var(--r96-accent) 8%,var(--r96-panel));
   color:var(--r96-accent);
-  font-size:.66rem;
-  font-weight:950;
-  text-transform:uppercase;
-  letter-spacing:.08em;
 }
 .r96-meta{
   padding-top:13px;
@@ -524,9 +505,6 @@ button[aria-disabled="true"]:active{transform:none!important}
 }
 .r96-number{
   color:var(--r96-accent);
-  font-size:.7rem;
-  font-weight:950;
-  letter-spacing:.16em;
 }
 .r96-stage-lock{
   background:
@@ -555,7 +533,7 @@ button[aria-disabled="true"]:active{transform:none!important}
   justify-content:space-between;
   gap:24px;
 }
-.r96-footer-brand .r96-mark{width:36px;height:36px;flex-basis:36px;font-size:.68rem}
+.r96-footer-brand .r96-mark{width:36px;height:36px;flex-basis:36px}
 .r96-footer p{margin:0;color:var(--r96-muted);font-size:.76rem}
 
 @media(max-width:1180px){
@@ -580,6 +558,14 @@ button[aria-disabled="true"]:active{transform:none!important}
 }
 @media(max-width:720px){
   :root{--r96-inner:calc(100vw - 28px)}
+  .r96-name.r96-wordmark{
+    width:clamp(112px,28vw,168px);
+    height:36px;
+  }
+  .r96-footer-brand .r96-name.r96-wordmark{
+    width:205px;
+    height:36px;
+  }
   .r96-nav{width:calc(100vw - 22px);min-height:64px;gap:8px}
   .r96-nav-left{gap:8px}
   .r96-name{font-size:1.02rem}
