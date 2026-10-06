@@ -44,7 +44,7 @@
 
       if (icon) icon.textContent = "R";
       if (strong) strong.textContent = "Iniciar sesión";
-      if (small) small.textContent = "Acceso con Wix";
+      if (small) small.textContent = "Continuar con Google";
     }
 
     const hero = heroButton();
