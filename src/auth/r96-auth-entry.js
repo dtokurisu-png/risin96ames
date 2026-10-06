@@ -1,11 +1,11 @@
 import {
   bootstrapAuth,
   exposeAuthInterface
-} from "./r96-auth-core.js";
+} from "./r96-auth-core.js?v=2.0.3";
 
 import {
   mountAuthUi
-} from "./r96-auth-ui.js";
+} from "./r96-auth-ui.js?v=2.0.3";
 
 async function start() {
   exposeAuthInterface();

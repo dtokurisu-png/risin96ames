@@ -9,7 +9,7 @@ import {
 
 import {
   R96_AUTH_CONFIG
-} from "./r96-auth-config.js";
+} from "./r96-auth-config.js?v=2.0.3";
 
 const listeners = new Set();
 

@@ -5,7 +5,7 @@ Clean rebuild of the game-development platform.
 ## Current state
 
 - **Stage 1 — Visual: LOCKED (1.0.0).**
-- **Stage 2 — Authentication: ACTIVE (2.0.0 candidate).**
+- **Stage 2 — Authentication: ACTIVE (2.0.3 candidate).**
 
 Authentication is implemented as a separate Headless OAuth module under `src/auth/`. It uses a dedicated R96 OAuth client and does not reuse Mi Espacio/Nexo session code.
 

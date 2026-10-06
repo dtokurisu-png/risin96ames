@@ -18,7 +18,7 @@ Stage 1 internals remain locked. Stage 2 may only attach behavior to the existin
 
 ## Stage 2 — Authentication
 
-**Status: ACTIVE — 2.0.2 candidate.**
+**Status: ACTIVE — 2.0.3 candidate.**
 
 Authentication is isolated under `src/auth/` and uses a dedicated Wix Headless OAuth client named **R96 Headless Auth**.
 
@@ -60,3 +60,8 @@ Planned sequence:
 ## Wix boundary
 
 R96 uses its own Wix Headless OAuth client. This creates an R96-specific session flow even though the identity is a Wix site member. No Mi Espacio/Nexo runtime authentication code is reused.
+
+
+### Cache integrity
+
+Every import inside the auth module is version-pinned to the same Stage 2 release. This prevents browsers or CDN caches from mixing a new entrypoint with an older core/config implementation during OAuth.
