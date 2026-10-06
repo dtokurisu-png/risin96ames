@@ -10,8 +10,8 @@ Current state: active.
 
 Files:
 - `index.html`: semantic page composition only.
-- `src/visual/r99-visual.css`: visual tokens, layout, responsive rules, light/dark appearance.
-- `src/visual/r99-visual.js`: visual-only interactions: theme toggle and navigation menu.
+- `src/visual/r96-visual.css`: visual tokens, layout, responsive rules, light/dark appearance.
+- `src/visual/r96-visual.js`: visual-only interactions: theme toggle and navigation menu.
 
 Forbidden in Stage 1:
 - authentication;
