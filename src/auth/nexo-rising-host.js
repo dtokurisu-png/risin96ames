@@ -21,11 +21,49 @@
 
   window.__nexoRisingHost = true;
 
+  const TRANSITION_KEY = "r96-nexo-auth-transition";
+
+  function readTransition() {
+    try {
+      return sessionStorage.getItem(TRANSITION_KEY) === "1";
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function writeTransition(active) {
+    try {
+      if (active) sessionStorage.setItem(TRANSITION_KEY, "1");
+      else sessionStorage.removeItem(TRANSITION_KEY);
+    } catch (_) {}
+  }
+
+  function installTransitionCover() {
+    if (!readTransition() || document.getElementById("r96-auth-transition-cover")) return;
+    const cover = document.createElement("div");
+    cover.id = "r96-auth-transition-cover";
+    cover.setAttribute("aria-hidden", "true");
+    cover.style.cssText =
+      "position:fixed;inset:0;z-index:99;background:#070912;pointer-events:none;";
+    document.documentElement.style.background = "#070912";
+    if (document.body) {
+      document.body.style.background = "#070912";
+      document.body.appendChild(cover);
+    }
+  }
+
+  function clearTransition() {
+    writeTransition(false);
+    document.getElementById("r96-auth-transition-cover")?.remove();
+  }
+
+  installTransitionCover();
+
   const ORIGIN = "https://dtokurisu-png.github.io";
   const frame = document.createElement("iframe");
   frame.id = "nexo-rising-app";
   frame.title = "Rising Games · Nexo Group";
-  frame.src = ORIGIN + "/risin96ames/?v=6.0.1";
+  frame.src = ORIGIN + "/risin96ames/?v=6.0.2";
   frame.referrerPolicy = "no-referrer";
   frame.style.cssText =
     "position:fixed;inset:0;width:100%;height:100dvh;border:0;z-index:100;background:#070912";
@@ -75,6 +113,7 @@
       url.searchParams.delete(key)
     );
     url.searchParams.set(kind, value);
+    writeTransition(true);
     location.assign(url.href);
   }
 
@@ -135,9 +174,11 @@
     if (state === "SIGNED_OUT") {
       status = "signedOut";
       member = null;
+      clearTransition();
     } else if (state === "FAILED") {
       status = "error";
       member = null;
+      clearTransition();
     } else if (state === "LOGIN") {
       status = "signingIn";
       member = null;
@@ -182,6 +223,7 @@
 
         member = data.member;
         status = "signedIn";
+        clearTransition();
       } catch (_) {
         status = "error";
         member = null;
@@ -197,6 +239,7 @@
     } else if (status === "connecting" && Date.now() - started > 25000) {
       status = "error";
       member = null;
+      clearTransition();
     }
 
     send();
