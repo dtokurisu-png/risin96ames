@@ -13,6 +13,9 @@ import {
 
 const listeners = new Set();
 
+let popupWindow = null;
+let popupWatch = null;
+
 let state = Object.freeze({
   status: "booting",
   member: null,
@@ -42,6 +45,21 @@ function saveTokens(tokens) {
       JSON.stringify(tokens)
     );
   } catch (_) {}
+}
+
+function loadOAuthData() {
+  try {
+    return safeParse(localStorage.getItem(R96_AUTH_CONFIG.oauthStorageKey));
+  } catch (_) {
+    return null;
+  }
+}
+
+function saveOAuthData(oauthData) {
+  localStorage.setItem(
+    R96_AUTH_CONFIG.oauthStorageKey,
+    JSON.stringify(oauthData)
+  );
 }
 
 export function clearAuthStorage() {
@@ -131,6 +149,30 @@ function normalizeMember(member) {
   };
 }
 
+async function loadCurrentMember() {
+  const response = await wixClient.members.getCurrentMember({
+    fieldsets: ["FULL"]
+  });
+
+  const member = response?.member || response;
+
+  if (!member) {
+    throw new Error("R96_MEMBER_NOT_FOUND");
+  }
+
+  return normalizeMember(member);
+}
+
+async function emitSignedInMember() {
+  const member = await loadCurrentMember();
+
+  return emit({
+    status: "signedIn",
+    member,
+    error: null
+  });
+}
+
 export async function bootstrapAuth() {
   emit({
     status: "booting",
@@ -147,16 +189,8 @@ export async function bootstrapAuth() {
   }
 
   try {
-    const member = await wixClient.members.getCurrentMember({
-      fieldsets: ["FULL"]
-    });
-
-    return emit({
-      status: "signedIn",
-      member: normalizeMember(member),
-      error: null
-    });
-  } catch (error) {
+    return await emitSignedInMember();
+  } catch (_) {
     clearAuthStorage();
 
     return emit({
@@ -167,37 +201,112 @@ export async function bootstrapAuth() {
   }
 }
 
-function resolveReturnUrl() {
+function isEmbedded() {
   try {
-    const referrer = String(document.referrer || "");
+    return window.self !== window.top;
+  } catch (_) {
+    return true;
+  }
+}
 
-    if (
-      referrer.startsWith("https://dtokurisu.wixstudio.com/") &&
-      referrer.includes("/blank-9")
-    ) {
-      return R96_AUTH_CONFIG.wixPageUrl;
-    }
+function resolveReturnUrl() {
+  if (isEmbedded()) {
+    return R96_AUTH_CONFIG.wixPageUrl;
+  }
 
-    if (window.top === window && location.pathname.includes("/risin96ames")) {
-      return R96_AUTH_CONFIG.appUrl;
-    }
-  } catch (_) {}
-
-  return R96_AUTH_CONFIG.wixPageUrl;
+  return R96_AUTH_CONFIG.appUrl;
 }
 
 function navigateTop(url) {
-  try {
-    const opened = window.open(url, "_top");
-    if (opened !== null) return;
-  } catch (_) {}
-
   try {
     window.top.location.href = url;
     return;
   } catch (_) {}
 
   window.location.href = url;
+}
+
+function stopPopupWatch() {
+  if (popupWatch) {
+    clearInterval(popupWatch);
+    popupWatch = null;
+  }
+}
+
+function startPopupWatch() {
+  stopPopupWatch();
+
+  popupWatch = setInterval(() => {
+    if (!popupWindow || !popupWindow.closed) return;
+
+    stopPopupWatch();
+    popupWindow = null;
+
+    if (state.status === "signingIn") {
+      emit({
+        status: "signedOut",
+        member: null,
+        error: null
+      });
+    }
+  }, 500);
+}
+
+async function exchangeOAuthResult(payload) {
+  const storedOAuth = loadOAuthData();
+
+  if (!storedOAuth) {
+    throw new Error("R96_OAUTH_DATA_MISSING");
+  }
+
+  if (payload?.error) {
+    throw new Error(
+      payload.errorDescription ||
+      payload.error ||
+      "R96_OAUTH_PROVIDER_ERROR"
+    );
+  }
+
+  if (!payload?.code || !payload?.state) {
+    throw new Error("R96_OAUTH_CALLBACK_INVALID");
+  }
+
+  if (String(payload.state) !== String(storedOAuth.state)) {
+    throw new Error("R96_OAUTH_STATE_MISMATCH");
+  }
+
+  const tokens = await auth.getMemberTokens(
+    payload.code,
+    payload.state,
+    storedOAuth
+  );
+
+  auth.setTokens(tokens);
+  saveTokens(tokens);
+
+  try {
+    localStorage.removeItem(R96_AUTH_CONFIG.oauthStorageKey);
+    localStorage.removeItem(R96_AUTH_CONFIG.returnStorageKey);
+  } catch (_) {}
+
+  stopPopupWatch();
+  popupWindow = null;
+
+  return emitSignedInMember();
+}
+
+export async function completePopupCallback(payload) {
+  try {
+    return await exchangeOAuthResult(payload);
+  } catch (error) {
+    emit({
+      status: "error",
+      member: null,
+      error: "No se pudo completar el inicio de sesión con Google."
+    });
+
+    throw error;
+  }
 }
 
 export async function signInWithGoogle() {
@@ -207,18 +316,37 @@ export async function signInWithGoogle() {
     error: null
   });
 
+  let authPopup = null;
+
   try {
+    const embedded = isEmbedded();
     const returnUrl = resolveReturnUrl();
+
+    if (embedded) {
+      authPopup = window.open(
+        "about:blank",
+        "r96-google-auth",
+        "popup=yes,width=520,height=720,resizable=yes,scrollbars=yes"
+      );
+
+      if (!authPopup) {
+        throw new Error("R96_AUTH_POPUP_BLOCKED");
+      }
+
+      authPopup.document.title = "R96 · Iniciar sesión";
+      authPopup.document.body.innerHTML =
+        '<p style="font-family:system-ui;padding:24px">Abriendo Google…</p>';
+
+      popupWindow = authPopup;
+      startPopupWatch();
+    }
 
     const oauthData = auth.generateOAuthData(
       R96_AUTH_CONFIG.callbackUrl,
       returnUrl
     );
 
-    localStorage.setItem(
-      R96_AUTH_CONFIG.oauthStorageKey,
-      JSON.stringify(oauthData)
-    );
+    saveOAuthData(oauthData);
     localStorage.setItem(
       R96_AUTH_CONFIG.returnStorageKey,
       returnUrl
@@ -230,12 +358,28 @@ export async function signInWithGoogle() {
       responseMode: "fragment"
     });
 
-    navigateTop(authUrl);
+    if (embedded && authPopup && !authPopup.closed) {
+      authPopup.location.replace(authUrl);
+      return;
+    }
+
+    window.location.href = authUrl;
   } catch (error) {
+    stopPopupWatch();
+
+    try {
+      authPopup?.close();
+    } catch (_) {}
+
+    popupWindow = null;
+
     emit({
       status: "error",
       member: null,
-      error: "No se pudo iniciar el acceso con Google."
+      error:
+        error?.message === "R96_AUTH_POPUP_BLOCKED"
+          ? "El navegador bloqueó la ventana de Google. Permite ventanas emergentes para R96 e inténtalo de nuevo."
+          : "No se pudo iniciar el acceso con Google."
     });
 
     throw error;
@@ -243,46 +387,14 @@ export async function signInWithGoogle() {
 }
 
 export async function completeOAuthCallback() {
-  const storedOAuth = safeParse(
-    localStorage.getItem(R96_AUTH_CONFIG.oauthStorageKey)
-  );
-
-  if (!storedOAuth) {
-    throw new Error("R96_OAUTH_DATA_MISSING");
-  }
-
   const parsed = auth.parseFromUrl();
-
-  if (parsed.error) {
-    throw new Error(parsed.errorDescription || parsed.error);
-  }
-
-  if (!parsed.code || !parsed.state) {
-    throw new Error("R96_OAUTH_CALLBACK_INVALID");
-  }
-
-  if (String(parsed.state) !== String(storedOAuth.state)) {
-    throw new Error("R96_OAUTH_STATE_MISMATCH");
-  }
-
-  const tokens = await auth.getMemberTokens(
-    parsed.code,
-    parsed.state,
-    storedOAuth
-  );
-
-  auth.setTokens(tokens);
-  saveTokens(tokens);
-
-  try {
-    localStorage.removeItem(R96_AUTH_CONFIG.oauthStorageKey);
-  } catch (_) {}
-
-  return (
+  const returnUrl =
     localStorage.getItem(R96_AUTH_CONFIG.returnStorageKey) ||
-    storedOAuth.originalUrl ||
-    R96_AUTH_CONFIG.wixPageUrl
-  );
+    R96_AUTH_CONFIG.appUrl;
+
+  await exchangeOAuthResult(parsed);
+
+  return returnUrl;
 }
 
 export async function signOut() {
@@ -312,6 +424,7 @@ export function exposeAuthInterface() {
     getState: getAuthState,
     subscribe: subscribeAuth,
     signIn: signInWithGoogle,
-    signOut
+    signOut,
+    completePopupCallback
   });
 }

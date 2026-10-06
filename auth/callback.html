@@ -47,22 +47,81 @@
     <h1>Completando inicio de sesión</h1>
     <p id="status">Validando tu cuenta con Wix…</p>
   </main>
-  <script type="module">
-    import {
-      completeOAuthCallback
-    } from "../src/auth/r96-auth-core.js?v=2.0.0";
 
+  <script type="module">
     const status = document.querySelector("#status");
 
+    function parseCallback() {
+      const params = new URLSearchParams(
+        location.hash.startsWith("#")
+          ? location.hash.slice(1)
+          : location.search.slice(1)
+      );
+
+      return {
+        code: params.get("code") || "",
+        state: params.get("state") || "",
+        error: params.get("error") || "",
+        errorDescription:
+          params.get("error_description") ||
+          params.get("errorDescription") ||
+          ""
+      };
+    }
+
+    async function finishPopupFlow(payload) {
+      if (!window.opener || window.opener.closed) {
+        return false;
+      }
+
+      try {
+        if (window.opener.location.origin !== location.origin) {
+          return false;
+        }
+
+        const receiver = window.opener.R96Auth?.completePopupCallback;
+
+        if (typeof receiver !== "function") {
+          return false;
+        }
+
+        await receiver(payload);
+
+        status.textContent =
+          "Acceso confirmado. Regresando a R96…";
+
+        setTimeout(() => window.close(), 180);
+        return true;
+      } catch (error) {
+        console.error("[R96 auth] popup handoff failed", error);
+        throw error;
+      }
+    }
+
     try {
-      const returnUrl = await completeOAuthCallback();
-      status.textContent = "Acceso confirmado. Regresando a R96…";
-      location.replace(returnUrl);
+      const payload = parseCallback();
+
+      if (await finishPopupFlow(payload)) {
+        // The opener owns the session and UI state.
+      } else {
+        const { completeOAuthCallback } = await import(
+          "../src/auth/r96-auth-core.js?v=2.0.1"
+        );
+
+        const returnUrl = await completeOAuthCallback();
+        status.textContent =
+          "Acceso confirmado. Regresando a R96…";
+        location.replace(returnUrl);
+      }
     } catch (error) {
       console.error("[R96 auth] callback failed", error);
       status.className = "error";
+
+      const code = String(error?.message || "R96_AUTH_CALLBACK_FAILED");
       status.textContent =
-        "No se pudo completar el inicio de sesión. Regresa a R96 e inténtalo nuevamente.";
+        "No se pudo completar el inicio de sesión (" +
+        code +
+        "). Regresa a R96 e inténtalo nuevamente.";
     }
   </script>
 </body>

@@ -18,7 +18,7 @@ Stage 1 internals remain locked. Stage 2 may only attach behavior to the existin
 
 ## Stage 2 — Authentication
 
-**Status: ACTIVE — 2.0.0 candidate.**
+**Status: ACTIVE — 2.0.1 candidate.**
 
 Authentication is isolated under `src/auth/` and uses a dedicated Wix Headless OAuth client named **R96 Headless Auth**.
 
@@ -43,7 +43,7 @@ Storage namespace:
 - `r96.auth.oauth.v1`
 - `r96.auth.return.v1`
 
-Stage 2 does **not** use Nexo sessions, Nexo backend methods, Nexo CMS, Wix page-member state, postMessage bridges, or R96 legacy authentication.
+Stage 2 does **not** use Nexo sessions, Nexo backend methods, Nexo CMS, Wix page-member state, parent-page bridges, or R96 legacy authentication. When R96 is embedded in Wix, Google authentication runs in a dedicated popup so PKCE data and member tokens stay inside the same R96 iframe storage partition.
 
 ## Stage boundaries
 
