@@ -707,7 +707,7 @@
     }
 
     if (message.type === "invite-entry") {
-      if (inviteFlow === "idle" || inviteFlow === "entry") {
+      if (inviteFlow === "idle") {
         showInviteEntry();
       }
       return;
