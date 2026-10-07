@@ -36,7 +36,7 @@ jobs:
 
           CHANGED="$(git diff --name-only "$BASE" HEAD)"
           BLOCKED=0
-          for path in             "src/auth/nexo-rising-host.js"             "src/auth/r96-native-auth.js"             "index.html"             ".github/workflows/auth-lock.yml"             "AUTH_LOCK.md"
+          for path in             "src/auth/nexo-rising-host.js"             "src/auth/r96-native-auth.js"             "index.html"             ".github/workflows/auth-lock.yml"             "AUTH_LOCK.md"             "AGENTS.md"
           do
             if printf '%s\n' "$CHANGED" | grep -Fxq "$path"; then
               echo "::error file=$path::Authentication is locked. Owner authorization is required."
