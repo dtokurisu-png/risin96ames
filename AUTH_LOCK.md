@@ -13,6 +13,5 @@ Protected restore branch: `locked/auth-final-2026-10-07`.
 Intentional override marker: `[AUTH-UNLOCK-BY-OWNER]`.
 Do not use it without explicit owner authorization in the current task.
 
-The developer-invitation system must be implemented separately. It may use an already-authenticated Nexo member identity and Rising role/permission data, but it must not change authentication.
 
 Lock integrity: `AUTH_LOCK.md`, `AGENTS.md`, and `.github/workflows/auth-lock.yml` are themselves protected. AGENTS.md is also part of the lock boundary and must not be weakened without explicit owner authorization.
