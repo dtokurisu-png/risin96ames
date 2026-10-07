@@ -303,6 +303,10 @@
       WONDER_REQUIRED: "Esta cuenta ya no tiene permiso Wonder para crear invitaciones.",
       INVALID_REQUEST_ID: "La solicitud de invitación no fue válida.",
       REQUEST_ALREADY_USED: "Esta solicitud ya fue procesada.",
+      ACTION_CAPABILITY_MISSING: "Rising todavía no terminó de preparar esta acción. Actualiza la página y vuelve a intentarlo.",
+      CAPABILITY_INVALID: "La autorización temporal de esta página ya no es válida. Actualiza la página.",
+      CAPABILITY_EXPIRED: "La autorización temporal de esta página expiró. Actualiza la página.",
+      INVITE_CREATE_TIMEOUT: "La invitación tardó demasiado en responder. Vuelve a intentarlo.",
       INVITE_CREATE_FAILED: "No se pudo crear la invitación."
     };
 
@@ -329,11 +333,20 @@
     }, HOST_ORIGIN);
   }
 
+  let inviteTimer = null;
+
   function requestInvitation() {
     if (access.isWonder !== true || access.canInviteDeveloper !== true) return;
 
     closeMenu();
     showLoading();
+
+    if (inviteTimer) clearTimeout(inviteTimer);
+    inviteTimer = setTimeout(() => {
+      showError("INVITE_CREATE_TIMEOUT");
+      inviteTimer = null;
+    }, 12000);
+
     post("create-invite", {
       requestId: newRequestId()
     });
@@ -392,6 +405,11 @@
     }
 
     if (message.type === "invite-result") {
+      if (inviteTimer) {
+        clearTimeout(inviteTimer);
+        inviteTimer = null;
+      }
+
       const data = message.data || {};
       if (data.ok === true) {
         showInvitation(data);
