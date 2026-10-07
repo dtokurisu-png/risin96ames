@@ -213,14 +213,11 @@
   function showLoading() {
     const dialog = dialogShell();
 
-    const copy = document.createElement("p");
-    copy.textContent = "Rising está verificando tu rol Wonder y creando una invitación de un solo uso.";
-
     const loading = document.createElement("div");
     loading.className = "r96-access-loading";
     loading.textContent = "Generando invitación…";
 
-    dialog.append(copy, loading);
+    dialog.appendChild(loading);
   }
 
   function addCopyField(dialog, labelText, value, className = "") {
