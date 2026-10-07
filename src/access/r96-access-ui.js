@@ -86,42 +86,33 @@
         height:36px;
         cursor:pointer;
       }
-      .r96-access-field{
-        margin-top:16px;
-      }
-      .r96-access-field label{
-        display:block;
-        margin-bottom:6px;
-        color:var(--r96-muted);
-        font-size:.76rem;
-        font-weight:800;
-      }
-      .r96-access-copy-row{
-        display:grid;
-        grid-template-columns:minmax(0,1fr) auto;
-        gap:8px;
-      }
-      .r96-access-copy-row input{
-        min-width:0;
+      .r96-access-invitation{
         width:100%;
+        min-height:190px;
+        margin-top:16px;
+        resize:vertical;
         border:1px solid var(--r96-line);
-        border-radius:11px;
+        border-radius:14px;
         background:var(--r96-panel);
         color:var(--r96-text);
-        padding:10px 11px;
+        padding:14px;
+        font:inherit;
+        font-size:.9rem;
+        line-height:1.55;
+        box-sizing:border-box;
       }
       .r96-access-copy{
+        width:100%;
+        min-height:44px;
+        margin-top:10px;
         border:1px solid var(--r96-line);
         border-radius:11px;
         background:var(--r96-panel-strong);
         color:var(--r96-text);
-        padding:0 14px;
+        padding:10px 14px;
+        font:inherit;
         font-weight:800;
         cursor:pointer;
-      }
-      .r96-access-code{
-        letter-spacing:.12em;
-        font-weight:900;
       }
       .r96-access-note{
         margin-top:16px;
@@ -150,8 +141,8 @@
         font-weight:800;
       }
       @media(max-width:560px){
-        .r96-access-copy-row{grid-template-columns:1fr}
-        .r96-access-copy{min-height:40px}
+        .r96-access-dialog{padding:18px}
+        .r96-access-invitation{min-height:210px}
       }
     `;
     document.head.appendChild(style);
@@ -220,58 +211,56 @@
     dialog.appendChild(loading);
   }
 
-  function addCopyField(dialog, labelText, value, className = "") {
-    const field = document.createElement("div");
-    field.className = "r96-access-field";
+  function showInvitation(data) {
+    const dialog = dialogShell();
 
-    const label = document.createElement("label");
-    label.textContent = labelText;
+    const inviteUrl = String(data.inviteUrl || "").trim();
+    const code = String(data.code || "").trim();
 
-    const row = document.createElement("div");
-    row.className = "r96-access-copy-row";
+    const invitationText = [
+      inviteUrl,
+      "",
+      "Hola, únete a Rising Games como desarrollador utilizando este código:",
+      "",
+      code
+    ].join("\n");
 
-    const input = document.createElement("input");
-    input.readOnly = true;
-    input.value = value;
-    if (className) input.classList.add(className);
+    const intro = document.createElement("p");
+    intro.textContent = "Invitación lista para compartir.";
 
-    const button = document.createElement("button");
-    button.className = "r96-access-copy";
-    button.type = "button";
-    button.textContent = "Copiar";
+    const text = document.createElement("textarea");
+    text.className = "r96-access-invitation";
+    text.readOnly = true;
+    text.value = invitationText;
+    text.setAttribute("aria-label", "Invitación completa para desarrollador");
 
-    button.addEventListener("click", async () => {
+    const copy = document.createElement("button");
+    copy.className = "r96-access-copy";
+    copy.type = "button";
+    copy.textContent = "Copiar invitación";
+
+    const status = document.createElement("div");
+    status.className = "r96-access-copy-status";
+    status.setAttribute("aria-live", "polite");
+
+    copy.addEventListener("click", async () => {
       let copied = false;
+
       try {
-        await navigator.clipboard.writeText(value);
+        await navigator.clipboard.writeText(invitationText);
         copied = true;
       } catch (_) {
         try {
-          input.focus();
-          input.select();
+          text.focus();
+          text.select();
           copied = document.execCommand("copy");
         } catch (_) {}
       }
 
-      const status = dialog.querySelector(".r96-access-copy-status");
-      if (status) {
-        status.textContent = copied ? "Copiado." : "No se pudo copiar automáticamente.";
-      }
+      status.textContent = copied
+        ? "Invitación copiada."
+        : "No se pudo copiar automáticamente.";
     });
-
-    row.append(input, button);
-    field.append(label, row);
-    dialog.appendChild(field);
-  }
-
-  function showInvitation(data) {
-    const dialog = dialogShell();
-
-    const intro = document.createElement("p");
-    intro.textContent = "La invitación ya fue creada. El enlace y el código deben llegar al desarrollador que vas a invitar.";
-
-    addCopyField(dialog, "Enlace de invitación", String(data.inviteUrl || ""));
-    addCopyField(dialog, "Código de un solo uso", String(data.code || ""), "r96-access-code");
 
     const expires = document.createElement("div");
     expires.className = "r96-access-note";
@@ -281,16 +270,14 @@
       expiryText = new Date(data.expiresAt).toLocaleString("es-ES");
     } catch (_) {}
 
-    expires.textContent = "Válida hasta " + expiryText + ". El código podrá utilizarse una sola vez.";
+    expires.textContent =
+      "Válida hasta " + expiryText + ". El código podrá utilizarse una sola vez.";
 
     const security = document.createElement("p");
-    security.textContent = "Por seguridad, Rising no guarda el token ni el código en texto legible. Si cierras esta ventana, tendrás que generar una nueva invitación si pierdes estos datos.";
+    security.textContent =
+      "Por seguridad, Rising no guarda el token ni el código en texto legible. Si pierdes esta invitación, tendrás que generar una nueva.";
 
-    const status = document.createElement("div");
-    status.className = "r96-access-copy-status";
-    status.setAttribute("aria-live", "polite");
-
-    dialog.append(expires, security, status);
+    dialog.append(intro, text, copy, status, expires, security);
   }
 
   function showError(code) {
