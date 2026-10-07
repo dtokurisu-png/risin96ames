@@ -680,6 +680,9 @@
 
     if (message.type === "access") {
       const data = message.data || {};
+      const resumeVerifiedInvite =
+        inviteFlow === "verified" && data.signedIn === true;
+
       access = {
         signedIn: data.signedIn === true,
         roleKey: String(data.roleKey || "visitor"),
@@ -688,6 +691,10 @@
         isWonder: data.isWonder === true
       };
       render();
+
+      if (resumeVerifiedInvite) {
+        showInviteClaiming();
+      }
       return;
     }
 
