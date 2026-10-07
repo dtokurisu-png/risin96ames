@@ -68,7 +68,7 @@
   });
 
   const accessScript = document.createElement("script");
-  accessScript.src = "./src/access/r96-access-ui.js?v=2.0.0";
+  accessScript.src = "./src/access/r96-access-ui.js?v=3.0.0";
   accessScript.defer = true;
   accessScript.dataset.r96AccessUi = "1";
   document.head.appendChild(accessScript);
