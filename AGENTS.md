@@ -3,13 +3,14 @@
 Read `AUTH_LOCK.md` before touching authentication or account-session code.
 
 ## Authentication freeze
+The current authentication baseline was validated again by the owner on 2026-10-07. Treat the login/logout/session path as read-only.
 The owner locked the working Nexo Group authentication integration on 2026-10-06. The auth client, Wix host bridge, login/logout/switch-account behavior, and authentication-related markup are read-only unless the owner explicitly authorizes an auth unlock in the current task.
 
 Do not use `[AUTH-UNLOCK-BY-OWNER]` without that explicit authorization.
 
 Developer invitations, developer roles, dashboards, game publishing, and community features must be implemented separately and may only consume the already-authenticated Nexo member identity.
 
-Restore branch: `locked/auth-stable-2026-10-06`.
+Restore branch: `locked/auth-final-2026-10-07`.
 
 
 ## Regla canónica de desarrollo: sin parches acumulativos
@@ -25,3 +26,6 @@ Flujo obligatorio:
 6. Si la corrección toca un área bloqueada, informar primero al propietario y obtener autorización explícita.
 
 No dejar “parches temporales” permanentes. Un fallback solo puede existir si forma parte intencional del diseño canónico y está documentado como tal.
+
+
+The lock instructions themselves are protected: do not weaken or remove `AUTH_LOCK.md`, this `AGENTS.md`, or `.github/workflows/auth-lock.yml` without explicit owner authorization.
