@@ -8,7 +8,7 @@ The owner locked the working Nexo Group authentication integration on 2026-10-06
 
 Do not use `[AUTH-UNLOCK-BY-OWNER]` without that explicit authorization.
 
-Developer invitations, developer roles, dashboards, game publishing, and community features must be implemented separately and may only consume the already-authenticated Nexo member identity.
+All feature systems must remain separate from the frozen authentication implementation and may only consume the already-authenticated Nexo member identity.
 
 Restore branch: `locked/auth-final-2026-10-07`.
 
