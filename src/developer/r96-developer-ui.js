@@ -1,6 +1,9 @@
 (() => {
   "use strict";
 
+  if (window.__r96DeveloperUi) return;
+  window.__r96DeveloperUi = true;
+
   const HOST_ORIGIN = "https://dtokurisu.wixstudio.com";
   const SOURCE_HOST = "r96-developer-host";
   const SOURCE_UI = "r96-developer-ui";
@@ -8,6 +11,7 @@
 
   let menuButton = null;
   let ownerDiagnostic = null;
+  let developerSessionToken = "";
   let modal = null;
   let pendingInvite = null;
   let currentAccess = {
@@ -25,6 +29,7 @@
       source: SOURCE_UI,
       protocol: PROTOCOL,
       type,
+      developerSessionToken,
       ...payload
     }, HOST_ORIGIN);
   }
@@ -469,11 +474,14 @@
     if (!data || data.source !== "r96-wix-auth" || data.protocol !== 1) return;
 
     if (data.status === "signedOut") {
+      developerSessionToken = "";
       setAccess({ signedIn: false, roleKey: "visitor", canInvite: false, isDeveloper: false });
+      post("refresh");
       return;
     }
 
     if (data.status === "signedIn") {
+      developerSessionToken = String(data.member?.developerSessionToken || "").trim();
       post("refresh");
       if (pendingInvite?.verified) {
         setTimeout(continueAfterVerification, 80);
