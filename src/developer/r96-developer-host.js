@@ -14,6 +14,8 @@
 
   window.__r96DeveloperHost = true;
 
+  let developerSessionToken = "";
+
   function frame() {
     return document.getElementById("nexo-rising-app");
   }
@@ -50,6 +52,7 @@
       },
       body: JSON.stringify({
         action,
+        developerSessionToken,
         ...payload
       })
     });
@@ -134,6 +137,10 @@
 
     const data = event.data;
     if (!data || data.source !== SOURCE_UI || data.protocol !== PROTOCOL) return;
+
+    if (Object.prototype.hasOwnProperty.call(data, "developerSessionToken")) {
+      developerSessionToken = String(data.developerSessionToken || "").trim();
+    }
 
     if (data.type === "ready") {
       refreshStatus();
