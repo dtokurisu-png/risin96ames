@@ -25,7 +25,7 @@
   const frame = document.createElement("iframe");
   frame.id = "nexo-rising-app";
   frame.title = "Rising Games · Nexo Group";
-  frame.src = ORIGIN + "/risin96ames/?v=6.0.4";
+  frame.src = ORIGIN + "/risin96ames/?v=6.0.6";
   frame.referrerPolicy = "no-referrer";
   frame.style.cssText =
     "position:fixed;inset:0;width:100%;height:100dvh;border:0;z-index:100;background:#070912";
@@ -33,6 +33,7 @@
   let requestId = 0;
   let sequence = 0;
   let commandSequence = 0;
+  let navigating = false;
   let member = null;
   let status = "connecting";
   let consumed = "";
@@ -70,7 +71,7 @@
     );
   }
 
-  function samePageAction(kind, value) {
+  function navigateAccountAction(kind, value) {
     const url = new URL(location.href);
     ["nxb", "nxa", "nxav", "nexoAuth", "nexoAction", "nexoReturn", "nexoCommandId"].forEach((key) =>
       url.searchParams.delete(key)
@@ -80,7 +81,11 @@
       "nexoCommandId",
       Date.now().toString(36) + "-" + (++commandSequence).toString(36)
     );
-    history.replaceState(history.state, "", url.href);
+    // Velo runs outside this DOM context. Browser history mutations do not
+    // update wix-location-frontend.query. A document navigation delivers the
+    // command through Wix's supported page-entry lifecycle.
+    navigating = true;
+    location.assign(url.href);
   }
 
   function clearResultState() {
@@ -96,6 +101,7 @@
   }
 
   function receive(event) {
+    if (navigating) return;
     if (event.source !== frame.contentWindow || event.origin !== ORIGIN) return;
 
     const data = event.data;
@@ -112,15 +118,15 @@
 
     if (data.type === "r96-account-action") {
       if (data.action === "login") {
-        samePageAction("nexoAuth", "login");
+        navigateAccountAction("nexoAuth", "login");
         return;
       }
       if (data.action === "switch") {
-        samePageAction("nexoAction", "switch");
+        navigateAccountAction("nexoAction", "switch");
         return;
       }
       if (data.action === "logout") {
-        samePageAction("nexoAction", "logout");
+        navigateAccountAction("nexoAction", "logout");
         return;
       }
       if (data.action === "profile") {
@@ -133,6 +139,7 @@
   }
 
   async function poll() {
+    if (navigating) return;
     if (location.pathname.replace(/\/+$/, "") !== PATH) {
       cleanup();
       return;
@@ -234,3 +241,4 @@
   const timer = setInterval(poll, 500);
   poll();
 })();
+
