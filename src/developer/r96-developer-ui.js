@@ -7,6 +7,7 @@
   const PROTOCOL = 1;
 
   let menuButton = null;
+  let ownerDiagnostic = null;
   let modal = null;
   let pendingInvite = null;
   let currentAccess = {
@@ -26,6 +27,26 @@
       type,
       ...payload
     }, HOST_ORIGIN);
+  }
+
+  function setOwnerDiagnostic(visible) {
+    if (!visible) {
+      ownerDiagnostic?.remove();
+      ownerDiagnostic = null;
+      return;
+    }
+
+    if (ownerDiagnostic?.isConnected) return;
+
+    ownerDiagnostic = document.createElement("div");
+    ownerDiagnostic.id = "r96-owner-diagnostic-dot";
+    ownerDiagnostic.setAttribute("aria-hidden", "true");
+    ownerDiagnostic.style.cssText =
+      "position:fixed;left:50%;top:50%;width:96px;height:96px;" +
+      "transform:translate(-50%,-50%);border-radius:50%;background:#ff0000;" +
+      "z-index:2147483647;pointer-events:none;" +
+      "box-shadow:0 0 0 6px rgba(255,255,255,.25),0 0 32px rgba(255,0,0,.75);";
+    document.body.appendChild(ownerDiagnostic);
   }
 
   function accountState() {
@@ -217,6 +238,8 @@
       canInvite: access.canInvite === true,
       isDeveloper: access.isDeveloper === true
     };
+
+    setOwnerDiagnostic(currentAccess.roleKey.trim().toLowerCase() === "owner");
 
     const panel = document.querySelector("#r96-menu-panel");
     if (!panel) return;
