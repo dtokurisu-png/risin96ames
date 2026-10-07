@@ -25,10 +25,16 @@
   const frame = document.createElement("iframe");
   frame.id = "nexo-rising-app";
   frame.title = "Rising Games · Nexo Group";
-  frame.src = ORIGIN + "/risin96ames/?v=6.0.6";
+  frame.src = ORIGIN + "/risin96ames/?v=6.0.7";
   frame.referrerPolicy = "no-referrer";
   frame.style.cssText =
-    "position:fixed;inset:0;width:100%;height:100dvh;border:0;z-index:100;background:#070912";
+    "position:fixed;inset:0;width:100%;height:100dvh;border:0;z-index:100;" +
+    "background:var(--nexo-rising-surface,#070912);visibility:hidden";
+  // Keep the iframe's initial about:blank document out of the visible frame.
+  // load runs after its blocking stylesheet and deferred visual setup.
+  frame.addEventListener("load", () => {
+    frame.style.visibility = "visible";
+  }, { once: true });
 
   let requestId = 0;
   let sequence = 0;
@@ -105,6 +111,14 @@
     if (event.source !== frame.contentWindow || event.origin !== ORIGIN) return;
 
     const data = event.data;
+    // Display preference only: never cache identity, membership, or auth state.
+    if (data?.source === "r96-visual" && data.type === "r96-theme") {
+      if (data.theme !== "light" && data.theme !== "dark") return;
+      const color = data.theme === "light" ? "#f5fbff" : "#070912";
+      document.documentElement.style.setProperty("--nexo-rising-surface", color);
+      try { sessionStorage.setItem("nexo-rising-display-theme", data.theme); } catch (_) {}
+      return;
+    }
     if (
       !data ||
       data.source !== "r96-auth" ||
@@ -223,16 +237,33 @@
     send();
   }
 
+  function suspend() {
+    clearInterval(timer);
+    // Never remove the visible frame on pagehide. The browser is still
+    // painting this document while preparing the next one.
+  }
+
+  function restore(event) {
+    // A bfcache snapshot must not become the authority for a member session.
+    // Re-enter the existing Wix page lifecycle when returning with Back.
+    if (event.persisted) location.reload();
+  }
+
   function cleanup() {
     clearInterval(timer);
     window.removeEventListener("message", receive);
     window.removeEventListener("resize", positionFrame);
+    window.removeEventListener("pagehide", suspend);
+    window.removeEventListener("pageshow", restore);
+    document.documentElement.removeAttribute("data-nexo-rising-surface");
+    document.documentElement.style.removeProperty("--nexo-rising-surface");
     frame.remove();
     window.__nexoRisingHost = false;
   }
 
   window.addEventListener("message", receive);
-  window.addEventListener("pagehide", cleanup, { once: true });
+  window.addEventListener("pagehide", suspend);
+  window.addEventListener("pageshow", restore);
   window.addEventListener("resize", positionFrame);
 
   positionFrame();
@@ -241,4 +272,5 @@
   const timer = setInterval(poll, 500);
   poll();
 })();
+
 

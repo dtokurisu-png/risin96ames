@@ -4,14 +4,26 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="dark light">
+  <style id="r96-first-paint">
+    html{background:#070912;color-scheme:dark}
+    html[data-r96-theme="light"]{background:#f5fbff;color-scheme:light}
+    body{margin:0;background:inherit}
+  </style>
+  <script>
+    (() => {
+      let theme = "dark";
+      try { if (localStorage.getItem("r96-visual-theme") === "light") theme = "light"; } catch (_) {}
+      document.documentElement.dataset.r96Theme = theme;
+    })();
+  </script>
   <meta name="theme-color" content="#070912">
   <title>R96 · Plataforma de juegos</title>
   <meta name="description" content="Rising Games, parte del entorno de desarrollo de Nexo Group. Una cuenta para todos tus espacios.">
-  <link rel="stylesheet" href="./src/visual/r96-visual.css?v=1.0.0">  <script src="./src/visual/r96-visual.js?v=1.0.0" defer></script>
+  <link rel="stylesheet" href="./src/visual/r96-visual.css?v=1.0.1">  <script src="./src/visual/r96-visual.js?v=1.0.1" defer></script>
   <script src="./src/auth/r96-native-auth.js?v=6.0.3" defer></script><style>.r96-nexo-brand{display:flex;align-items:center;gap:16px;margin:24px 0;font-size:14px;line-height:1.6;color:var(--r96-muted)}.r96-nexo-brand img{object-fit:contain;background:#101323;border-radius:12px;padding:8px;flex-shrink:0}.r96-actions{flex-wrap:wrap}.r96-account-copy strong{max-width:180px;white-space:normal}</style></head>
 <body>
 
-<div class="r96-app" data-theme="dark">
+<div class="r96-app">
     <header class="r96-header">
       <nav class="r96-nav" aria-label="Navegación principal">
         <div class="r96-nav-left">
@@ -244,4 +256,5 @@
   </div>
 </body>
 </html>
+
 

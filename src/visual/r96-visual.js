@@ -13,6 +13,11 @@
   const applyTheme = (theme) => {
     const next = theme === "light" ? "light" : "dark";
     app.dataset.theme = next;
+    document.documentElement.dataset.r96Theme = next;
+    if (window.parent !== window) {
+      window.parent.postMessage({ source: "r96-visual", type: "r96-theme", theme: next },
+        "https://dtokurisu.wixstudio.com");
+    }
 
     if (themeButton) {
       const dark = next === "dark";
@@ -25,11 +30,8 @@
     }
   };
 
-  try {
-    applyTheme(localStorage.getItem(THEME_KEY) || "dark");
-  } catch (_) {
-    applyTheme("dark");
-  }
+  // The head bootstrap selects the stored theme before the first paint.
+  applyTheme(document.documentElement.dataset.r96Theme || "dark");
 
   themeButton?.addEventListener("click", () => {
     const next = app.dataset.theme === "dark" ? "light" : "dark";
@@ -74,3 +76,4 @@
   }
 
 })();
+
