@@ -125,6 +125,10 @@
       capability = queryCapability;
     }
 
+    if (accessOverride) {
+      return { ...accessOverride };
+    }
+
     return {
       signedIn: roleKey !== "visitor",
       roleKey,
@@ -275,8 +279,15 @@
       clearClaimState();
 
       if (data.access) {
-        lastAccessSignature = "";
-        post("access", data.access);
+        accessOverride = {
+          signedIn: data.access.signedIn === true,
+          roleKey: String(data.access.roleKey || "developer"),
+          canInviteDeveloper: data.access.canInviteDeveloper === true,
+          isDeveloper: data.access.isDeveloper === true,
+          isWonder: data.access.isWonder === true
+        };
+        lastAccessSignature = JSON.stringify(accessOverride);
+        post("access", accessOverride);
       }
 
       post("invite-claimed", data);
