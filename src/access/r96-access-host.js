@@ -520,10 +520,10 @@
       return;
     }
 
-    if (accessState().isWonder !== true) {
+    if (accessState().canInviteDeveloper !== true) {
       postToFrame("invite-result", {
         ok: false,
-        error: "WONDER_REQUIRED"
+        error: "INVITE_PERMISSION_REQUIRED"
       });
       return;
     }
