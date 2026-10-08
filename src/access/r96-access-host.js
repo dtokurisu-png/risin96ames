@@ -18,6 +18,8 @@
   const PROTOCOL = 1;
   const MODAL_ID = "r96-host-invite-modal";
   const STYLE_ID = "r96-host-invite-style";
+  const GAME_CAP_REQUEST_EVENT = "r96:game-capability-request";
+  const GAME_CAP_RESPONSE_EVENT = "r96:game-capability-response";
   const LEGACY_PARAMS = [
     "r96a1","r96cmd","r96req","r96result","r96iid",
     "r96token","r96code","r96exp","r96err"
@@ -33,6 +35,7 @@
   let verifyInFlight = false;
   let claimInFlight = false;
   let claimBlocked = false;
+  let gameCapabilityInFlight = false;
 
   function readSession(key) {
     try { return String(sessionStorage.getItem(key) || ""); }
@@ -585,6 +588,125 @@
     }
   }
 
+
+  function emitGameCapability(detail) {
+    window.dispatchEvent(
+      new CustomEvent(GAME_CAP_RESPONSE_EVENT, {
+        detail
+      })
+    );
+  }
+
+  async function issueGameCapability(requestId) {
+    const safeRequestId = String(requestId || "").trim();
+
+    if (!/^[A-Za-z0-9_-]{16,100}$/.test(safeRequestId)) {
+      emitGameCapability({
+        requestId: safeRequestId,
+        ok: false,
+        error: "INVALID_REQUEST_ID"
+      });
+      return;
+    }
+
+    if (gameCapabilityInFlight) {
+      emitGameCapability({
+        requestId: safeRequestId,
+        ok: false,
+        error: "GAME_CAPABILITY_BUSY"
+      });
+      return;
+    }
+
+    captureTransientState();
+
+    if (accessState().isDeveloper !== true) {
+      emitGameCapability({
+        requestId: safeRequestId,
+        ok: false,
+        error: "DEVELOPER_REQUIRED"
+      });
+      return;
+    }
+
+    if (!actionCapability) {
+      emitGameCapability({
+        requestId: safeRequestId,
+        ok: false,
+        error: "ACTION_CAPABILITY_MISSING"
+      });
+      return;
+    }
+
+    gameCapabilityInFlight = true;
+
+    try {
+      const response = await fetch(
+        SITE_BASE + "/_functions/r96AccessAction",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          cache: "no-store",
+          body: JSON.stringify({
+            action: "createGameCapability",
+            capability: actionCapability
+          })
+        }
+      );
+
+      const payload = await response.json().catch(() => null);
+
+      if (!payload || payload.ok !== true || !payload.data) {
+        const error = String(
+          payload?.error || "GAME_CAPABILITY_CREATE_FAILED"
+        );
+
+        if (
+          error === "CAPABILITY_INVALID" ||
+          error === "CAPABILITY_EXPIRED"
+        ) {
+          actionCapability = "";
+        }
+
+        emitGameCapability({
+          requestId: safeRequestId,
+          ok: false,
+          error
+        });
+        return;
+      }
+
+      const data = payload.data;
+
+      actionCapability = String(data.nextActionCapability || "");
+
+      emitGameCapability({
+        requestId: safeRequestId,
+        ok: true,
+        capability: String(data.gameCapability || ""),
+        expiresAt: String(data.gameCapabilityExpiresAt || "")
+      });
+    } catch (_) {
+      emitGameCapability({
+        requestId: safeRequestId,
+        ok: false,
+        error: "GAME_CAPABILITY_CREATE_FAILED"
+      });
+    } finally {
+      gameCapabilityInFlight = false;
+    }
+  }
+
+  function onGameCapabilityRequest(event) {
+    issueGameCapability(event?.detail?.requestId);
+  }
+
+  window.addEventListener(
+    GAME_CAP_REQUEST_EVENT,
+    onGameCapabilityRequest
+  );
+
   addEventListener("message", (event) => {
     if (event.origin !== FRAME_ORIGIN) return;
 
@@ -659,7 +781,13 @@
 
   addEventListener(
     "pagehide",
-    () => clearInterval(timer),
+    () => {
+      clearInterval(timer);
+      window.removeEventListener(
+        GAME_CAP_REQUEST_EVENT,
+        onGameCapabilityRequest
+      );
+    },
     { once: true }
   );
 })();
