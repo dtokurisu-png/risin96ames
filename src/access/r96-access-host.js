@@ -614,12 +614,6 @@
   captureTransientState();
 
   if (
-    /^[A-Za-z0-9_-]{40,80}$/.test(
-      readSession(ENTRY_STORAGE_KEY)
-    )
-  ) {
-    showInviteEntry();
-  } else if (
     /^[A-Z0-9]{8}$/.test(
       readSession(CODE_STORAGE_KEY)
     ) &&
@@ -632,6 +626,12 @@
     } else {
       showInviteVerified();
     }
+  } else if (
+    /^[A-Za-z0-9_-]{40,80}$/.test(
+      readSession(ENTRY_STORAGE_KEY)
+    )
+  ) {
+    showInviteEntry();
   }
 
   const timer = setInterval(() => {
