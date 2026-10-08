@@ -10,12 +10,116 @@
   const SOURCE_BRIDGE = "r96-games-bridge";
   const SOURCE_UI = "r96-games-ui";
   const PROTOCOL = 1;
+  const GAME_CAP_REQUEST_EVENT = "r96:game-capability-request";
+  const GAME_CAP_RESPONSE_EVENT = "r96:game-capability-response";
 
   if (location.pathname.replace(/\/+$/, "") !== PATH) return;
 
   let frameWindow = null;
   let catalogPromise = null;
   let cachedCatalog = null;
+  let gameCapability = "";
+  let gameCapabilityExpiresAt = "";
+  let gameCapabilityPromise = null;
+
+
+  function tokenValid() {
+    if (!/^[A-Za-z0-9_-]{40,80}$/.test(gameCapability)) return false;
+
+    const expiresAt = new Date(gameCapabilityExpiresAt || 0);
+    return Number.isFinite(expiresAt.getTime()) &&
+      expiresAt.getTime() > Date.now() + 5000;
+  }
+
+  function requestId() {
+    if (globalThis.crypto?.randomUUID) {
+      return crypto.randomUUID().replace(/-/g, "");
+    }
+
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    return Array.from(
+      bytes,
+      value => value.toString(16).padStart(2, "0")
+    ).join("");
+  }
+
+  function clearGameCapability() {
+    gameCapability = "";
+    gameCapabilityExpiresAt = "";
+  }
+
+  function acquireGameCapability(force = false) {
+    if (!force && tokenValid()) {
+      return Promise.resolve(gameCapability);
+    }
+
+    if (gameCapabilityPromise) return gameCapabilityPromise;
+
+    gameCapabilityPromise = new Promise((resolve, reject) => {
+      const id = requestId();
+
+      const timeout = setTimeout(() => {
+        window.removeEventListener(
+          GAME_CAP_RESPONSE_EVENT,
+          onResponse
+        );
+        gameCapabilityPromise = null;
+        reject(new Error("GAME_CAPABILITY_TIMEOUT"));
+      }, 10000);
+
+      function onResponse(event) {
+        const detail = event?.detail || {};
+        if (String(detail.requestId || "") !== id) return;
+
+        clearTimeout(timeout);
+        window.removeEventListener(
+          GAME_CAP_RESPONSE_EVENT,
+          onResponse
+        );
+        gameCapabilityPromise = null;
+
+        if (detail.ok !== true) {
+          clearGameCapability();
+          reject(
+            new Error(
+              String(
+                detail.error ||
+                "GAME_CAPABILITY_CREATE_FAILED"
+              )
+            )
+          );
+          return;
+        }
+
+        const token = String(detail.capability || "");
+        const expiresAt = String(detail.expiresAt || "");
+
+        if (!/^[A-Za-z0-9_-]{40,80}$/.test(token)) {
+          clearGameCapability();
+          reject(new Error("GAME_CAPABILITY_INVALID"));
+          return;
+        }
+
+        gameCapability = token;
+        gameCapabilityExpiresAt = expiresAt;
+        resolve(gameCapability);
+      }
+
+      window.addEventListener(
+        GAME_CAP_RESPONSE_EVENT,
+        onResponse
+      );
+
+      window.dispatchEvent(
+        new CustomEvent(GAME_CAP_REQUEST_EVENT, {
+          detail:{ requestId:id }
+        })
+      );
+    });
+
+    return gameCapabilityPromise;
+  }
 
   function post(type, data = {}, requestId = "") {
     if (!frameWindow) return;
@@ -77,28 +181,55 @@
     }
   }
 
+  async function callStudioAction(action, input, forceCapability = false) {
+    const capability = await acquireGameCapability(forceCapability);
+
+    const response = await fetch(
+      SITE_BASE + "/_functions/r96GamesAction",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        credentials: "same-origin",
+        cache: "no-store",
+        body: JSON.stringify({
+          action,
+          capability,
+          input: input || {}
+        })
+      }
+    );
+
+    const payload = await response.json().catch(() => null);
+
+    if (
+      payload?.error === "GAME_CAPABILITY_INVALID" ||
+      payload?.error === "GAME_CAPABILITY_EXPIRED"
+    ) {
+      clearGameCapability();
+    }
+
+    return payload;
+  }
+
   async function studioAction(message) {
     const requestId = String(message.requestId || "");
     const action = String(message.action || "").trim();
+    const input = message.input || {};
 
     try {
-      const response = await fetch(
-        SITE_BASE + "/_functions/r96GamesAction",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          credentials: "same-origin",
-          cache: "no-store",
-          body: JSON.stringify({
-            action,
-            input: message.input || {}
-          })
-        }
-      );
+      let payload = await callStudioAction(action, input, false);
 
-      const payload = await response.json().catch(() => null);
+      if (
+        payload?.ok !== true &&
+        (
+          payload?.error === "GAME_CAPABILITY_INVALID" ||
+          payload?.error === "GAME_CAPABILITY_EXPIRED"
+        )
+      ) {
+        payload = await callStudioAction(action, input, true);
+      }
 
       if (!payload || payload.ok !== true) {
         post(
@@ -124,12 +255,14 @@
       if (action === "game.create") {
         await sendCatalog(true);
       }
-    } catch (_) {
+    } catch (error) {
       post(
         "studio-result",
         {
           ok: false,
-          error: "GAMES_ACTION_FAILED"
+          error: String(
+            error?.message || "GAMES_ACTION_FAILED"
+          )
         },
         requestId
       );
