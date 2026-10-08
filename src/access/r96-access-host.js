@@ -10,7 +10,8 @@
   const CAPABILITY_PARAM = "r96cap";
   const INVITE_PARAM = "r96invite";
   const ENTRY_STORAGE_KEY = "r96-invite-entry-v2";
-  const CLAIM_STORAGE_KEY = "r96-invite-claim-v2";
+  const CODE_STORAGE_KEY = "r96-invite-code-v3";
+  const LEGACY_CLAIM_STORAGE_KEY = "r96-invite-claim-v2";
   const FRAME_ORIGIN = "https://dtokurisu-png.github.io";
   const SOURCE_BRIDGE = "r96-access-bridge";
   const SOURCE_UI = "r96-access-ui";
@@ -60,7 +61,8 @@
     const inviteToken = url.searchParams.get(INVITE_PARAM) || "";
     if (/^[A-Za-z0-9_-]{40,80}$/.test(inviteToken)) {
       writeSession(ENTRY_STORAGE_KEY, inviteToken);
-      writeSession(CLAIM_STORAGE_KEY, "");
+      writeSession(CODE_STORAGE_KEY, "");
+      writeSession(LEGACY_CLAIM_STORAGE_KEY, "");
       claimBlocked = false;
     }
 
@@ -200,8 +202,6 @@
 
   function claimErrorMessage(code) {
     const messages = {
-      CLAIM_INVALID: "La validación de esta invitación ya no es válida.",
-      CLAIM_EXPIRED: "La validación de la invitación expiró. Solicita una nueva invitación.",
       INVITE_NOT_FOUND: "No se encontró la invitación.",
       INVITE_ALREADY_USED: "Esta invitación ya fue utilizada.",
       INVITE_NOT_VERIFIED: "La invitación todavía no está verificada.",
@@ -396,7 +396,7 @@
       if (
         !payload ||
         payload.ok !== true ||
-        !payload.data?.claimToken
+        payload.data?.valid !== true
       ) {
         showInviteEntry(
           String(payload?.error || "INVITE_VERIFY_FAILED")
@@ -404,8 +404,12 @@
         return;
       }
 
-      writeSession(CLAIM_STORAGE_KEY, String(payload.data.claimToken));
-      writeSession(ENTRY_STORAGE_KEY, "");
+      const normalizedCode = String(code || "")
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, "");
+
+      writeSession(CODE_STORAGE_KEY, normalizedCode);
+      writeSession(LEGACY_CLAIM_STORAGE_KEY, "");
       claimBlocked = false;
 
       if (accessState().signedIn && actionCapability) {
@@ -425,10 +429,12 @@
 
     captureTransientState();
 
-    const claimToken = readSession(CLAIM_STORAGE_KEY);
+    const inviteToken = readSession(ENTRY_STORAGE_KEY);
+    const code = readSession(CODE_STORAGE_KEY);
     const state = accessState();
 
-    if (!/^[A-Za-z0-9_-]{40,80}$/.test(claimToken)) return;
+    if (!/^[A-Za-z0-9_-]{40,80}$/.test(inviteToken)) return;
+    if (!/^[A-Z0-9]{8}$/.test(code)) return;
 
     if (!state.signedIn || !actionCapability) {
       if (!document.getElementById(MODAL_ID)) {
@@ -451,7 +457,8 @@
           body: JSON.stringify({
             action: "claimInvite",
             capability: actionCapability,
-            claimToken
+            inviteToken,
+            code
           })
         }
       );
@@ -482,8 +489,9 @@
       const data = payload.data;
 
       actionCapability = String(data.nextActionCapability || "");
-      writeSession(CLAIM_STORAGE_KEY, "");
+      writeSession(CODE_STORAGE_KEY, "");
       writeSession(ENTRY_STORAGE_KEY, "");
+      writeSession(LEGACY_CLAIM_STORAGE_KEY, "");
 
       roleOverride = String(data.access.roleKey || "developer");
       lastRole = "";
@@ -602,6 +610,7 @@
     }
   });
 
+  writeSession(LEGACY_CLAIM_STORAGE_KEY, "");
   captureTransientState();
 
   if (
@@ -611,8 +620,11 @@
   ) {
     showInviteEntry();
   } else if (
+    /^[A-Z0-9]{8}$/.test(
+      readSession(CODE_STORAGE_KEY)
+    ) &&
     /^[A-Za-z0-9_-]{40,80}$/.test(
-      readSession(CLAIM_STORAGE_KEY)
+      readSession(ENTRY_STORAGE_KEY)
     )
   ) {
     if (accessState().signedIn && actionCapability) {
@@ -627,16 +639,20 @@
     sendAccess(false);
 
     const entryToken = readSession(ENTRY_STORAGE_KEY);
-    const claimToken = readSession(CLAIM_STORAGE_KEY);
+    const code = readSession(CODE_STORAGE_KEY);
 
     if (
       /^[A-Za-z0-9_-]{40,80}$/.test(entryToken) &&
+      !/^[A-Z0-9]{8}$/.test(code) &&
       !document.getElementById(MODAL_ID)
     ) {
       showInviteEntry();
     }
 
-    if (/^[A-Za-z0-9_-]{40,80}$/.test(claimToken)) {
+    if (
+      /^[A-Za-z0-9_-]{40,80}$/.test(entryToken) &&
+      /^[A-Z0-9]{8}$/.test(code)
+    ) {
       tryClaimInvite();
     }
   }, 150);
