@@ -382,7 +382,6 @@
       INVITE_NOT_FOUND: "Este enlace de invitación no es válido.",
       INVITE_CODE_INVALID: "El código no es correcto. Revísalo e inténtalo otra vez.",
       INVITE_ALREADY_USED: "Esta invitación ya fue utilizada.",
-      INVITE_ALREADY_VERIFIED: "Este código ya fue validado en otra sesión.",
       INVITE_NOT_ACTIVE: "Esta invitación ya no está activa.",
       INVITE_EXPIRED: "Esta invitación expiró.",
       INVITE_VERIFY_FAILED: "No se pudo verificar la invitación."
@@ -393,22 +392,28 @@
 
   function claimErrorMessage(code) {
     const messages = {
-      CLAIM_INVALID: "La validación de esta invitación ya no es válida.",
-      CLAIM_EXPIRED: "La validación de la invitación expiró. Solicita una nueva invitación.",
+      CLAIM_TIMEOUT: "Rising no recibió una respuesta a tiempo. Puedes reintentar sin volver a iniciar sesión.",
+      ACCESS_REFRESH_FAILED: "No se pudo renovar la autorización de esta sesión. Vuelve a intentar la activación.",
       INVITE_NOT_FOUND: "No se encontró la invitación.",
       INVITE_ALREADY_USED: "Esta invitación ya fue utilizada.",
-      INVITE_NOT_VERIFIED: "La invitación todavía no está verificada.",
+      INVITE_NOT_ACTIVE: "Esta invitación ya no está activa.",
       INVITE_EXPIRED: "La invitación expiró.",
-      ROLE_ALREADY_GRANTED: "Esta cuenta ya tiene acceso de desarrollador.",
-      CAPABILITY_INVALID: "La autorización de la sesión cambió. Actualiza la página.",
-      CAPABILITY_EXPIRED: "La autorización de la sesión expiró. Actualiza la página.",
+      INVITE_CODE_INVALID: "El código dejó de ser válido. Vuelve a ingresarlo.",
+      INVITE_IN_PROGRESS: "Esta invitación está siendo activada por otra sesión.",
       R96_ACCESS_ACTION_FAILED: "No se pudo activar el acceso de desarrollador."
     };
 
     return messages[code] || messages.R96_ACCESS_ACTION_FAILED;
   }
 
+  function clearClaimTimer() {
+    if (!claimTimer) return;
+    clearTimeout(claimTimer);
+    claimTimer = null;
+  }
+
   function showInviteEntry(errorCode = "") {
+    clearClaimTimer();
     inviteFlow = "entry";
 
     const dialog = dialogShell("Bienvenido a Rising Games", false);
@@ -465,7 +470,6 @@
       submit.textContent = "Validando…";
       feedback.className = "";
       feedback.textContent = "";
-
       post("verify-invite", { code });
     };
 
@@ -478,7 +482,6 @@
     });
 
     dialog.append(intro, label, input, submit, feedback);
-
     setTimeout(() => input.focus(), 0);
   }
 
@@ -493,6 +496,7 @@
 
     if (state === "signedIn") {
       showInviteClaiming();
+      post("retry-claim");
       return;
     }
 
@@ -518,10 +522,12 @@
   }
 
   function showInviteVerified() {
+    clearClaimTimer();
     inviteFlow = "verified";
 
     if (currentAuthState() === "signedIn" || access.signedIn) {
       showInviteClaiming();
+      post("retry-claim");
       return;
     }
 
@@ -535,7 +541,7 @@
 
     const copy = document.createElement("span");
     copy.textContent =
-      " Ahora puedes activar tu acceso como desarrollador. Inicia sesión con tu cuenta Nexo Group.";
+      " Ahora inicia sesión con tu cuenta Nexo Group. El código se volverá a comprobar antes de asignar el acceso.";
 
     success.append(strong, copy);
 
@@ -554,18 +560,27 @@
   }
 
   function showInviteClaiming() {
+    clearClaimTimer();
     inviteFlow = "claiming";
 
     const dialog = dialogShell("Activando acceso", false);
 
     const loading = document.createElement("div");
     loading.className = "r96-access-loading";
-    loading.textContent = "Activando tu acceso como desarrollador…";
+    loading.textContent = "Comprobando la invitación y activando tu acceso…";
 
     dialog.appendChild(loading);
+
+    claimTimer = setTimeout(() => {
+      claimTimer = null;
+      if (inviteFlow === "claiming") {
+        showInviteClaimError("CLAIM_TIMEOUT");
+      }
+    }, 18000);
   }
 
   function showInviteClaimed(data = {}) {
+    clearClaimTimer();
     inviteFlow = "claimed";
 
     if (data.access) {
@@ -589,7 +604,7 @@
 
     const copy = document.createElement("span");
     copy.textContent =
-      " Tu cuenta Nexo quedó vinculada a Rising Games con el rol de desarrollador.";
+      " Tu cuenta Nexo quedó vinculada a Rising Games con el rol correspondiente.";
 
     success.append(strong, copy);
 
@@ -603,6 +618,7 @@
   }
 
   function showInviteClaimError(code) {
+    clearClaimTimer();
     inviteFlow = "error";
 
     const dialog = dialogShell("No se pudo activar el acceso");
@@ -611,7 +627,35 @@
     error.className = "r96-access-error";
     error.textContent = claimErrorMessage(code);
 
-    dialog.appendChild(error);
+    const retryable = [
+      "CLAIM_TIMEOUT",
+      "ACCESS_REFRESH_FAILED",
+      "R96_ACCESS_ACTION_FAILED"
+    ].includes(code);
+
+    if (retryable) {
+      const retry = document.createElement("button");
+      retry.className = "r96-invite-primary";
+      retry.type = "button";
+      retry.textContent = "Reintentar activación";
+      retry.addEventListener("click", () => {
+        showInviteClaiming();
+        post("retry-claim");
+      });
+      dialog.append(error, retry);
+      return;
+    }
+
+    const restart = document.createElement("button");
+    restart.className = "r96-invite-primary";
+    restart.type = "button";
+    restart.textContent = "Volver a validar código";
+    restart.addEventListener("click", () => {
+      post("reset-invite");
+      showInviteEntry();
+    });
+
+    dialog.append(error, restart);
   }
 
   function newRequestId() {
@@ -694,6 +738,7 @@
 
       if (resumeVerifiedInvite) {
         showInviteClaiming();
+        post("retry-claim");
       }
       return;
     }
@@ -714,7 +759,7 @@
     }
 
     if (message.type === "invite-entry") {
-      if (inviteFlow === "idle") {
+      if (["idle", "entry", "error"].includes(inviteFlow)) {
         showInviteEntry();
       }
       return;
