@@ -19,9 +19,6 @@
     isWonder: false
   };
 
-  let inviteTimer = null;
-  let inviteFlow = "idle";
-
   function ensureStyle() {
     if (document.getElementById("r96-access-ui-style")) return;
 
@@ -104,8 +101,7 @@
         line-height:1.55;
         box-sizing:border-box;
       }
-      .r96-access-copy,
-      .r96-invite-primary{
+      .r96-access-copy{
         width:100%;
         min-height:44px;
         margin-top:10px;
@@ -117,15 +113,6 @@
         font:inherit;
         font-weight:800;
         cursor:pointer;
-      }
-      .r96-invite-primary{
-        background:var(--r96-accent);
-        color:#071018;
-        border-color:transparent;
-      }
-      .r96-invite-primary:disabled{
-        opacity:.58;
-        cursor:default;
       }
       .r96-access-note{
         margin-top:16px;
@@ -140,14 +127,11 @@
         font-weight:800;
       }
       .r96-access-error{
-        margin-top:14px;
-        padding:11px 12px;
+        margin-top:16px;
+        padding:12px;
         border:1px solid var(--r96-line);
         border-radius:12px;
         background:var(--r96-panel);
-        color:var(--r96-text);
-        line-height:1.4;
-        font-size:.86rem;
       }
       .r96-access-copy-status{
         min-height:20px;
@@ -155,45 +139,6 @@
         color:var(--r96-accent);
         font-size:.78rem;
         font-weight:800;
-      }
-      .r96-invite-code-label{
-        display:block;
-        margin-top:18px;
-        margin-bottom:7px;
-        color:var(--r96-muted);
-        font-size:.78rem;
-        font-weight:800;
-      }
-      .r96-invite-code-input{
-        width:100%;
-        box-sizing:border-box;
-        border:1px solid var(--r96-line);
-        border-radius:12px;
-        background:var(--r96-panel);
-        color:var(--r96-text);
-        padding:13px 14px;
-        font:inherit;
-        font-size:1rem;
-        font-weight:900;
-        letter-spacing:.12em;
-        text-transform:uppercase;
-        outline:none;
-      }
-      .r96-invite-code-input:focus{
-        border-color:var(--r96-accent);
-      }
-      .r96-invite-success{
-        margin-top:16px;
-        padding:14px;
-        border:1px solid var(--r96-line);
-        border-radius:14px;
-        background:var(--r96-panel);
-        line-height:1.5;
-      }
-      .r96-invite-success strong{
-        display:block;
-        margin-bottom:5px;
-        color:var(--r96-text);
       }
       @media(max-width:560px){
         .r96-access-dialog{padding:18px}
@@ -214,7 +159,7 @@
     document.getElementById(DIALOG_ID)?.remove();
   }
 
-  function dialogShell(titleText = "Invitación de desarrollador", closable = true) {
+  function dialogShell() {
     ensureStyle();
     removeDialog();
 
@@ -234,43 +179,26 @@
     const titleWrap = document.createElement("div");
     const title = document.createElement("h2");
     title.id = "r96-access-dialog-title";
-    title.textContent = titleText;
+    title.textContent = "Invitación de desarrollador";
     titleWrap.appendChild(title);
 
-    head.appendChild(titleWrap);
+    const close = document.createElement("button");
+    close.className = "r96-access-dialog-close";
+    close.type = "button";
+    close.textContent = "×";
+    close.setAttribute("aria-label", "Cerrar");
+    close.addEventListener("click", removeDialog);
 
-    if (closable) {
-      const close = document.createElement("button");
-      close.className = "r96-access-dialog-close";
-      close.type = "button";
-      close.textContent = "×";
-      close.setAttribute("aria-label", "Cerrar");
-      close.addEventListener("click", removeDialog);
-      head.appendChild(close);
-    }
-
+    head.append(titleWrap, close);
     dialog.appendChild(head);
     backdrop.appendChild(dialog);
     document.body.appendChild(backdrop);
 
-    if (closable) {
-      backdrop.addEventListener("click", (event) => {
-        if (event.target === backdrop) removeDialog();
-      });
-    }
+    backdrop.addEventListener("click", (event) => {
+      if (event.target === backdrop) removeDialog();
+    });
 
     return dialog;
-  }
-
-  function post(type, payload = {}) {
-    if (window.parent === window) return;
-
-    window.parent.postMessage({
-      source: SOURCE_UI,
-      protocol: PROTOCOL,
-      type,
-      ...payload
-    }, HOST_ORIGIN);
   }
 
   function showLoading() {
@@ -352,7 +280,11 @@
     dialog.append(intro, text, copy, status, expires, security);
   }
 
-  function generationErrorMessage(code) {
+  function showError(code) {
+    const dialog = dialogShell();
+    const error = document.createElement("div");
+    error.className = "r96-access-error";
+
     const messages = {
       AUTH_REQUIRED: "La sesión Nexo no está disponible.",
       WONDER_REQUIRED: "Esta cuenta ya no tiene permiso Wonder para crear invitaciones.",
@@ -362,300 +294,11 @@
       CAPABILITY_INVALID: "La autorización temporal de esta página ya no es válida. Actualiza la página.",
       CAPABILITY_EXPIRED: "La autorización temporal de esta página expiró. Actualiza la página.",
       INVITE_CREATE_TIMEOUT: "La invitación tardó demasiado en responder. Vuelve a intentarlo.",
-      INVITE_CREATE_FAILED: "No se pudo crear la invitación.",
-      R96_ACCESS_ACTION_FAILED: "No se pudo completar la acción de acceso."
+      INVITE_CREATE_FAILED: "No se pudo crear la invitación."
     };
 
-    return messages[code] || messages.INVITE_CREATE_FAILED;
-  }
-
-  function showGenerationError(code) {
-    const dialog = dialogShell();
-    const error = document.createElement("div");
-    error.className = "r96-access-error";
-    error.textContent = generationErrorMessage(code);
+    error.textContent = messages[code] || messages.INVITE_CREATE_FAILED;
     dialog.appendChild(error);
-  }
-
-  function inviteEntryErrorMessage(code) {
-    const messages = {
-      INVITE_NOT_FOUND: "Este enlace de invitación no es válido.",
-      INVITE_CODE_INVALID: "El código no es correcto. Revísalo e inténtalo otra vez.",
-      INVITE_ALREADY_USED: "Esta invitación ya fue utilizada.",
-      INVITE_NOT_ACTIVE: "Esta invitación ya no está activa.",
-      INVITE_EXPIRED: "Esta invitación expiró.",
-      INVITE_VERIFY_FAILED: "No se pudo verificar la invitación."
-    };
-
-    return messages[code] || messages.INVITE_VERIFY_FAILED;
-  }
-
-  function claimErrorMessage(code) {
-    const messages = {
-      CLAIM_TIMEOUT: "Rising no recibió una respuesta a tiempo. Puedes reintentar sin volver a iniciar sesión.",
-      ACCESS_REFRESH_FAILED: "No se pudo renovar la autorización de esta sesión. Vuelve a intentar la activación.",
-      INVITE_NOT_FOUND: "No se encontró la invitación.",
-      INVITE_ALREADY_USED: "Esta invitación ya fue utilizada.",
-      INVITE_NOT_ACTIVE: "Esta invitación ya no está activa.",
-      INVITE_EXPIRED: "La invitación expiró.",
-      INVITE_CODE_INVALID: "El código dejó de ser válido. Vuelve a ingresarlo.",
-      INVITE_IN_PROGRESS: "Esta invitación está siendo activada por otra sesión.",
-      R96_ACCESS_ACTION_FAILED: "No se pudo activar el acceso de desarrollador."
-    };
-
-    return messages[code] || messages.R96_ACCESS_ACTION_FAILED;
-  }
-
-  function clearClaimTimer() {
-    if (!claimTimer) return;
-    clearTimeout(claimTimer);
-    claimTimer = null;
-  }
-
-  function showInviteEntry(errorCode = "") {
-    clearClaimTimer();
-    inviteFlow = "entry";
-
-    const dialog = dialogShell("Bienvenido a Rising Games", false);
-
-    const intro = document.createElement("p");
-    intro.textContent =
-      "Eres un desarrollador invitado. Ingresa el código que recibiste junto con este enlace para continuar.";
-
-    const label = document.createElement("label");
-    label.className = "r96-invite-code-label";
-    label.setAttribute("for", "r96-invite-code");
-    label.textContent = "Código de invitación";
-
-    const input = document.createElement("input");
-    input.id = "r96-invite-code";
-    input.className = "r96-invite-code-input";
-    input.type = "text";
-    input.inputMode = "text";
-    input.autocomplete = "one-time-code";
-    input.maxLength = 9;
-    input.placeholder = "ABCD-1234";
-    input.setAttribute("aria-label", "Código de invitación");
-
-    const submit = document.createElement("button");
-    submit.className = "r96-invite-primary";
-    submit.type = "button";
-    submit.textContent = "Validar código";
-
-    const feedback = document.createElement("div");
-    feedback.setAttribute("aria-live", "polite");
-
-    if (errorCode) {
-      feedback.className = "r96-access-error";
-      feedback.textContent = inviteEntryErrorMessage(errorCode);
-    }
-
-    input.addEventListener("input", () => {
-      const raw = input.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
-      input.value = raw.length > 4
-        ? raw.slice(0, 4) + "-" + raw.slice(4)
-        : raw;
-    });
-
-    const verify = () => {
-      const code = input.value.trim();
-      if (!code) {
-        feedback.className = "r96-access-error";
-        feedback.textContent = "Ingresa el código de invitación.";
-        input.focus();
-        return;
-      }
-
-      submit.disabled = true;
-      submit.textContent = "Validando…";
-      feedback.className = "";
-      feedback.textContent = "";
-      post("verify-invite", { code });
-    };
-
-    submit.addEventListener("click", verify);
-    input.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        verify();
-      }
-    });
-
-    dialog.append(intro, label, input, submit, feedback);
-    setTimeout(() => input.focus(), 0);
-  }
-
-  function currentAuthState() {
-    return String(
-      document.querySelector(".r96-account-visual")?.dataset?.r96AuthState || ""
-    );
-  }
-
-  function triggerCanonicalLogin() {
-    const state = currentAuthState();
-
-    if (state === "signedIn") {
-      showInviteClaiming();
-      post("retry-claim");
-      return;
-    }
-
-    const login = document.querySelector("#r96-login");
-    const account = document.querySelector(".r96-account-visual");
-    const target = login && !login.disabled
-      ? login
-      : account && !account.disabled
-        ? account
-        : null;
-
-    if (!target) {
-      const status = document.querySelector("#r96-invite-login-status");
-      if (status) {
-        status.textContent =
-          "Espera a que Rising termine de comprobar la sesión y vuelve a pulsar Iniciar sesión.";
-      }
-      return;
-    }
-
-    removeDialog();
-    target.click();
-  }
-
-  function showInviteVerified() {
-    clearClaimTimer();
-    inviteFlow = "verified";
-
-    if (currentAuthState() === "signedIn" || access.signedIn) {
-      showInviteClaiming();
-      post("retry-claim");
-      return;
-    }
-
-    const dialog = dialogShell("Invitación validada", false);
-
-    const success = document.createElement("div");
-    success.className = "r96-invite-success";
-
-    const strong = document.createElement("strong");
-    strong.textContent = "Genial, tu invitación es válida.";
-
-    const copy = document.createElement("span");
-    copy.textContent =
-      " Ahora inicia sesión con tu cuenta Nexo Group. El código se volverá a comprobar antes de asignar el acceso.";
-
-    success.append(strong, copy);
-
-    const login = document.createElement("button");
-    login.className = "r96-invite-primary";
-    login.type = "button";
-    login.textContent = "Iniciar sesión";
-    login.addEventListener("click", triggerCanonicalLogin);
-
-    const status = document.createElement("div");
-    status.id = "r96-invite-login-status";
-    status.className = "r96-access-copy-status";
-    status.setAttribute("aria-live", "polite");
-
-    dialog.append(success, login, status);
-  }
-
-  function showInviteClaiming() {
-    clearClaimTimer();
-    inviteFlow = "claiming";
-
-    const dialog = dialogShell("Activando acceso", false);
-
-    const loading = document.createElement("div");
-    loading.className = "r96-access-loading";
-    loading.textContent = "Comprobando la invitación y activando tu acceso…";
-
-    dialog.appendChild(loading);
-
-    claimTimer = setTimeout(() => {
-      claimTimer = null;
-      if (inviteFlow === "claiming") {
-        showInviteClaimError("CLAIM_TIMEOUT");
-      }
-    }, 18000);
-  }
-
-  function showInviteClaimed(data = {}) {
-    clearClaimTimer();
-    inviteFlow = "claimed";
-
-    if (data.access) {
-      access = {
-        signedIn: data.access.signedIn === true,
-        roleKey: String(data.access.roleKey || "developer"),
-        canInviteDeveloper: data.access.canInviteDeveloper === true,
-        isDeveloper: data.access.isDeveloper === true,
-        isWonder: data.access.isWonder === true
-      };
-      render();
-    }
-
-    const dialog = dialogShell("Acceso activado");
-
-    const success = document.createElement("div");
-    success.className = "r96-invite-success";
-
-    const strong = document.createElement("strong");
-    strong.textContent = "Ya tienes acceso como desarrollador.";
-
-    const copy = document.createElement("span");
-    copy.textContent =
-      " Tu cuenta Nexo quedó vinculada a Rising Games con el rol correspondiente.";
-
-    success.append(strong, copy);
-
-    const close = document.createElement("button");
-    close.className = "r96-invite-primary";
-    close.type = "button";
-    close.textContent = "Continuar";
-    close.addEventListener("click", removeDialog);
-
-    dialog.append(success, close);
-  }
-
-  function showInviteClaimError(code) {
-    clearClaimTimer();
-    inviteFlow = "error";
-
-    const dialog = dialogShell("No se pudo activar el acceso");
-
-    const error = document.createElement("div");
-    error.className = "r96-access-error";
-    error.textContent = claimErrorMessage(code);
-
-    const retryable = [
-      "CLAIM_TIMEOUT",
-      "ACCESS_REFRESH_FAILED",
-      "R96_ACCESS_ACTION_FAILED"
-    ].includes(code);
-
-    if (retryable) {
-      const retry = document.createElement("button");
-      retry.className = "r96-invite-primary";
-      retry.type = "button";
-      retry.textContent = "Reintentar activación";
-      retry.addEventListener("click", () => {
-        showInviteClaiming();
-        post("retry-claim");
-      });
-      dialog.append(error, retry);
-      return;
-    }
-
-    const restart = document.createElement("button");
-    restart.className = "r96-invite-primary";
-    restart.type = "button";
-    restart.textContent = "Volver a validar código";
-    restart.addEventListener("click", () => {
-      post("reset-invite");
-      showInviteEntry();
-    });
-
-    dialog.append(error, restart);
   }
 
   function newRequestId() {
@@ -666,6 +309,19 @@
     return Array.from(bytes, (value) => value.toString(16).padStart(2, "0")).join("");
   }
 
+  function post(type, payload = {}) {
+    if (window.parent === window) return;
+
+    window.parent.postMessage({
+      source: SOURCE_UI,
+      protocol: PROTOCOL,
+      type,
+      ...payload
+    }, HOST_ORIGIN);
+  }
+
+  let inviteTimer = null;
+
   function requestInvitation() {
     if (access.isWonder !== true || access.canInviteDeveloper !== true) return;
 
@@ -674,7 +330,7 @@
 
     if (inviteTimer) clearTimeout(inviteTimer);
     inviteTimer = setTimeout(() => {
-      showGenerationError("INVITE_CREATE_TIMEOUT");
+      showError("INVITE_CREATE_TIMEOUT");
       inviteTimer = null;
     }, 12000);
 
@@ -724,9 +380,6 @@
 
     if (message.type === "access") {
       const data = message.data || {};
-      const resumeVerifiedInvite =
-        inviteFlow === "verified" && data.signedIn === true;
-
       access = {
         signedIn: data.signedIn === true,
         roleKey: String(data.roleKey || "visitor"),
@@ -735,11 +388,6 @@
         isWonder: data.isWonder === true
       };
       render();
-
-      if (resumeVerifiedInvite) {
-        showInviteClaiming();
-        post("retry-claim");
-      }
       return;
     }
 
@@ -753,40 +401,8 @@
       if (data.ok === true) {
         showInvitation(data);
       } else {
-        showGenerationError(String(data.error || "INVITE_CREATE_FAILED"));
+        showError(String(data.error || "INVITE_CREATE_FAILED"));
       }
-      return;
-    }
-
-    if (message.type === "invite-entry") {
-      if (["idle", "entry", "error"].includes(inviteFlow)) {
-        showInviteEntry();
-      }
-      return;
-    }
-
-    if (message.type === "invite-verify-error") {
-      showInviteEntry(String(message.data?.error || "INVITE_VERIFY_FAILED"));
-      return;
-    }
-
-    if (message.type === "invite-verified") {
-      showInviteVerified();
-      return;
-    }
-
-    if (message.type === "invite-claiming") {
-      showInviteClaiming();
-      return;
-    }
-
-    if (message.type === "invite-claimed") {
-      showInviteClaimed(message.data || {});
-      return;
-    }
-
-    if (message.type === "invite-claim-error") {
-      showInviteClaimError(String(message.data?.error || "R96_ACCESS_ACTION_FAILED"));
     }
   });
 
