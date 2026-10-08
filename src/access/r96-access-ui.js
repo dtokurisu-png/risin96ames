@@ -357,7 +357,7 @@
 
     const messages = {
       AUTH_REQUIRED: "La sesión Nexo no está disponible.",
-      WONDER_REQUIRED: "Esta cuenta ya no tiene permiso Wonder para crear invitaciones.",
+      INVITE_PERMISSION_REQUIRED: "Esta cuenta no tiene permiso para crear invitaciones de desarrollador.",
       INVALID_REQUEST_ID: "La solicitud de invitación no fue válida.",
       REQUEST_ALREADY_USED: "Esta solicitud ya fue procesada.",
       ACTION_CAPABILITY_MISSING: "Rising todavía no terminó de preparar esta acción. Actualiza la página y vuelve a intentarlo.",
@@ -393,7 +393,7 @@
   let inviteTimer = null;
 
   function requestInvitation() {
-    if (access.isWonder !== true || access.canInviteDeveloper !== true) return;
+    if (access.canInviteDeveloper !== true) return;
 
     closeMenu();
     showLoading();
@@ -418,7 +418,7 @@
 
     let button = document.getElementById(BUTTON_ID);
 
-    if (access.isWonder !== true) {
+    if (access.canInviteDeveloper !== true) {
       button?.remove();
       return;
     }
