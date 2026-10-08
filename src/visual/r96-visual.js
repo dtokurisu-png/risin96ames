@@ -73,5 +73,19 @@
   accessScript.dataset.r96AccessUi = "1";
   document.head.appendChild(accessScript);
 
+
+  const gameCarousel = document.querySelector("#games .r96-carousel");
+  if (gameCarousel) {
+    // Static cards are design templates only; the live catalog owns this container.
+    gameCarousel.replaceChildren();
+    gameCarousel.hidden = true;
+  }
+
+  const gamesScript = document.createElement("script");
+  gamesScript.src = "./src/games/r96-games-ui.js?v=1.0.0";
+  gamesScript.defer = true;
+  gamesScript.dataset.r96GamesUi = "1";
+  document.head.appendChild(gamesScript);
+
 })();
 
