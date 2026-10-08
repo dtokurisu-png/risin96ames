@@ -105,7 +105,7 @@
     return {
       signedIn: roleKey !== "visitor",
       roleKey,
-      canInviteDeveloper: roleKey === "wonder",
+      canInviteDeveloper: roleKey === "wonder" || roleKey === "developer",
       isDeveloper: roleKey === "wonder" || roleKey === "developer",
       isWonder: roleKey === "wonder"
     };
