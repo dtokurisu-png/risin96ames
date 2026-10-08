@@ -19,6 +19,76 @@
     isWonder: false
   };
 
+  function uiLanguage() {
+    const lang = String(document.documentElement.lang || "es")
+      .trim()
+      .toLowerCase();
+    return lang.startsWith("en") ? "en" : "es";
+  }
+
+  function roleAccountCopy(roleKey) {
+    const lang = uiLanguage();
+
+    if (lang === "en") {
+      if (roleKey === "wonder") return "Nexo Group account — Wonder";
+      if (roleKey === "developer") return "Nexo Group account — Developer";
+      if (roleKey === "member") return "Nexo Group account — Guest";
+      return "";
+    }
+
+    if (roleKey === "wonder") return "Cuenta Nexo Group — Wonder";
+    if (roleKey === "developer") return "Cuenta Nexo Group — Desarrollador";
+    if (roleKey === "member") return "Cuenta Nexo Group — Invitado";
+    return "";
+  }
+
+  function syncAccountRoleLabel() {
+    const account = document.querySelector(".r96-account-visual");
+    const subtitle = account?.querySelector(".r96-account-copy small");
+
+    if (!account || !subtitle) return;
+    if (account.dataset.r96AuthState !== "signedIn") return;
+    if (access.signedIn !== true) return;
+
+    const roleKey = String(access.roleKey || "member").toLowerCase();
+    const label = roleAccountCopy(roleKey);
+    if (!label) return;
+
+    account.dataset.r96AccessRole = roleKey;
+
+    if (subtitle.textContent !== label) {
+      subtitle.textContent = label;
+    }
+  }
+
+  function installAccountRoleObserver() {
+    const account = document.querySelector(".r96-account-visual");
+    if (!account || account.dataset.r96RoleObserver === "1") return;
+
+    account.dataset.r96RoleObserver = "1";
+
+    const observer = new MutationObserver(() => {
+      syncAccountRoleLabel();
+    });
+
+    observer.observe(account, {
+      attributes: true,
+      attributeFilter: ["data-r96-auth-state"],
+      childList: true,
+      subtree: true,
+      characterData: true
+    });
+
+    const langObserver = new MutationObserver(() => {
+      syncAccountRoleLabel();
+    });
+
+    langObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["lang"]
+    });
+  }
+
   function ensureStyle() {
     if (document.getElementById("r96-access-ui-style")) return;
 
@@ -340,6 +410,9 @@
   }
 
   function render() {
+    installAccountRoleObserver();
+    syncAccountRoleLabel();
+
     const panel = document.querySelector("#r96-menu-panel");
     if (!panel) return;
 
@@ -388,6 +461,7 @@
         isWonder: data.isWonder === true
       };
       render();
+      syncAccountRoleLabel();
       return;
     }
 
@@ -406,6 +480,7 @@
     }
   });
 
+  installAccountRoleObserver();
   render();
   postReady();
 
