@@ -816,13 +816,6 @@
     });
   }
 
-  function base64Utf8(value) {
-    const bytes = new TextEncoder().encode(String(value || ""));
-    let binary = "";
-    for (const byte of bytes) binary += String.fromCharCode(byte);
-    return btoa(binary);
-  }
-
   function directUpload(prepared, file, onProgress, control) {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
@@ -857,6 +850,7 @@
         }
 
         onProgress(1);
+
         resolve({
           ticket:prepared.ticket,
           fileId
@@ -865,165 +859,6 @@
 
       xhr.send(file);
     });
-  }
-
-  function tusPatch(location, chunk, offset, total, onProgress, control) {
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      control.xhr = xhr;
-
-      xhr.open("PATCH", location, true);
-      xhr.setRequestHeader("Tus-Resumable", "1.0.0");
-      xhr.setRequestHeader("Upload-Offset", String(offset));
-      xhr.setRequestHeader(
-        "Content-Type",
-        "application/offset+octet-stream"
-      );
-
-      xhr.upload.onprogress = event => {
-        if (!event.lengthComputable) return;
-        onProgress(
-          Math.min(
-            0.99,
-            (offset + event.loaded) / Math.max(1, total)
-          )
-        );
-      };
-
-      xhr.onerror = () => reject(new Error("UPLOAD_FAILED"));
-      xhr.onabort = () => reject(new Error("UPLOAD_CANCELLED"));
-      xhr.onload = () => {
-        if (xhr.status < 200 || xhr.status >= 300) {
-          reject(new Error("UPLOAD_FAILED"));
-          return;
-        }
-
-        const reported = Number(
-          xhr.getResponseHeader("Upload-Offset")
-        );
-
-        resolve(
-          Number.isFinite(reported)
-            ? reported
-            : offset + chunk.size
-        );
-      };
-
-      xhr.send(chunk);
-    });
-  }
-
-  async function tusOffset(location, control) {
-    const response = await fetch(location, {
-      method:"HEAD",
-      headers:{"Tus-Resumable":"1.0.0"},
-      signal:control.controller.signal
-    });
-
-    if (!response.ok) throw new Error("UPLOAD_FAILED");
-
-    const offset = Number(response.headers.get("Upload-Offset"));
-    return Number.isFinite(offset) ? offset : 0;
-  }
-
-  async function tusUpload(prepared, file, onProgress, control) {
-    const metadata = [
-      "filename " + base64Utf8(prepared.fileName || file.name),
-      "contentType " + base64Utf8(
-        prepared.mimeType || file.type || "application/octet-stream"
-      ),
-      "token " + base64Utf8(prepared.uploadToken)
-    ].join(",");
-
-    const createResponse = await fetch(prepared.uploadUrl, {
-      method:"POST",
-      headers:{
-        "Tus-Resumable":"1.0.0",
-        "Upload-Length":String(file.size),
-        "Upload-Metadata":metadata
-      },
-      signal:control.controller.signal
-    });
-
-    if (!createResponse.ok) throw new Error("UPLOAD_FAILED");
-
-    const locationHeader = createResponse.headers.get("Location");
-    if (!locationHeader) throw new Error("UPLOAD_FAILED");
-
-    const location = new URL(
-      locationHeader,
-      prepared.uploadUrl
-    ).href;
-
-    let offset = 0;
-    const chunkSize = 8 * 1024 * 1024;
-
-    while (offset < file.size) {
-      if (control.cancelled) throw new Error("UPLOAD_CANCELLED");
-
-      const end = Math.min(file.size, offset + chunkSize);
-      const chunk = file.slice(offset, end);
-      let attempt = 0;
-
-      while (true) {
-        try {
-          offset = await tusPatch(
-            location,
-            chunk,
-            offset,
-            file.size,
-            onProgress,
-            control
-          );
-          break;
-        } catch (error) {
-          if (control.cancelled || clean(error?.message) === "UPLOAD_CANCELLED") {
-            throw new Error("UPLOAD_CANCELLED");
-          }
-
-          attempt += 1;
-          if (attempt >= 3) throw error;
-
-          await new Promise(resolve =>
-            setTimeout(resolve, 500 * attempt)
-          );
-
-          offset = await tusOffset(location, control);
-        }
-      }
-    }
-
-    onProgress(0.99);
-
-    const base = clean(prepared.uploadUrl).replace(/\/+$/, "");
-    const finalizeUrl = new URL(
-      base + "/" + encodeURIComponent(prepared.uploadToken)
-    );
-    finalizeUrl.searchParams.set(
-      "filename",
-      prepared.fileName || file.name
-    );
-
-    const finalize = await fetch(finalizeUrl.href, {
-      method:"PUT",
-      headers:{"Content-Type":"application/json"},
-      body:"{}",
-      signal:control.controller.signal
-    });
-
-    const payload = await finalize.json().catch(() => null);
-    const fileId = clean(payload?.file?.id || payload?.file?._id);
-
-    if (!finalize.ok || !fileId) {
-      throw new Error("UPLOAD_FAILED");
-    }
-
-    onProgress(1);
-
-    return {
-      ticket:prepared.ticket,
-      fileId
-    };
   }
 
   async function uploadFile(kind, file, onProgress, control) {
@@ -1039,19 +874,18 @@
     const uploadUrl = clean(prepared.uploadUrl);
     if (!uploadUrl) throw new Error("UPLOAD_PREPARE_FAILED");
 
-    if (clean(prepared.uploadProtocol).toUpperCase() === "TUS") {
-      if (!clean(prepared.uploadToken)) {
-        throw new Error("UPLOAD_PREPARE_FAILED");
-      }
-      return tusUpload(prepared, file, onProgress, control);
-    }
-
     return directUpload(prepared, file, onProgress, control);
   }
 
   function errorMessage(code) {
     const messagesEs = {
       AUTH_REQUIRED:"Inicia sesión con tu cuenta Nexo Group.",
+      ACTION_CAPABILITY_MISSING:"La autorización de desarrollador no está disponible. Actualiza la página.",
+      GAME_CAPABILITY_BUSY:"La autorización de publicación está ocupada. Intenta de nuevo.",
+      GAME_CAPABILITY_TIMEOUT:"La autorización de publicación tardó demasiado. Intenta de nuevo.",
+      GAME_CAPABILITY_CREATE_FAILED:"No se pudo preparar la autorización para publicar.",
+      GAME_CAPABILITY_INVALID:"La autorización para publicar ya no es válida. Actualiza la página.",
+      GAME_CAPABILITY_EXPIRED:"La autorización para publicar expiró. Actualiza la página.",
       DEVELOPER_REQUIRED:"Esta cuenta no tiene permisos de desarrollador.",
       PREVIEW_TYPE_INVALID:"La imagen debe ser PNG, JPG o WEBP.",
       PREVIEW_TOO_LARGE:"La imagen supera el límite permitido.",
@@ -1075,6 +909,12 @@
 
     const messagesEn = {
       AUTH_REQUIRED:"Sign in with your Nexo Group account.",
+      ACTION_CAPABILITY_MISSING:"Developer authorization is unavailable. Refresh the page.",
+      GAME_CAPABILITY_BUSY:"Publishing authorization is busy. Try again.",
+      GAME_CAPABILITY_TIMEOUT:"Publishing authorization took too long. Try again.",
+      GAME_CAPABILITY_CREATE_FAILED:"Publishing authorization could not be prepared.",
+      GAME_CAPABILITY_INVALID:"Publishing authorization is no longer valid. Refresh the page.",
+      GAME_CAPABILITY_EXPIRED:"Publishing authorization expired. Refresh the page.",
       DEVELOPER_REQUIRED:"This account does not have developer permissions.",
       PREVIEW_TYPE_INVALID:"The preview must be PNG, JPG, or WEBP.",
       PREVIEW_TOO_LARGE:"The preview image is too large.",
