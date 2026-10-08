@@ -62,6 +62,7 @@
         font-weight:750;
       }
       .r96-game-thumb{
+        position:relative;
         background:linear-gradient(140deg,#071426,#101932);
       }
       .r96-game-thumb.r96-has-preview{
@@ -282,6 +283,159 @@
         cursor:pointer;
       }
       .r96-game-submit:disabled{opacity:.58;cursor:default}
+      .r96-upload-state{
+        display:grid;
+        gap:7px;
+        margin-top:3px;
+        padding:10px 11px;
+        border:1px solid var(--r96-line);
+        border-radius:11px;
+        background:color-mix(in srgb,var(--r96-panel) 82%,transparent);
+      }
+      .r96-upload-state[hidden]{display:none}
+      .r96-upload-top{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:10px;
+        color:var(--r96-muted);
+        font-size:.7rem;
+        font-weight:800;
+      }
+      .r96-upload-name{
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+      }
+      .r96-upload-percent{flex:0 0 auto}
+      .r96-upload-track{
+        height:8px;
+        overflow:hidden;
+        border-radius:999px;
+        background:color-mix(in srgb,var(--r96-line) 70%,transparent);
+      }
+      .r96-upload-bar{
+        width:0%;
+        height:100%;
+        border-radius:inherit;
+        background:var(--r96-accent);
+        transition:width .12s linear;
+      }
+      .r96-upload-message{
+        min-height:1.15em;
+        color:var(--r96-muted);
+        font-size:.7rem;
+        font-weight:750;
+      }
+      .r96-upload-state[data-state="done"] .r96-upload-message{
+        color:var(--r96-accent);
+      }
+      .r96-upload-state[data-state="error"] .r96-upload-message{
+        color:#ffb6b6;
+      }
+      .r96-thumb-edit{
+        position:absolute;
+        right:12px;
+        top:12px;
+        z-index:3;
+        min-height:30px;
+        padding:0 10px;
+        border:1px solid rgba(255,255,255,.34);
+        border-radius:999px;
+        background:rgba(4,8,18,.72);
+        color:#fff;
+        font:inherit;
+        font-size:.68rem;
+        font-weight:900;
+        cursor:pointer;
+        backdrop-filter:blur(8px);
+      }
+      .r96-frame-editor-backdrop{
+        position:fixed;
+        inset:0;
+        z-index:2147483200;
+        display:grid;
+        place-items:center;
+        padding:20px;
+        background:rgba(0,0,0,.72);
+        backdrop-filter:blur(10px);
+      }
+      .r96-frame-editor{
+        width:min(720px,100%);
+        border:1px solid var(--r96-line);
+        border-radius:20px;
+        background:var(--r96-bg-2);
+        color:var(--r96-text);
+        padding:18px;
+        box-shadow:0 30px 90px rgba(0,0,0,.48);
+      }
+      .r96-frame-editor h3{margin:0 0 8px}
+      .r96-frame-editor p{
+        margin:0 0 14px;
+        color:var(--r96-muted);
+        font-size:.78rem;
+      }
+      .r96-frame-canvas{
+        position:relative;
+        width:100%;
+        aspect-ratio:16/9;
+        overflow:hidden;
+        border:1px solid var(--r96-line);
+        border-radius:16px;
+        background-repeat:no-repeat;
+        background-size:cover;
+        cursor:grab;
+        touch-action:none;
+        user-select:none;
+      }
+      .r96-frame-canvas:active{cursor:grabbing}
+      .r96-frame-crosshair{
+        position:absolute;
+        left:50%;
+        top:50%;
+        width:26px;
+        height:26px;
+        transform:translate(-50%,-50%);
+        border:1px solid rgba(255,255,255,.72);
+        border-radius:50%;
+        pointer-events:none;
+        box-shadow:0 0 0 9999px rgba(0,0,0,.06);
+      }
+      .r96-frame-controls{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:12px;
+        margin-top:14px;
+      }
+      .r96-frame-control{
+        display:grid;
+        gap:6px;
+        color:var(--r96-muted);
+        font-size:.72rem;
+        font-weight:800;
+      }
+      .r96-frame-actions{
+        display:flex;
+        justify-content:flex-end;
+        gap:9px;
+        margin-top:16px;
+      }
+      .r96-frame-actions button{
+        min-height:38px;
+        padding:0 14px;
+        border:1px solid var(--r96-line);
+        border-radius:10px;
+        background:var(--r96-panel);
+        color:var(--r96-text);
+        font:inherit;
+        font-weight:850;
+        cursor:pointer;
+      }
+      .r96-frame-actions .r96-frame-apply{
+        border:0;
+        background:var(--r96-accent);
+        color:#071017;
+      }
       .r96-game-feedback{
         min-height:22px;
         color:var(--r96-muted);
@@ -319,11 +473,21 @@
     if (!raw) return "";
     try {
       const url = new URL(raw);
-      if (url.protocol === "https:" || url.protocol === "http:") {
+      if (
+        url.protocol === "https:" ||
+        url.protocol === "http:" ||
+        url.protocol === "blob:"
+      ) {
         return url.href;
       }
     } catch (_) {}
     return "";
+  }
+
+  function clampPercent(value, fallback = 50) {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return fallback;
+    return Math.max(0, Math.min(100, number));
   }
 
   function stageLabel(game) {
@@ -431,7 +595,7 @@
     return meta;
   }
 
-  function gameCard(game, index, previewMode = false) {
+  function gameCard(game, index, previewMode = false, onEditPreview = null) {
     const article = document.createElement("article");
     article.className = "r96-card";
     article.dataset.r96GameId = clean(game.id);
@@ -446,6 +610,9 @@
         "linear-gradient(rgba(4,8,18,.15),rgba(4,8,18,.32)),url(" +
         JSON.stringify(preview) +
         ")";
+      thumb.style.backgroundPosition =
+        clampPercent(game.previewPositionX) + "% " +
+        clampPercent(game.previewPositionY) + "%";
     }
 
     const code = document.createElement("span");
@@ -457,6 +624,23 @@
     stage.textContent = stageLabel(game);
 
     thumb.append(code, stage);
+
+    if (
+      previewMode &&
+      preview &&
+      typeof onEditPreview === "function"
+    ) {
+      const edit = document.createElement("button");
+      edit.className = "r96-thumb-edit";
+      edit.type = "button";
+      edit.textContent = t("Editar encuadre", "Edit framing");
+      edit.addEventListener("click", event => {
+        event.preventDefault();
+        event.stopPropagation();
+        onEditPreview();
+      });
+      thumb.appendChild(edit);
+    }
 
     const body = document.createElement("div");
     body.className = "r96-card-body";
@@ -632,7 +816,217 @@
     });
   }
 
-  async function uploadFile(kind, file) {
+  function base64Utf8(value) {
+    const bytes = new TextEncoder().encode(String(value || ""));
+    let binary = "";
+    for (const byte of bytes) binary += String.fromCharCode(byte);
+    return btoa(binary);
+  }
+
+  function directUpload(prepared, file, onProgress, control) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      control.xhr = xhr;
+
+      xhr.open("PUT", prepared.uploadUrl, true);
+      xhr.setRequestHeader(
+        "Content-Type",
+        prepared.mimeType || file.type || "application/octet-stream"
+      );
+
+      xhr.upload.onprogress = event => {
+        if (!event.lengthComputable) return;
+        onProgress(event.loaded / event.total);
+      };
+
+      xhr.onerror = () => reject(new Error("UPLOAD_FAILED"));
+      xhr.onabort = () => reject(new Error("UPLOAD_CANCELLED"));
+      xhr.onload = () => {
+        if (xhr.status < 200 || xhr.status >= 300) {
+          reject(new Error("UPLOAD_FAILED"));
+          return;
+        }
+
+        let payload = null;
+        try { payload = JSON.parse(xhr.responseText || "{}"); } catch (_) {}
+
+        const fileId = clean(payload?.file?.id || payload?.file?._id);
+        if (!fileId) {
+          reject(new Error("UPLOAD_FAILED"));
+          return;
+        }
+
+        onProgress(1);
+        resolve({
+          ticket:prepared.ticket,
+          fileId
+        });
+      };
+
+      xhr.send(file);
+    });
+  }
+
+  function tusPatch(location, chunk, offset, total, onProgress, control) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      control.xhr = xhr;
+
+      xhr.open("PATCH", location, true);
+      xhr.setRequestHeader("Tus-Resumable", "1.0.0");
+      xhr.setRequestHeader("Upload-Offset", String(offset));
+      xhr.setRequestHeader(
+        "Content-Type",
+        "application/offset+octet-stream"
+      );
+
+      xhr.upload.onprogress = event => {
+        if (!event.lengthComputable) return;
+        onProgress(
+          Math.min(
+            0.99,
+            (offset + event.loaded) / Math.max(1, total)
+          )
+        );
+      };
+
+      xhr.onerror = () => reject(new Error("UPLOAD_FAILED"));
+      xhr.onabort = () => reject(new Error("UPLOAD_CANCELLED"));
+      xhr.onload = () => {
+        if (xhr.status < 200 || xhr.status >= 300) {
+          reject(new Error("UPLOAD_FAILED"));
+          return;
+        }
+
+        const reported = Number(
+          xhr.getResponseHeader("Upload-Offset")
+        );
+
+        resolve(
+          Number.isFinite(reported)
+            ? reported
+            : offset + chunk.size
+        );
+      };
+
+      xhr.send(chunk);
+    });
+  }
+
+  async function tusOffset(location, control) {
+    const response = await fetch(location, {
+      method:"HEAD",
+      headers:{"Tus-Resumable":"1.0.0"},
+      signal:control.controller.signal
+    });
+
+    if (!response.ok) throw new Error("UPLOAD_FAILED");
+
+    const offset = Number(response.headers.get("Upload-Offset"));
+    return Number.isFinite(offset) ? offset : 0;
+  }
+
+  async function tusUpload(prepared, file, onProgress, control) {
+    const metadata = [
+      "filename " + base64Utf8(prepared.fileName || file.name),
+      "contentType " + base64Utf8(
+        prepared.mimeType || file.type || "application/octet-stream"
+      ),
+      "token " + base64Utf8(prepared.uploadToken)
+    ].join(",");
+
+    const createResponse = await fetch(prepared.uploadUrl, {
+      method:"POST",
+      headers:{
+        "Tus-Resumable":"1.0.0",
+        "Upload-Length":String(file.size),
+        "Upload-Metadata":metadata
+      },
+      signal:control.controller.signal
+    });
+
+    if (!createResponse.ok) throw new Error("UPLOAD_FAILED");
+
+    const locationHeader = createResponse.headers.get("Location");
+    if (!locationHeader) throw new Error("UPLOAD_FAILED");
+
+    const location = new URL(
+      locationHeader,
+      prepared.uploadUrl
+    ).href;
+
+    let offset = 0;
+    const chunkSize = 8 * 1024 * 1024;
+
+    while (offset < file.size) {
+      if (control.cancelled) throw new Error("UPLOAD_CANCELLED");
+
+      const end = Math.min(file.size, offset + chunkSize);
+      const chunk = file.slice(offset, end);
+      let attempt = 0;
+
+      while (true) {
+        try {
+          offset = await tusPatch(
+            location,
+            chunk,
+            offset,
+            file.size,
+            onProgress,
+            control
+          );
+          break;
+        } catch (error) {
+          if (control.cancelled || clean(error?.message) === "UPLOAD_CANCELLED") {
+            throw new Error("UPLOAD_CANCELLED");
+          }
+
+          attempt += 1;
+          if (attempt >= 3) throw error;
+
+          await new Promise(resolve =>
+            setTimeout(resolve, 500 * attempt)
+          );
+
+          offset = await tusOffset(location, control);
+        }
+      }
+    }
+
+    onProgress(0.99);
+
+    const base = clean(prepared.uploadUrl).replace(/\/+$/, "");
+    const finalizeUrl = new URL(
+      base + "/" + encodeURIComponent(prepared.uploadToken)
+    );
+    finalizeUrl.searchParams.set(
+      "filename",
+      prepared.fileName || file.name
+    );
+
+    const finalize = await fetch(finalizeUrl.href, {
+      method:"PUT",
+      headers:{"Content-Type":"application/json"},
+      body:"{}",
+      signal:control.controller.signal
+    });
+
+    const payload = await finalize.json().catch(() => null);
+    const fileId = clean(payload?.file?.id || payload?.file?._id);
+
+    if (!finalize.ok || !fileId) {
+      throw new Error("UPLOAD_FAILED");
+    }
+
+    onProgress(1);
+
+    return {
+      ticket:prepared.ticket,
+      fileId
+    };
+  }
+
+  async function uploadFile(kind, file, onProgress, control) {
     const prepared = await studioAction("upload.prepare", {
       kind,
       fileName:file.name,
@@ -640,28 +1034,19 @@
       sizeInBytes:file.size
     });
 
+    if (control.cancelled) throw new Error("UPLOAD_CANCELLED");
+
     const uploadUrl = clean(prepared.uploadUrl);
     if (!uploadUrl) throw new Error("UPLOAD_PREPARE_FAILED");
 
-    const response = await fetch(uploadUrl, {
-      method:"PUT",
-      headers:{
-        "Content-Type":prepared.mimeType || file.type || "application/octet-stream"
-      },
-      body:file
-    });
-
-    const payload = await response.json().catch(() => null);
-    const fileId = clean(payload?.file?.id || payload?.file?._id);
-
-    if (!response.ok || !fileId) {
-      throw new Error("UPLOAD_FAILED");
+    if (clean(prepared.uploadProtocol).toUpperCase() === "TUS") {
+      if (!clean(prepared.uploadToken)) {
+        throw new Error("UPLOAD_PREPARE_FAILED");
+      }
+      return tusUpload(prepared, file, onProgress, control);
     }
 
-    return {
-      ticket:prepared.ticket,
-      fileId
-    };
+    return directUpload(prepared, file, onProgress, control);
   }
 
   function errorMessage(code) {
@@ -718,6 +1103,7 @@
   function removeModal() {
     const modal = document.getElementById(MODAL_ID);
     if (!modal) return;
+    try { modal._r96Cleanup?.(); } catch (_) {}
     modal.querySelectorAll("[data-r96-object-url]").forEach(node => {
       try { URL.revokeObjectURL(node.dataset.r96ObjectUrl); } catch (_) {}
     });
@@ -920,6 +1306,58 @@
     build.type = "file";
     build.accept = ".zip,.apk,.exe,.msi,.7z";
 
+    function makeUploadState() {
+      const root = document.createElement("div");
+      root.className = "r96-upload-state";
+      root.hidden = true;
+      root.dataset.state = "idle";
+
+      const top = document.createElement("div");
+      top.className = "r96-upload-top";
+
+      const name = document.createElement("span");
+      name.className = "r96-upload-name";
+
+      const percent = document.createElement("span");
+      percent.className = "r96-upload-percent";
+      percent.textContent = "0%";
+
+      top.append(name, percent);
+
+      const track = document.createElement("div");
+      track.className = "r96-upload-track";
+
+      const bar = document.createElement("div");
+      bar.className = "r96-upload-bar";
+      track.appendChild(bar);
+
+      const message = document.createElement("div");
+      message.className = "r96-upload-message";
+
+      root.append(top, track, message);
+      return {root,name,percent,bar,message};
+    }
+
+    const previewUploadUi = makeUploadState();
+    const buildUploadUi = makeUploadState();
+
+    const previewField = makeField(
+      t("Imagen de preview", "Preview image"),
+      previewInput,
+      t("PNG, JPG o WEBP.", "PNG, JPG, or WEBP.")
+    );
+    previewField.appendChild(previewUploadUi.root);
+
+    const buildField = makeField(
+      t("Build del juego", "Game build"),
+      build,
+      t(
+        "ZIP, APK, EXE, MSI o 7Z. Es obligatorio para Prototype, Build Preview, Slot y Released.",
+        "ZIP, APK, EXE, MSI, or 7Z. Required for Prototype, Build Preview, Slot, and Released."
+      )
+    );
+    buildField.appendChild(buildUploadUi.root);
+
     const feedback = document.createElement("div");
     feedback.className = "r96-game-feedback";
     feedback.setAttribute("aria-live", "polite");
@@ -928,26 +1366,16 @@
     submit.className = "r96-game-submit";
     submit.type = "submit";
     submit.textContent = t("Publicar juego", "Publish game");
+    submit.disabled = true;
 
     form.append(
       makeField(t("Título del juego", "Game title"), titleInput),
-      makeField(
-        t("Imagen de preview", "Preview image"),
-        previewInput,
-        t("PNG, JPG o WEBP.", "PNG, JPG, or WEBP.")
-      ),
+      previewField,
       row,
       tagsField,
       makeField(t("Descripción", "Description"), description),
       makeField(t("Versión inicial", "Initial version"), version),
-      makeField(
-        t("Build del juego", "Game build"),
-        build,
-        t(
-          "ZIP, APK, EXE, MSI o 7Z. Es obligatorio para Prototype, Build Preview, Slot y Released.",
-          "ZIP, APK, EXE, MSI, or 7Z. Required for Prototype, Build Preview, Slot, and Released."
-        )
-      ),
+      buildField,
       feedback,
       submit
     );
@@ -956,6 +1384,175 @@
     previewPanel.className = "r96-game-preview-panel";
 
     let localPreviewUrl = "";
+    let previewPositionX = 50;
+    let previewPositionY = 50;
+
+    const uploads = {
+      preview:{
+        generation:0,
+        status:"idle",
+        file:null,
+        result:null,
+        control:null,
+        ui:previewUploadUi
+      },
+      build:{
+        generation:0,
+        status:"idle",
+        file:null,
+        result:null,
+        control:null,
+        ui:buildUploadUi
+      }
+    };
+
+    function buildRequired() {
+      return ["prototype","build-preview","slot","released"]
+        .includes(stageSelect.value);
+    }
+
+    function cancelUpload(kind) {
+      const state = uploads[kind];
+      if (!state) return;
+
+      state.generation += 1;
+
+      if (state.control) {
+        state.control.cancelled = true;
+        try { state.control.xhr?.abort(); } catch (_) {}
+        try { state.control.controller?.abort(); } catch (_) {}
+      }
+
+      state.control = null;
+      state.status = "idle";
+      state.result = null;
+    }
+
+    function setUploadVisual(kind, stateName, progress = 0, message = "") {
+      const state = uploads[kind];
+      const ui = state.ui;
+      const percent = Math.max(0, Math.min(100, Math.round(progress * 100)));
+
+      ui.root.hidden = !state.file;
+      ui.root.dataset.state = stateName;
+      ui.name.textContent = state.file?.name || "";
+      ui.percent.textContent = percent + "%";
+      ui.bar.style.width = percent + "%";
+      ui.message.textContent = message;
+    }
+
+    function syncSubmit() {
+      const previewReady = uploads.preview.status === "done";
+      const buildSelected = Boolean(uploads.build.file);
+      const buildReady = uploads.build.status === "done";
+      const buildOkay = buildRequired()
+        ? buildReady
+        : (!buildSelected || buildReady);
+
+      submit.disabled = !(previewReady && buildOkay);
+
+      if (!previewReady) {
+        submit.title = t(
+          "Espera a que termine de cargarse la imagen de preview.",
+          "Wait for the preview image to finish uploading."
+        );
+      } else if (!buildOkay) {
+        submit.title = t(
+          "Espera a que termine de cargarse el juego.",
+          "Wait for the game build to finish uploading."
+        );
+      } else {
+        submit.removeAttribute("title");
+      }
+    }
+
+    async function beginUpload(kind, file) {
+      const state = uploads[kind];
+
+      cancelUpload(kind);
+
+      state.file = file;
+      state.status = "preparing";
+      const generation = ++state.generation;
+
+      const control = {
+        cancelled:false,
+        xhr:null,
+        controller:new AbortController()
+      };
+      state.control = control;
+
+      setUploadVisual(
+        kind,
+        "uploading",
+        0,
+        t("Preparando carga…", "Preparing upload…")
+      );
+      syncSubmit();
+
+      try {
+        const result = await uploadFile(
+          kind,
+          file,
+          progress => {
+            if (
+              generation !== state.generation ||
+              control.cancelled
+            ) return;
+
+            state.status = "uploading";
+            setUploadVisual(
+              kind,
+              "uploading",
+              progress,
+              t(
+                "Cargando " + Math.round(progress * 100) + "%…",
+                "Uploading " + Math.round(progress * 100) + "%…"
+              )
+            );
+            syncSubmit();
+          },
+          control
+        );
+
+        if (
+          generation !== state.generation ||
+          control.cancelled
+        ) return;
+
+        state.status = "done";
+        state.result = result;
+        state.control = null;
+
+        setUploadVisual(
+          kind,
+          "done",
+          1,
+          t("Carga completa ✓", "Upload complete ✓")
+        );
+      } catch (error) {
+        if (
+          generation !== state.generation ||
+          control.cancelled ||
+          clean(error?.message) === "UPLOAD_CANCELLED"
+        ) {
+          return;
+        }
+
+        state.status = "error";
+        state.result = null;
+        state.control = null;
+
+        setUploadVisual(
+          kind,
+          "error",
+          0,
+          errorMessage(clean(error?.message || "UPLOAD_FAILED"))
+        );
+      } finally {
+        syncSubmit();
+      }
+    }
 
     function previewData() {
       return {
@@ -966,30 +1563,237 @@
         tags:[...tags],
         description:description.value,
         currentVersion:version.value,
-        previewImage:localPreviewUrl
+        previewImage:localPreviewUrl,
+        previewPositionX,
+        previewPositionY
       };
+    }
+
+    function openFramingEditor() {
+      if (!localPreviewUrl) return;
+
+      const originalX = previewPositionX;
+      const originalY = previewPositionY;
+
+      const editorBackdrop = document.createElement("div");
+      editorBackdrop.className = "r96-frame-editor-backdrop";
+
+      const editor = document.createElement("div");
+      editor.className = "r96-frame-editor";
+
+      const heading = document.createElement("h3");
+      heading.textContent = t("Editar encuadre", "Edit framing");
+
+      const help = document.createElement("p");
+      help.textContent = t(
+        "Arrastra la imagen o usa los controles para elegir qué parte queda centrada en la tarjeta.",
+        "Drag the image or use the controls to choose what stays centered in the card."
+      );
+
+      const canvas = document.createElement("div");
+      canvas.className = "r96-frame-canvas";
+      canvas.style.backgroundImage = "url(" + JSON.stringify(localPreviewUrl) + ")";
+
+      const crosshair = document.createElement("div");
+      crosshair.className = "r96-frame-crosshair";
+      canvas.appendChild(crosshair);
+
+      const controls = document.createElement("div");
+      controls.className = "r96-frame-controls";
+
+      const xWrap = document.createElement("label");
+      xWrap.className = "r96-frame-control";
+      xWrap.appendChild(document.createTextNode(t("Horizontal", "Horizontal")));
+      const xRange = document.createElement("input");
+      xRange.type = "range";
+      xRange.min = "0";
+      xRange.max = "100";
+      xRange.value = String(previewPositionX);
+      xWrap.appendChild(xRange);
+
+      const yWrap = document.createElement("label");
+      yWrap.className = "r96-frame-control";
+      yWrap.appendChild(document.createTextNode(t("Vertical", "Vertical")));
+      const yRange = document.createElement("input");
+      yRange.type = "range";
+      yRange.min = "0";
+      yRange.max = "100";
+      yRange.value = String(previewPositionY);
+      yWrap.appendChild(yRange);
+
+      controls.append(xWrap, yWrap);
+
+      const actions = document.createElement("div");
+      actions.className = "r96-frame-actions";
+
+      const reset = document.createElement("button");
+      reset.type = "button";
+      reset.textContent = t("Centrar", "Center");
+
+      const cancel = document.createElement("button");
+      cancel.type = "button";
+      cancel.textContent = t("Cancelar", "Cancel");
+
+      const apply = document.createElement("button");
+      apply.className = "r96-frame-apply";
+      apply.type = "button";
+      apply.textContent = t("Aplicar", "Apply");
+
+      actions.append(reset, cancel, apply);
+      editor.append(heading, help, canvas, controls, actions);
+      editorBackdrop.appendChild(editor);
+      document.body.appendChild(editorBackdrop);
+
+      function updateFrame() {
+        previewPositionX = clampPercent(previewPositionX);
+        previewPositionY = clampPercent(previewPositionY);
+        canvas.style.backgroundPosition =
+          previewPositionX + "% " + previewPositionY + "%";
+        xRange.value = String(previewPositionX);
+        yRange.value = String(previewPositionY);
+      }
+
+      xRange.addEventListener("input", () => {
+        previewPositionX = Number(xRange.value);
+        updateFrame();
+      });
+      yRange.addEventListener("input", () => {
+        previewPositionY = Number(yRange.value);
+        updateFrame();
+      });
+
+      let dragging = false;
+      let startPointerX = 0;
+      let startPointerY = 0;
+      let startImageX = 50;
+      let startImageY = 50;
+
+      canvas.addEventListener("pointerdown", event => {
+        dragging = true;
+        startPointerX = event.clientX;
+        startPointerY = event.clientY;
+        startImageX = previewPositionX;
+        startImageY = previewPositionY;
+        canvas.setPointerCapture?.(event.pointerId);
+      });
+
+      canvas.addEventListener("pointermove", event => {
+        if (!dragging) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const dx = event.clientX - startPointerX;
+        const dy = event.clientY - startPointerY;
+
+        previewPositionX = clampPercent(
+          startImageX - (dx / Math.max(1, rect.width)) * 100
+        );
+        previewPositionY = clampPercent(
+          startImageY - (dy / Math.max(1, rect.height)) * 100
+        );
+
+        updateFrame();
+      });
+
+      const endDrag = () => { dragging = false; };
+      canvas.addEventListener("pointerup", endDrag);
+      canvas.addEventListener("pointercancel", endDrag);
+
+      reset.addEventListener("click", () => {
+        previewPositionX = 50;
+        previewPositionY = 50;
+        updateFrame();
+      });
+
+      cancel.addEventListener("click", () => {
+        previewPositionX = originalX;
+        previewPositionY = originalY;
+        editorBackdrop.remove();
+        renderPreview();
+      });
+
+      apply.addEventListener("click", () => {
+        editorBackdrop.remove();
+        renderPreview();
+      });
+
+      editorBackdrop.addEventListener("click", event => {
+        if (event.target !== editorBackdrop) return;
+        previewPositionX = originalX;
+        previewPositionY = originalY;
+        editorBackdrop.remove();
+        renderPreview();
+      });
+
+      updateFrame();
     }
 
     function renderPreview() {
       previewPanel.replaceChildren(
-        gameCard(previewData(), 0, true)
+        gameCard(previewData(), 0, true, openFramingEditor)
       );
     }
 
     [titleInput,genreInput,description,version].forEach(input => {
       input.addEventListener("input", renderPreview);
     });
-    stageSelect.addEventListener("change", renderPreview);
+
+    stageSelect.addEventListener("change", () => {
+      renderPreview();
+      syncSubmit();
+    });
 
     previewInput.addEventListener("change", () => {
+      cancelUpload("preview");
+
       if (localPreviewUrl) {
         try { URL.revokeObjectURL(localPreviewUrl); } catch (_) {}
       }
-      localPreviewUrl = previewInput.files?.[0]
-        ? URL.createObjectURL(previewInput.files[0])
+
+      const file = previewInput.files?.[0] || null;
+      previewPositionX = 50;
+      previewPositionY = 50;
+
+      localPreviewUrl = file
+        ? URL.createObjectURL(file)
         : "";
+
+      uploads.preview.file = file;
+      uploads.preview.result = null;
+      uploads.preview.status = file ? "preparing" : "idle";
+
       renderPreview();
+      syncSubmit();
+
+      if (file) beginUpload("preview", file);
     });
+
+    build.addEventListener("change", () => {
+      cancelUpload("build");
+
+      const file = build.files?.[0] || null;
+      uploads.build.file = file;
+      uploads.build.result = null;
+      uploads.build.status = file ? "preparing" : "idle";
+
+      if (!file) {
+        buildUploadUi.root.hidden = true;
+        syncSubmit();
+        return;
+      }
+
+      beginUpload("build", file);
+    });
+
+    backdrop._r96Cleanup = () => {
+      cancelUpload("preview");
+      cancelUpload("build");
+      if (localPreviewUrl) {
+        try { URL.revokeObjectURL(localPreviewUrl); } catch (_) {}
+        localPreviewUrl = "";
+      }
+    };
+
+    syncSubmit();
 
     form.addEventListener("submit", async event => {
       event.preventDefault();
@@ -1003,19 +1807,9 @@
         return;
       }
 
-      const previewFile = previewInput.files?.[0] || null;
-      const buildFile = build.files?.[0] || null;
-      const stageKey = stageSelect.value;
-      const buildRequired = ["prototype","build-preview","slot","released"].includes(stageKey);
-
       if (!clean(titleInput.value)) {
         feedback.dataset.error = "1";
         feedback.textContent = errorMessage("TITLE_REQUIRED");
-        return;
-      }
-      if (!previewFile) {
-        feedback.dataset.error = "1";
-        feedback.textContent = t("Selecciona una imagen de preview.", "Select a preview image.");
         return;
       }
       if (!clean(genreInput.value)) {
@@ -1033,38 +1827,41 @@
         feedback.textContent = errorMessage("VERSION_REQUIRED");
         return;
       }
-      if (buildRequired && !buildFile) {
+      if (uploads.preview.status !== "done" || !uploads.preview.result) {
         feedback.dataset.error = "1";
         feedback.textContent = t(
-          "Esta etapa requiere cargar un build del juego.",
-          "This stage requires a game build."
+          "Espera a que termine de cargarse la imagen de preview.",
+          "Wait for the preview image to finish uploading."
+        );
+        return;
+      }
+      if (
+        (buildRequired() || uploads.build.file) &&
+        (uploads.build.status !== "done" || !uploads.build.result)
+      ) {
+        feedback.dataset.error = "1";
+        feedback.textContent = t(
+          "Espera a que termine de cargarse el juego.",
+          "Wait for the game build to finish uploading."
         );
         return;
       }
 
       submit.disabled = true;
+      feedback.textContent = t("Publicando juego…", "Publishing game…");
 
       try {
-        feedback.textContent = t("Subiendo imagen…", "Uploading preview…");
-        const previewUpload = await uploadFile("preview", previewFile);
-
-        let buildUpload = {};
-        if (buildFile) {
-          feedback.textContent = t("Subiendo build…", "Uploading build…");
-          buildUpload = await uploadFile("build", buildFile);
-        }
-
-        feedback.textContent = t("Publicando juego…", "Publishing game…");
-
         await studioAction("game.create", {
           title:titleInput.value,
-          stageKey,
+          stageKey:stageSelect.value,
           genre:genreInput.value,
           tags,
           description:description.value,
           currentVersion:version.value,
-          previewUpload,
-          buildUpload
+          previewPositionX,
+          previewPositionY,
+          previewUpload:uploads.preview.result,
+          buildUpload:uploads.build.result || {}
         });
 
         feedback.dataset.error = "0";
@@ -1078,8 +1875,7 @@
         feedback.textContent = errorMessage(
           clean(error?.message || "GAMES_ACTION_FAILED")
         );
-      } finally {
-        submit.disabled = false;
+        syncSubmit();
       }
     });
 
