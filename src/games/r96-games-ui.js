@@ -11,6 +11,7 @@
 
   const ADD_BUTTON_ID = "r96-add-game";
   const MODAL_ID = "r96-game-studio-modal";
+  const DETAIL_MODAL_ID = "r96-game-detail-modal";
 
   const carousel = document.querySelector("#games .r96-carousel");
   const titleCopy = document.querySelector("#games .r96-title-row > .r96-copy");
@@ -443,6 +444,237 @@
         line-height:1.45;
       }
       .r96-game-feedback[data-error="1"]{color:#ffb6b6}
+      .r96-game-detail-backdrop{
+        position:fixed;
+        inset:0;
+        z-index:2147482450;
+        display:grid;
+        place-items:center;
+        padding:20px;
+        background:rgba(0,0,0,.72);
+        backdrop-filter:blur(10px);
+      }
+      .r96-game-detail{
+        width:min(1180px,100%);
+        max-height:92vh;
+        overflow:auto;
+        border:1px solid var(--r96-line);
+        border-radius:26px;
+        background:var(--r96-bg-2);
+        color:var(--r96-text);
+        box-shadow:0 34px 100px rgba(0,0,0,.5);
+      }
+      .r96-game-detail-head{
+        position:sticky;
+        top:0;
+        z-index:5;
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap:16px;
+        padding:17px 20px;
+        border-bottom:1px solid var(--r96-line);
+        background:color-mix(in srgb,var(--r96-bg-2) 92%,transparent);
+        backdrop-filter:blur(14px);
+      }
+      .r96-game-detail-head strong{
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+        font-size:.88rem;
+      }
+      .r96-game-detail-close{
+        flex:0 0 auto;
+        width:38px;
+        height:38px;
+        border:1px solid var(--r96-line);
+        border-radius:11px;
+        background:var(--r96-panel);
+        color:var(--r96-text);
+        font:inherit;
+        font-size:1.25rem;
+        cursor:pointer;
+      }
+      .r96-game-detail-hero{
+        position:relative;
+        width:100%;
+        aspect-ratio:16/7;
+        min-height:290px;
+        background:linear-gradient(140deg,#071426,#101932);
+        background-size:cover;
+        background-repeat:no-repeat;
+        background-position:center;
+        overflow:hidden;
+      }
+      .r96-game-detail-hero::after{
+        content:"";
+        position:absolute;
+        inset:0;
+        background:linear-gradient(
+          180deg,
+          rgba(4,8,18,.08) 12%,
+          rgba(4,8,18,.25) 55%,
+          rgba(4,8,18,.88) 100%
+        );
+        pointer-events:none;
+      }
+      .r96-game-detail-hero-copy{
+        position:absolute;
+        z-index:2;
+        left:clamp(20px,4vw,46px);
+        right:clamp(20px,4vw,46px);
+        bottom:clamp(22px,4vw,40px);
+      }
+      .r96-game-detail-stage{
+        display:inline-flex;
+        align-items:center;
+        min-height:30px;
+        padding:0 11px;
+        border:1px solid rgba(255,255,255,.24);
+        border-radius:999px;
+        background:rgba(5,10,20,.65);
+        color:#fff;
+        font-size:.72rem;
+        font-weight:900;
+        backdrop-filter:blur(8px);
+      }
+      .r96-game-detail-title{
+        margin:10px 0 0;
+        color:#fff;
+        font-size:clamp(2rem,4vw,3.8rem);
+        line-height:1;
+        letter-spacing:-.035em;
+      }
+      .r96-game-detail-body{
+        display:grid;
+        grid-template-columns:minmax(0,1.5fr) minmax(280px,.7fr);
+        gap:28px;
+        padding:26px;
+      }
+      .r96-game-detail-main,
+      .r96-game-detail-side{
+        display:grid;
+        align-content:start;
+        gap:22px;
+      }
+      .r96-game-detail-section{
+        display:grid;
+        gap:11px;
+        padding:18px;
+        border:1px solid var(--r96-line);
+        border-radius:17px;
+        background:color-mix(in srgb,var(--r96-panel) 72%,transparent);
+      }
+      .r96-game-detail-section h3{
+        margin:0;
+        font-size:.94rem;
+      }
+      .r96-game-detail-description{
+        margin:0;
+        color:var(--r96-muted);
+        font-size:.9rem;
+        line-height:1.7;
+        white-space:pre-wrap;
+      }
+      .r96-game-detail-meta{
+        display:grid;
+        gap:10px;
+      }
+      .r96-game-detail-meta-row{
+        display:flex;
+        justify-content:space-between;
+        gap:16px;
+        padding-bottom:9px;
+        border-bottom:1px solid var(--r96-line);
+        color:var(--r96-muted);
+        font-size:.8rem;
+      }
+      .r96-game-detail-meta-row:last-child{
+        border-bottom:0;
+        padding-bottom:0;
+      }
+      .r96-game-detail-meta-row strong{
+        color:var(--r96-text);
+        text-align:right;
+      }
+      .r96-game-detail-tags{
+        display:flex;
+        flex-wrap:wrap;
+        gap:7px;
+      }
+      .r96-game-gallery{
+        display:grid;
+        gap:12px;
+      }
+      .r96-game-gallery-main{
+        width:100%;
+        aspect-ratio:16/9;
+        border:1px solid var(--r96-line);
+        border-radius:15px;
+        background:linear-gradient(140deg,#071426,#101932);
+        background-size:cover;
+        background-repeat:no-repeat;
+        background-position:center;
+      }
+      .r96-game-gallery-thumbs{
+        display:flex;
+        gap:9px;
+        overflow:auto;
+        padding-bottom:2px;
+      }
+      .r96-game-gallery-thumb{
+        flex:0 0 104px;
+        aspect-ratio:16/9;
+        border:1px solid var(--r96-line);
+        border-radius:10px;
+        background-position:center;
+        background-size:cover;
+        background-repeat:no-repeat;
+        cursor:pointer;
+      }
+      .r96-game-gallery-thumb[aria-current="true"]{
+        border-color:var(--r96-accent);
+        box-shadow:0 0 0 2px color-mix(in srgb,var(--r96-accent) 22%,transparent);
+      }
+      .r96-game-play{
+        width:100%;
+        min-height:50px;
+        border:0;
+        border-radius:13px;
+        background:linear-gradient(135deg,var(--r96-accent),#d9fff9);
+        color:#071017;
+        font:inherit;
+        font-weight:950;
+      }
+      .r96-game-play:disabled{
+        opacity:.56;
+        cursor:not-allowed;
+      }
+      .r96-game-detail-note{
+        margin:0;
+        color:var(--r96-muted);
+        font-size:.72rem;
+        line-height:1.5;
+      }
+      .r96-version-current{
+        display:grid;
+        gap:7px;
+        padding:13px;
+        border:1px solid var(--r96-line);
+        border-radius:13px;
+        background:var(--r96-bg-2);
+      }
+      .r96-version-current-top{
+        display:flex;
+        justify-content:space-between;
+        gap:12px;
+        align-items:center;
+      }
+      .r96-version-current-top strong{font-size:.9rem}
+      .r96-version-current-top span{
+        color:var(--r96-muted);
+        font-size:.7rem;
+      }
       .r96-game-preview-panel{
         position:sticky;
         top:86px;
@@ -457,6 +689,8 @@
       @media(max-width:820px){
         .r96-game-studio-grid{grid-template-columns:1fr}
         .r96-game-preview-panel{position:static}
+        .r96-game-detail-body{grid-template-columns:1fr}
+        .r96-game-detail-hero{aspect-ratio:16/10;min-height:240px}
       }
       @media(max-width:560px){
         .r96-game-modal-backdrop{padding:10px}
@@ -668,13 +902,347 @@
     open.className = "r96-primary";
     open.type = "button";
     open.textContent = t("Ver juego", "View game");
-    open.setAttribute("aria-disabled", "true");
+
+    if (previewMode) {
+      open.setAttribute("aria-disabled", "true");
+      open.tabIndex = -1;
+    } else {
+      open.removeAttribute("aria-disabled");
+      open.addEventListener("click", event => {
+        event.preventDefault();
+        event.stopPropagation();
+        openGameDetail(game);
+      });
+    }
 
     actions.appendChild(open);
     body.append(tags, title, desc, meta, actions);
     article.append(thumb, body);
 
     return article;
+  }
+
+  function detailImages(game) {
+    const result = [];
+    const seen = new Set();
+
+    const add = value => {
+      const url = safeUrl(value);
+      if (!url || seen.has(url)) return;
+      seen.add(url);
+      result.push(url);
+    };
+
+    add(game.previewImage);
+
+    if (Array.isArray(game.galleryImages)) {
+      game.galleryImages.forEach(add);
+    }
+
+    return result;
+  }
+
+  function buildTypeLabel(value) {
+    const key = clean(value).toLowerCase();
+    const labels = {
+      windows:"Windows",
+      android:"Android",
+      package:t("Paquete", "Package"),
+      file:t("Archivo", "File")
+    };
+    return labels[key] || t("No especificado", "Not specified");
+  }
+
+  function removeGameDetail() {
+    document.getElementById(DETAIL_MODAL_ID)?.remove();
+  }
+
+  function detailMetaRow(labelText, value) {
+    const row = document.createElement("div");
+    row.className = "r96-game-detail-meta-row";
+
+    const label = document.createElement("span");
+    label.textContent = labelText;
+
+    const strong = document.createElement("strong");
+    strong.textContent = clean(value) || "—";
+
+    row.append(label, strong);
+    return row;
+  }
+
+  function openGameDetail(game) {
+    ensureStyle();
+    removeGameDetail();
+
+    const backdrop = document.createElement("div");
+    backdrop.id = DETAIL_MODAL_ID;
+    backdrop.className = "r96-game-detail-backdrop";
+
+    const detail = document.createElement("section");
+    detail.className = "r96-game-detail";
+    detail.setAttribute("role", "dialog");
+    detail.setAttribute("aria-modal", "true");
+    detail.setAttribute("aria-labelledby", "r96-game-detail-title");
+
+    const head = document.createElement("div");
+    head.className = "r96-game-detail-head";
+
+    const headTitle = document.createElement("strong");
+    headTitle.textContent = clean(game.title);
+
+    const close = document.createElement("button");
+    close.className = "r96-game-detail-close";
+    close.type = "button";
+    close.textContent = "×";
+    close.setAttribute("aria-label", t("Cerrar", "Close"));
+    close.addEventListener("click", removeGameDetail);
+
+    head.append(headTitle, close);
+
+    const hero = document.createElement("div");
+    hero.className = "r96-game-detail-hero";
+
+    const preview = safeUrl(game.previewImage);
+    if (preview) {
+      hero.style.backgroundImage =
+        "url(" + JSON.stringify(preview) + ")";
+      hero.style.backgroundPosition =
+        clampPercent(game.previewPositionX) + "% " +
+        clampPercent(game.previewPositionY) + "%";
+    }
+
+    const heroCopy = document.createElement("div");
+    heroCopy.className = "r96-game-detail-hero-copy";
+
+    const stage = document.createElement("span");
+    stage.className = "r96-game-detail-stage";
+    stage.textContent = stageLabel(game);
+
+    const title = document.createElement("h2");
+    title.id = "r96-game-detail-title";
+    title.className = "r96-game-detail-title";
+    title.textContent = clean(game.title);
+
+    heroCopy.append(stage, title);
+    hero.appendChild(heroCopy);
+
+    const body = document.createElement("div");
+    body.className = "r96-game-detail-body";
+
+    const main = document.createElement("div");
+    main.className = "r96-game-detail-main";
+
+    const descriptionSection = document.createElement("section");
+    descriptionSection.className = "r96-game-detail-section";
+
+    const descriptionTitle = document.createElement("h3");
+    descriptionTitle.textContent = t("Descripción", "Description");
+
+    const description = document.createElement("p");
+    description.className = "r96-game-detail-description";
+    description.textContent =
+      clean(game.description) ||
+      t("Sin descripción.", "No description.");
+
+    descriptionSection.append(descriptionTitle, description);
+
+    const images = detailImages(game);
+
+    if (images.length) {
+      const gallerySection = document.createElement("section");
+      gallerySection.className = "r96-game-detail-section";
+
+      const galleryTitle = document.createElement("h3");
+      galleryTitle.textContent = t("Galería", "Gallery");
+
+      const gallery = document.createElement("div");
+      gallery.className = "r96-game-gallery";
+
+      const galleryMain = document.createElement("div");
+      galleryMain.className = "r96-game-gallery-main";
+      galleryMain.style.backgroundImage =
+        "url(" + JSON.stringify(images[0]) + ")";
+      galleryMain.style.backgroundPosition =
+        clampPercent(game.previewPositionX) + "% " +
+        clampPercent(game.previewPositionY) + "%";
+
+      const thumbs = document.createElement("div");
+      thumbs.className = "r96-game-gallery-thumbs";
+
+      images.forEach((url, index) => {
+        const thumb = document.createElement("button");
+        thumb.className = "r96-game-gallery-thumb";
+        thumb.type = "button";
+        thumb.style.backgroundImage =
+          "url(" + JSON.stringify(url) + ")";
+        thumb.setAttribute(
+          "aria-label",
+          t(
+            "Ver imagen " + (index + 1),
+            "View image " + (index + 1)
+          )
+        );
+        thumb.setAttribute(
+          "aria-current",
+          index === 0 ? "true" : "false"
+        );
+
+        thumb.addEventListener("click", () => {
+          galleryMain.style.backgroundImage =
+            "url(" + JSON.stringify(url) + ")";
+          galleryMain.style.backgroundPosition =
+            index === 0
+              ? clampPercent(game.previewPositionX) + "% " +
+                clampPercent(game.previewPositionY) + "%"
+              : "50% 50%";
+
+          thumbs
+            .querySelectorAll(".r96-game-gallery-thumb")
+            .forEach(node => node.setAttribute("aria-current", "false"));
+
+          thumb.setAttribute("aria-current", "true");
+        });
+
+        thumbs.appendChild(thumb);
+      });
+
+      gallery.append(galleryMain, thumbs);
+      gallerySection.append(galleryTitle, gallery);
+      main.append(descriptionSection, gallerySection);
+    } else {
+      main.appendChild(descriptionSection);
+    }
+
+    const side = document.createElement("aside");
+    side.className = "r96-game-detail-side";
+
+    const infoSection = document.createElement("section");
+    infoSection.className = "r96-game-detail-section";
+
+    const infoTitle = document.createElement("h3");
+    infoTitle.textContent = t("Información", "Information");
+
+    const meta = document.createElement("div");
+    meta.className = "r96-game-detail-meta";
+    meta.append(
+      detailMetaRow(t("Etapa", "Stage"), stageLabel(game)),
+      detailMetaRow(t("Género", "Genre"), game.genre),
+      detailMetaRow(
+        t("Versión", "Version"),
+        game.currentVersion
+      ),
+      detailMetaRow(
+        t("Actualizado", "Updated"),
+        formatDate(game.versionUpdatedAt)
+      )
+    );
+
+    if (game.hasBuild) {
+      meta.append(
+        detailMetaRow(
+          t("Build", "Build"),
+          buildTypeLabel(game.buildType)
+        )
+      );
+    }
+
+    const tags = document.createElement("div");
+    tags.className = "r96-game-detail-tags";
+
+    const tagValues = Array.isArray(game.tags)
+      ? game.tags.map(clean).filter(Boolean)
+      : [];
+
+    tagValues.forEach(value => {
+      const pill = document.createElement("span");
+      pill.className = "r96-game-tag";
+      pill.textContent = value;
+      tags.appendChild(pill);
+    });
+
+    infoSection.append(infoTitle, meta);
+    if (tagValues.length) infoSection.appendChild(tags);
+
+    const playSection = document.createElement("section");
+    playSection.className = "r96-game-detail-section";
+
+    const playTitle = document.createElement("h3");
+    playTitle.textContent = t("Jugar", "Play");
+
+    const play = document.createElement("button");
+    play.className = "r96-game-play";
+    play.type = "button";
+    play.disabled = true;
+    play.textContent = game.hasBuild
+      ? t("Jugar", "Play")
+      : t("Build no disponible", "Build unavailable");
+
+    const playNote = document.createElement("p");
+    playNote.className = "r96-game-detail-note";
+    playNote.textContent = game.hasBuild
+      ? t(
+          "El build está cargado. La ejecución o descarga se habilita en la siguiente etapa.",
+          "The build is uploaded. Launch or download is enabled in the next stage."
+        )
+      : t(
+          "Este juego todavía no tiene un build publicado.",
+          "This game does not have a published build yet."
+        );
+
+    playSection.append(playTitle, play, playNote);
+
+    const versionSection = document.createElement("section");
+    versionSection.className = "r96-game-detail-section";
+
+    const versionTitle = document.createElement("h3");
+    versionTitle.textContent = t(
+      "Versiones",
+      "Versions"
+    );
+
+    const currentVersion = document.createElement("div");
+    currentVersion.className = "r96-version-current";
+
+    const currentTop = document.createElement("div");
+    currentTop.className = "r96-version-current-top";
+
+    const currentName = document.createElement("strong");
+    currentName.textContent =
+      clean(game.currentVersion) ||
+      t("Versión actual", "Current version");
+
+    const currentDate = document.createElement("span");
+    currentDate.textContent = formatDate(game.versionUpdatedAt);
+
+    currentTop.append(currentName, currentDate);
+
+    const versionNote = document.createElement("p");
+    versionNote.className = "r96-game-detail-note";
+    versionNote.textContent = t(
+      "Esta es la versión publicada actualmente. El historial y las notas de cambios se habilitan cuando implementemos las actualizaciones del juego.",
+      "This is the current published version. Full history and release notes are enabled when game updates are implemented."
+    );
+
+    currentVersion.append(currentTop, versionNote);
+    versionSection.append(versionTitle, currentVersion);
+
+    side.append(infoSection, playSection, versionSection);
+    body.append(main, side);
+    detail.append(head, hero, body);
+    backdrop.appendChild(detail);
+    document.body.appendChild(backdrop);
+
+    backdrop.addEventListener("click", event => {
+      if (event.target === backdrop) removeGameDetail();
+    });
+
+    const onKey = event => {
+      if (event.key !== "Escape") return;
+      document.removeEventListener("keydown", onKey);
+      removeGameDetail();
+    };
+    document.addEventListener("keydown", onKey);
   }
 
   function renderCatalog(payload) {
