@@ -1660,7 +1660,34 @@
     let completed = 0;
 
     for (const item of entries) {
-      const bytes = await item.entry.async("arraybuffer");
+      let bytes;
+
+      if (item.path === indexItem.path) {
+        let html = await item.entry.async("string");
+
+        const returnLink =
+          '<a href="/risin96ames/" target="_self" aria-label="Rising Games" ' +
+          'style="position:fixed;top:12px;left:12px;z-index:2147483647;' +
+          'display:inline-flex;align-items:center;min-height:36px;padding:0 12px;' +
+          'border:1px solid rgba(255,255,255,.35);border-radius:999px;' +
+          'background:rgba(4,8,18,.78);color:#fff;text-decoration:none;' +
+          'font:700 12px system-ui,sans-serif;backdrop-filter:blur(8px)">' +
+          '← Rising Games</a>';
+
+        if (/<body[^>]*>/i.test(html)) {
+          html = html.replace(
+            /<body([^>]*)>/i,
+            '<body$1>' + returnLink
+          );
+        } else {
+          html = returnLink + html;
+        }
+
+        bytes = new TextEncoder().encode(html).buffer;
+      } else {
+        bytes = await item.entry.async("arraybuffer");
+      }
+
       const headers = new Headers({
         "Content-Type":mimeTypeForPath(item.path),
         "Cache-Control":"no-store",
@@ -1747,22 +1774,8 @@
     if (!game || !clean(game.id)) return;
 
     const previousText = button?.textContent || "";
-    let playerWindow = null;
 
     try {
-      playerWindow = window.open("about:blank", "_blank");
-
-      if (!playerWindow) {
-        throw new Error("POPUP_BLOCKED");
-      }
-
-      try {
-        playerWindow.opener = null;
-        playerWindow.document.title = clean(game.title) || "Rising Games";
-        playerWindow.document.body.innerHTML =
-          '<div style="font-family:system-ui,sans-serif;background:#070b14;color:#fff;min-height:100vh;display:grid;place-items:center;margin:0"><div>Preparando juego…</div></div>';
-      } catch (_) {}
-
       if (button) {
         button.disabled = true;
         button.textContent = t("Preparando…", "Preparing…");
@@ -1779,7 +1792,7 @@
         const url = safeUrl(data?.url);
         if (!url) throw new Error("GAME_LAUNCH_FAILED");
 
-        playerWindow.location.replace(url);
+        window.open(url, "_blank", "noopener,noreferrer");
 
         updateLaunchStatus(
           statusNode,
@@ -1799,19 +1812,13 @@
         statusNode
       );
 
-      playerWindow.location.replace(runtime.runtimeUrl);
-
       updateLaunchStatus(
         statusNode,
-        t("Juego abierto.", "Game opened.")
+        t("Abriendo juego…", "Opening game…")
       );
-    } catch (error) {
-      try {
-        if (playerWindow && !playerWindow.closed) {
-          playerWindow.close();
-        }
-      } catch (_) {}
 
+      window.location.assign(runtime.runtimeUrl);
+    } catch (error) {
       const code = clean(
         error?.message || "GAME_LAUNCH_FAILED"
       );
@@ -1844,10 +1851,6 @@
         HTML_RUNTIME_UNSUPPORTED:t(
           "Este navegador no puede montar el juego HTML.",
           "This browser cannot mount the HTML game."
-        ),
-        POPUP_BLOCKED:t(
-          "El navegador bloqueó la ventana del juego. Permite ventanas emergentes para Rising Games.",
-          "The browser blocked the game window. Allow pop-ups for Rising Games."
         ),
         GAME_LAUNCH_TIMEOUT:t(
           "La preparación del juego tardó demasiado.",
