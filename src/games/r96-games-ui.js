@@ -916,6 +916,23 @@
     }
 
     actions.appendChild(open);
+
+    if (
+      !previewMode &&
+      (game.hasBuild === true || game.hasPlayableBuild === true)
+    ) {
+      const launch = document.createElement("button");
+      launch.className = "r96-secondary";
+      launch.type = "button";
+      launch.textContent = launchLabel(game);
+      launch.addEventListener("click", event => {
+        event.preventDefault();
+        event.stopPropagation();
+        performGameLaunch(game, launch);
+      });
+      actions.appendChild(launch);
+    }
+
     body.append(tags, title, desc, meta, actions);
     article.append(thumb, body);
 
@@ -1173,24 +1190,46 @@
     const play = document.createElement("button");
     play.className = "r96-game-play";
     play.type = "button";
-    play.disabled = true;
-    play.textContent = game.hasBuild
-      ? t("Jugar", "Play")
+
+    const canLaunch =
+      game.hasBuild === true ||
+      game.hasPlayableBuild === true;
+
+    play.disabled = !canLaunch;
+    play.textContent = canLaunch
+      ? launchLabel(game)
       : t("Build no disponible", "Build unavailable");
 
     const playNote = document.createElement("p");
     playNote.className = "r96-game-detail-note";
-    playNote.textContent = game.hasBuild
-      ? t(
-          "El build está cargado. La ejecución o descarga se habilita en la siguiente etapa.",
-          "The build is uploaded. Launch or download is enabled in the next stage."
+    playNote.textContent = canLaunch
+      ? (
+          game.hasPlayableBuild === true
+            ? t(
+                "Abre la versión jugable en una nueva pestaña.",
+                "Opens the playable version in a new tab."
+              )
+            : t(
+                "El build privado se entrega mediante un enlace temporal de descarga.",
+                "The private build is delivered through a temporary download link."
+              )
         )
       : t(
           "Este juego todavía no tiene un build publicado.",
           "This game does not have a published build yet."
         );
 
-    playSection.append(playTitle, play, playNote);
+    const launchStatus = document.createElement("div");
+    launchStatus.className = "r96-game-launch-status";
+    launchStatus.setAttribute("aria-live", "polite");
+
+    if (canLaunch) {
+      play.addEventListener("click", () => {
+        performGameLaunch(game, play, launchStatus);
+      });
+    }
+
+    playSection.append(playTitle, play, playNote, launchStatus);
 
     const versionSection = document.createElement("section");
     versionSection.className = "r96-game-detail-section";
@@ -1356,6 +1395,101 @@
       bytes,
       value => value.toString(16).padStart(2, "0")
     ).join("");
+  }
+
+  function launchAction(gameId) {
+    const id = requestId();
+
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        pending.delete(id);
+        reject(new Error("GAME_LAUNCH_TIMEOUT"));
+      }, 15000);
+
+      pending.set(id, {
+        resolve,
+        reject,
+        timeout
+      });
+
+      window.parent.postMessage({
+        source: SOURCE_UI,
+        protocol: PROTOCOL,
+        type: "launch-action",
+        requestId:id,
+        gameId:clean(gameId)
+      }, HOST_ORIGIN);
+    });
+  }
+
+  function launchLabel(game) {
+    return game?.hasPlayableBuild === true
+      ? t("Jugar", "Play")
+      : t("Descargar", "Download");
+  }
+
+  async function performGameLaunch(game, button, statusNode = null) {
+    if (!game || !clean(game.id)) return;
+
+    const previousText = button?.textContent || "";
+    if (button) {
+      button.disabled = true;
+      button.textContent = t("Preparando…", "Preparing…");
+    }
+
+    if (statusNode) {
+      statusNode.dataset.error = "0";
+      statusNode.textContent = game.hasPlayableBuild === true
+        ? t("Preparando juego…", "Preparing game…")
+        : t("Preparando descarga…", "Preparing download…");
+    }
+
+    try {
+      const data = await launchAction(game.id);
+      const url = safeUrl(data?.url);
+
+      if (!url) throw new Error("GAME_LAUNCH_FAILED");
+
+      if (data?.mode === "web") {
+        window.open(url, "_blank", "noopener,noreferrer");
+      } else {
+        const link = document.createElement("a");
+        link.href = url;
+        link.rel = "noopener";
+        link.target = "_blank";
+        if (clean(data?.fileName)) {
+          link.download = clean(data.fileName);
+        }
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      }
+
+      if (statusNode) {
+        statusNode.dataset.error = "0";
+        statusNode.textContent = data?.mode === "web"
+          ? t("Juego abierto.", "Game opened.")
+          : t("Descarga iniciada.", "Download started.");
+      }
+    } catch (error) {
+      if (statusNode) {
+        statusNode.dataset.error = "1";
+        const code = clean(error?.message || "GAME_LAUNCH_FAILED");
+        const messages = {
+          GAME_NOT_FOUND:t("El juego ya no está disponible.", "The game is no longer available."),
+          BUILD_NOT_AVAILABLE:t("Este juego todavía no tiene un build disponible.", "This game does not have a build available yet."),
+          BUILD_DOWNLOAD_FAILED:t("No se pudo preparar la descarga.", "The download could not be prepared."),
+          GAME_LAUNCH_TIMEOUT:t("La preparación tardó demasiado.", "Preparing the game took too long."),
+          GAME_LAUNCH_FAILED:t("No se pudo abrir o descargar el juego.", "The game could not be opened or downloaded.")
+        };
+        statusNode.textContent = messages[code] || messages.GAME_LAUNCH_FAILED;
+      }
+    } finally {
+      if (button) {
+        button.disabled = false;
+        button.textContent = previousText;
+      }
+    }
   }
 
   function studioAction(action, input = {}) {
@@ -2335,7 +2469,10 @@
       return;
     }
 
-    if (message.type === "studio-result") {
+    if (
+      message.type === "studio-result" ||
+      message.type === "launch-result"
+    ) {
       const id = clean(message.requestId);
       const entry = pending.get(id);
       if (!entry) return;
@@ -2348,7 +2485,14 @@
       } else {
         entry.reject(
           new Error(
-            clean(message.data?.error || "GAMES_ACTION_FAILED")
+            clean(
+              message.data?.error ||
+              (
+                message.type === "launch-result"
+                  ? "GAME_LAUNCH_FAILED"
+                  : "GAMES_ACTION_FAILED"
+              )
+            )
           )
         );
       }
