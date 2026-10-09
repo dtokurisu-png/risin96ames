@@ -213,6 +213,58 @@
     return payload;
   }
 
+  async function launchAction(message) {
+    const requestId = String(message.requestId || "");
+    const gameId = String(message.gameId || "").trim();
+
+    try {
+      const response = await fetch(
+        SITE_BASE + "/_functions/r96GameLaunch",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          credentials: "same-origin",
+          cache: "no-store",
+          body: JSON.stringify({ gameId })
+        }
+      );
+
+      const payload = await response.json().catch(() => null);
+
+      if (!payload || payload.ok !== true) {
+        post(
+          "launch-result",
+          {
+            ok: false,
+            error: String(payload?.error || "GAME_LAUNCH_FAILED")
+          },
+          requestId
+        );
+        return;
+      }
+
+      post(
+        "launch-result",
+        {
+          ok: true,
+          data: payload.data || {}
+        },
+        requestId
+      );
+    } catch (_) {
+      post(
+        "launch-result",
+        {
+          ok: false,
+          error: "GAME_LAUNCH_FAILED"
+        },
+        requestId
+      );
+    }
+  }
+
   async function studioAction(message) {
     const requestId = String(message.requestId || "");
     const action = String(message.action || "").trim();
@@ -290,6 +342,11 @@
 
     if (message.type === "studio-action") {
       studioAction(message);
+      return;
+    }
+
+    if (message.type === "launch-action") {
+      launchAction(message);
     }
   });
 })();
