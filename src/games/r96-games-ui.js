@@ -919,12 +919,12 @@
 
     if (
       !previewMode &&
-      (game.hasBuild === true || game.hasPlayableBuild === true)
+      game.hasPlayableBuild === true
     ) {
       const launch = document.createElement("button");
       launch.className = "r96-secondary";
       launch.type = "button";
-      launch.textContent = launchLabel(game);
+      launch.textContent = launchLabel();
       launch.addEventListener("click", event => {
         event.preventDefault();
         event.stopPropagation();
@@ -1191,32 +1191,23 @@
     play.className = "r96-game-play";
     play.type = "button";
 
-    const canLaunch =
-      game.hasBuild === true ||
-      game.hasPlayableBuild === true;
+    const canLaunch = game.hasPlayableBuild === true;
 
     play.disabled = !canLaunch;
     play.textContent = canLaunch
-      ? launchLabel(game)
-      : t("Build no disponible", "Build unavailable");
+      ? launchLabel()
+      : t("Juego no disponible", "Game unavailable");
 
     const playNote = document.createElement("p");
     playNote.className = "r96-game-detail-note";
     playNote.textContent = canLaunch
-      ? (
-          game.hasPlayableBuild === true
-            ? t(
-                "Abre la versión jugable en una nueva pestaña.",
-                "Opens the playable version in a new tab."
-              )
-            : t(
-                "El build privado se entrega mediante un enlace temporal de descarga.",
-                "The private build is delivered through a temporary download link."
-              )
+      ? t(
+          "Abre esta versión del juego HTML directamente en el navegador.",
+          "Opens this HTML game version directly in the browser."
         )
       : t(
-          "Este juego todavía no tiene un build publicado.",
-          "This game does not have a published build yet."
+          "Esta versión todavía no tiene un runtime jugable publicado.",
+          "This version does not have a playable runtime yet."
         );
 
     const launchStatus = document.createElement("div");
@@ -1422,68 +1413,457 @@
     });
   }
 
-  function launchLabel(game) {
-    return game?.hasPlayableBuild === true
-      ? t("Jugar", "Play")
-      : t("Descargar", "Download");
+  const RUNTIME_CACHE_PREFIX = "r96-html-runtime-";
+  const RUNTIME_ROOT = "/risin96ames/runtime/";
+  let jsZipPromise = null;
+  let runtimeWorkerPromise = null;
+
+  function launchLabel() {
+    return t("Jugar", "Play");
+  }
+
+  function ensureJsZip() {
+    if (window.JSZip) return Promise.resolve(window.JSZip);
+    if (jsZipPromise) return jsZipPromise;
+
+    jsZipPromise = new Promise((resolve, reject) => {
+      const existing = document.querySelector(
+        'script[data-r96-jszip="1"]'
+      );
+
+      if (existing) {
+        existing.addEventListener("load", () => {
+          window.JSZip
+            ? resolve(window.JSZip)
+            : reject(new Error("HTML_RUNTIME_PREPARE_FAILED"));
+        }, { once:true });
+
+        existing.addEventListener("error", () => {
+          reject(new Error("HTML_RUNTIME_PREPARE_FAILED"));
+        }, { once:true });
+
+        return;
+      }
+
+      const script = document.createElement("script");
+      script.src =
+        "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js";
+      script.async = true;
+      script.dataset.r96Jszip = "1";
+
+      script.onload = () => {
+        window.JSZip
+          ? resolve(window.JSZip)
+          : reject(new Error("HTML_RUNTIME_PREPARE_FAILED"));
+      };
+
+      script.onerror = () => {
+        reject(new Error("HTML_RUNTIME_PREPARE_FAILED"));
+      };
+
+      document.head.appendChild(script);
+    });
+
+    return jsZipPromise;
+  }
+
+  function ensureRuntimeWorker() {
+    if (!("serviceWorker" in navigator)) {
+      return Promise.reject(
+        new Error("HTML_RUNTIME_UNSUPPORTED")
+      );
+    }
+
+    if (runtimeWorkerPromise) return runtimeWorkerPromise;
+
+    runtimeWorkerPromise = (async () => {
+      await navigator.serviceWorker.register(
+        "/risin96ames/r96-runtime-sw.js",
+        {
+          scope:"/risin96ames/"
+        }
+      );
+
+      await navigator.serviceWorker.ready;
+      return true;
+    })();
+
+    return runtimeWorkerPromise;
+  }
+
+  function cleanZipPath(value) {
+    const normalized = String(value || "")
+      .replace(/\\/g, "/")
+      .replace(/^\.\//, "")
+      .replace(/^\/+/, "");
+
+    if (
+      !normalized ||
+      normalized.includes("\0") ||
+      normalized.split("/").some(part => part === "..")
+    ) {
+      return "";
+    }
+
+    return normalized;
+  }
+
+  function encodeRuntimePath(value) {
+    return cleanZipPath(value)
+      .split("/")
+      .filter(Boolean)
+      .map(segment => encodeURIComponent(segment))
+      .join("/");
+  }
+
+  function mimeTypeForPath(path) {
+    const ext = clean(path)
+      .toLowerCase()
+      .split("?")[0]
+      .split("#")[0]
+      .split(".")
+      .pop();
+
+    const types = {
+      html:"text/html; charset=utf-8",
+      htm:"text/html; charset=utf-8",
+      css:"text/css; charset=utf-8",
+      js:"text/javascript; charset=utf-8",
+      mjs:"text/javascript; charset=utf-8",
+      json:"application/json; charset=utf-8",
+      map:"application/json; charset=utf-8",
+      txt:"text/plain; charset=utf-8",
+      xml:"application/xml; charset=utf-8",
+      svg:"image/svg+xml",
+      png:"image/png",
+      jpg:"image/jpeg",
+      jpeg:"image/jpeg",
+      webp:"image/webp",
+      gif:"image/gif",
+      ico:"image/x-icon",
+      mp3:"audio/mpeg",
+      wav:"audio/wav",
+      ogg:"audio/ogg",
+      m4a:"audio/mp4",
+      mp4:"video/mp4",
+      webm:"video/webm",
+      wasm:"application/wasm",
+      woff:"font/woff",
+      woff2:"font/woff2",
+      ttf:"font/ttf",
+      otf:"font/otf"
+    };
+
+    return types[ext] || "application/octet-stream";
+  }
+
+  async function pruneRuntimeCaches(currentCacheName) {
+    try {
+      const keys = (await caches.keys())
+        .filter(key => key.startsWith(RUNTIME_CACHE_PREFIX))
+        .sort()
+        .reverse();
+
+      const keep = new Set(
+        [currentCacheName, ...keys.filter(key => key !== currentCacheName)]
+          .slice(0, 5)
+      );
+
+      await Promise.all(
+        keys
+          .filter(key => !keep.has(key))
+          .map(key => caches.delete(key))
+      );
+    } catch (_) {}
+  }
+
+  function updateLaunchStatus(statusNode, textValue, isError = false) {
+    if (!statusNode) return;
+    statusNode.dataset.error = isError ? "1" : "0";
+    statusNode.textContent = textValue;
+  }
+
+  async function prepareHtmlRuntime(packageUrl, game, statusNode) {
+    const safePackageUrl = safeUrl(packageUrl);
+    if (!safePackageUrl) {
+      throw new Error("HTML_PACKAGE_PREPARE_FAILED");
+    }
+
+    await Promise.all([
+      ensureRuntimeWorker(),
+      ensureJsZip()
+    ]);
+
+    updateLaunchStatus(
+      statusNode,
+      t("Cargando paquete del juego…", "Loading game package…")
+    );
+
+    const response = await fetch(safePackageUrl, {
+      method:"GET",
+      mode:"cors",
+      cache:"no-store",
+      credentials:"omit"
+    });
+
+    if (!response.ok) {
+      throw new Error("HTML_PACKAGE_FETCH_FAILED");
+    }
+
+    const buffer = await response.arrayBuffer();
+
+    updateLaunchStatus(
+      statusNode,
+      t("Preparando archivos del juego…", "Preparing game files…")
+    );
+
+    const zip = await window.JSZip.loadAsync(buffer);
+
+    const entries = Object.values(zip.files)
+      .filter(entry => !entry.dir)
+      .map(entry => ({
+        entry,
+        path:cleanZipPath(entry.name)
+      }))
+      .filter(item =>
+        item.path &&
+        !item.path.startsWith("__MACOSX/") &&
+        !/(^|\/)\.DS_Store$/i.test(item.path)
+      );
+
+    const indexCandidates = entries
+      .filter(item => /(^|\/)index\.html?$/i.test(item.path))
+      .sort((a, b) => {
+        const aDepth = a.path.split("/").length;
+        const bDepth = b.path.split("/").length;
+        if (aDepth !== bDepth) return aDepth - bDepth;
+        return a.path.length - b.path.length;
+      });
+
+    const indexItem = indexCandidates[0];
+    if (!indexItem) {
+      throw new Error("HTML_INDEX_MISSING");
+    }
+
+    const session =
+      Date.now().toString(36) +
+      "-" +
+      requestId().replace(/-/g, "").slice(0, 12);
+
+    const cacheName = RUNTIME_CACHE_PREFIX + session;
+    const cache = await caches.open(cacheName);
+
+    const entryDir = indexItem.path.includes("/")
+      ? indexItem.path.slice(0, indexItem.path.lastIndexOf("/") + 1)
+      : "";
+
+    let completed = 0;
+
+    for (const item of entries) {
+      const bytes = await item.entry.async("arraybuffer");
+      const headers = new Headers({
+        "Content-Type":mimeTypeForPath(item.path),
+        "Cache-Control":"no-store",
+        "Access-Control-Allow-Origin":"*",
+        "Cross-Origin-Resource-Policy":"cross-origin"
+      });
+
+      const encodedPath = encodeRuntimePath(item.path);
+      if (!encodedPath) continue;
+
+      const primaryUrl =
+        location.origin +
+        RUNTIME_ROOT +
+        encodeURIComponent(session) +
+        "/" +
+        encodedPath;
+
+      await cache.put(
+        primaryUrl,
+        new Response(bytes.slice(0), {
+          status:200,
+          headers
+        })
+      );
+
+      if (
+        entryDir &&
+        item.path.startsWith(entryDir)
+      ) {
+        const aliasPath = item.path.slice(entryDir.length);
+        const encodedAlias = encodeRuntimePath(aliasPath);
+
+        if (encodedAlias) {
+          const aliasUrl =
+            location.origin +
+            RUNTIME_ROOT +
+            encodeURIComponent(session) +
+            "/" +
+            encodedAlias;
+
+          if (aliasUrl !== primaryUrl) {
+            await cache.put(
+              aliasUrl,
+              new Response(bytes.slice(0), {
+                status:200,
+                headers
+              })
+            );
+          }
+        }
+      }
+
+      completed += 1;
+
+      if (completed % 8 === 0 || completed === entries.length) {
+        updateLaunchStatus(
+          statusNode,
+          t(
+            "Montando juego " + completed + "/" + entries.length + "…",
+            "Mounting game " + completed + "/" + entries.length + "…"
+          )
+        );
+      }
+    }
+
+    await pruneRuntimeCaches(cacheName);
+
+    const runtimeUrl =
+      location.origin +
+      RUNTIME_ROOT +
+      encodeURIComponent(session) +
+      "/" +
+      encodeRuntimePath(indexItem.path);
+
+    return {
+      runtimeUrl,
+      entryPoint:indexItem.path,
+      fileCount:entries.length,
+      gameTitle:clean(game?.title)
+    };
   }
 
   async function performGameLaunch(game, button, statusNode = null) {
     if (!game || !clean(game.id)) return;
 
     const previousText = button?.textContent || "";
-    if (button) {
-      button.disabled = true;
-      button.textContent = t("Preparando…", "Preparing…");
-    }
-
-    if (statusNode) {
-      statusNode.dataset.error = "0";
-      statusNode.textContent = game.hasPlayableBuild === true
-        ? t("Preparando juego…", "Preparing game…")
-        : t("Preparando descarga…", "Preparing download…");
-    }
+    let playerWindow = null;
 
     try {
-      const data = await launchAction(game.id);
-      const url = safeUrl(data?.url);
+      playerWindow = window.open("about:blank", "_blank");
 
-      if (!url) throw new Error("GAME_LAUNCH_FAILED");
+      if (!playerWindow) {
+        throw new Error("POPUP_BLOCKED");
+      }
+
+      try {
+        playerWindow.opener = null;
+        playerWindow.document.title = clean(game.title) || "Rising Games";
+        playerWindow.document.body.innerHTML =
+          '<div style="font-family:system-ui,sans-serif;background:#070b14;color:#fff;min-height:100vh;display:grid;place-items:center;margin:0"><div>Preparando juego…</div></div>';
+      } catch (_) {}
+
+      if (button) {
+        button.disabled = true;
+        button.textContent = t("Preparando…", "Preparing…");
+      }
+
+      updateLaunchStatus(
+        statusNode,
+        t("Preparando juego…", "Preparing game…")
+      );
+
+      const data = await launchAction(game.id);
 
       if (data?.mode === "web") {
-        window.open(url, "_blank", "noopener,noreferrer");
-      } else {
-        const link = document.createElement("a");
-        link.href = url;
-        link.rel = "noopener";
-        link.target = "_blank";
-        if (clean(data?.fileName)) {
-          link.download = clean(data.fileName);
-        }
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
+        const url = safeUrl(data?.url);
+        if (!url) throw new Error("GAME_LAUNCH_FAILED");
+
+        playerWindow.location.replace(url);
+
+        updateLaunchStatus(
+          statusNode,
+          t("Juego abierto.", "Game opened.")
+        );
+
+        return;
       }
 
-      if (statusNode) {
-        statusNode.dataset.error = "0";
-        statusNode.textContent = data?.mode === "web"
-          ? t("Juego abierto.", "Game opened.")
-          : t("Descarga iniciada.", "Download started.");
+      if (data?.mode !== "html-package") {
+        throw new Error("PLAY_NOT_AVAILABLE");
       }
+
+      const runtime = await prepareHtmlRuntime(
+        data.packageUrl,
+        game,
+        statusNode
+      );
+
+      playerWindow.location.replace(runtime.runtimeUrl);
+
+      updateLaunchStatus(
+        statusNode,
+        t("Juego abierto.", "Game opened.")
+      );
     } catch (error) {
-      if (statusNode) {
-        statusNode.dataset.error = "1";
-        const code = clean(error?.message || "GAME_LAUNCH_FAILED");
-        const messages = {
-          GAME_NOT_FOUND:t("El juego ya no está disponible.", "The game is no longer available."),
-          BUILD_NOT_AVAILABLE:t("Este juego todavía no tiene un build disponible.", "This game does not have a build available yet."),
-          BUILD_DOWNLOAD_FAILED:t("No se pudo preparar la descarga.", "The download could not be prepared."),
-          GAME_LAUNCH_TIMEOUT:t("La preparación tardó demasiado.", "Preparing the game took too long."),
-          GAME_LAUNCH_FAILED:t("No se pudo abrir o descargar el juego.", "The game could not be opened or downloaded.")
-        };
-        statusNode.textContent = messages[code] || messages.GAME_LAUNCH_FAILED;
-      }
+      try {
+        if (playerWindow && !playerWindow.closed) {
+          playerWindow.close();
+        }
+      } catch (_) {}
+
+      const code = clean(
+        error?.message || "GAME_LAUNCH_FAILED"
+      );
+
+      const messages = {
+        GAME_NOT_FOUND:t(
+          "El juego ya no está disponible.",
+          "The game is no longer available."
+        ),
+        PLAY_NOT_AVAILABLE:t(
+          "Esta versión no tiene un runtime jugable disponible.",
+          "This version does not have a playable runtime."
+        ),
+        HTML_PACKAGE_PREPARE_FAILED:t(
+          "No se pudo preparar el paquete HTML.",
+          "The HTML package could not be prepared."
+        ),
+        HTML_PACKAGE_FETCH_FAILED:t(
+          "No se pudo cargar el paquete del juego.",
+          "The game package could not be loaded."
+        ),
+        HTML_INDEX_MISSING:t(
+          "El paquete no contiene un index.html jugable.",
+          "The package does not contain a playable index.html."
+        ),
+        HTML_RUNTIME_PREPARE_FAILED:t(
+          "No se pudo preparar el reproductor HTML.",
+          "The HTML player could not be prepared."
+        ),
+        HTML_RUNTIME_UNSUPPORTED:t(
+          "Este navegador no puede montar el juego HTML.",
+          "This browser cannot mount the HTML game."
+        ),
+        POPUP_BLOCKED:t(
+          "El navegador bloqueó la ventana del juego. Permite ventanas emergentes para Rising Games.",
+          "The browser blocked the game window. Allow pop-ups for Rising Games."
+        ),
+        GAME_LAUNCH_TIMEOUT:t(
+          "La preparación del juego tardó demasiado.",
+          "Preparing the game took too long."
+        ),
+        GAME_LAUNCH_FAILED:t(
+          "No se pudo abrir el juego.",
+          "The game could not be opened."
+        )
+      };
+
+      updateLaunchStatus(
+        statusNode,
+        messages[code] || messages.GAME_LAUNCH_FAILED,
+        true
+      );
     } finally {
       if (button) {
         button.disabled = false;
