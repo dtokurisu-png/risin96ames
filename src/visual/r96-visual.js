@@ -87,5 +87,11 @@
   gamesScript.dataset.r96GamesUi = "1";
   document.head.appendChild(gamesScript);
 
+  const developerScript = document.createElement("script");
+  developerScript.src = "./src/games/r96-developer-ui.js?v=1.0.0";
+  developerScript.defer = true;
+  developerScript.dataset.r96DeveloperUi = "1";
+  document.head.appendChild(developerScript);
+
 })();
 
