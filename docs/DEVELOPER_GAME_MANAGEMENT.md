@@ -67,6 +67,34 @@ Siguiente: QA de **Mis juegos** y luego edición + nueva GameVersion + historial
 
 ---
 
+## Avance — Gestión completa del juego / Subetapa 3 — 2026-10-10
+
+**Implementada y publicada técnicamente. QA humano pendiente.**
+
+El panel **Administrar** ahora permite editar la ficha pública, cambiar portada y visibilidad, subir una actualización como GameVersion independiente, consultar el historial y activar/restaurar versiones.
+
+Regla segura:
+- una versión nueva nace `ready`;
+- no reemplaza la versión pública hasta pulsar **Activar**;
+- la anterior pasa a `archived`;
+- **Restaurar** una archivada realiza rollback sin volver a subir archivos.
+
+Permisos:
+- developer: únicamente juegos propios;
+- Wonder: administración global;
+- verificación siempre en backend mediante game capability + ownerMemberId;
+- una versión sólo puede activarse si pertenece al mismo juego.
+
+Publicación:
+- Wix Site Code #473 success;
+- Pages #166 success;
+- Authentication Lock / Owner Locked Boundaries: success;
+- frontend de gestión: v2.
+
+Siguiente bloque: **reseñas, comentarios y gestión de interacción del usuario**.
+
+---
+
 ## Pendiente canónico
 
 ### Etapa siguiente — Gestión de versiones
