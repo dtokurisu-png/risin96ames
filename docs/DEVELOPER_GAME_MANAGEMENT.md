@@ -42,7 +42,7 @@ Después de la gestión de juego/versiones/permisos siguen pendientes las funcio
 
 ## Avance — Espacio del desarrollador / Subetapa 2 — 2026-10-10
 
-**Implementado técnicamente. Backend publicado; QA humano pendiente.**
+**Implementado y publicado técnicamente. QA humano pendiente.**
 
 Se añadió un módulo privado independiente de administración. El menú muestra **Mis juegos** únicamente para roles developer/wonder ya autenticados. Al abrirlo, el backend revalida la game capability y devuelve solamente juegos cuyo `ownerMemberId` coincide con la identidad autorizada.
 
@@ -61,7 +61,7 @@ Frontend:
 - `r96-developer-ui.js`
 - loader separado desde `r96-visual.js`
 - Authentication Lock #87: success
-- Pages #161: publicación iniciada
+- Pages #161: success
 
 Siguiente: QA de **Mis juegos** y luego edición + nueva GameVersion + historial + rollback.
 
