@@ -40,6 +40,33 @@ Después de la gestión de juego/versiones/permisos siguen pendientes las funcio
 
 ---
 
+## Avance — Espacio del desarrollador / Subetapa 2 — 2026-10-10
+
+**Implementado técnicamente. Backend publicado; QA humano pendiente.**
+
+Se añadió un módulo privado independiente de administración. El menú muestra **Mis juegos** únicamente para roles developer/wonder ya autenticados. Al abrirlo, el backend revalida la game capability y devuelve solamente juegos cuyo `ownerMemberId` coincide con la identidad autorizada.
+
+Cada juego puede abrirse con **Administrar** para ver su resumen real y la versión activa. Esta etapa no introduce todavía edición, actualización de archivos, historial completo ni rollback; esos controles pertenecen a la siguiente subetapa y no se simulan.
+
+La autenticación congelada no fue modificada.
+
+Backend:
+- `r96-developer-service.js`
+- acción `developer.games.list`
+- Publish Wix Site Code #470: success
+- Authentication Lock #175: success
+- Owner Locked Boundaries #69: success
+
+Frontend:
+- `r96-developer-ui.js`
+- loader separado desde `r96-visual.js`
+- Authentication Lock #87: success
+- Pages #161: publicación iniciada
+
+Siguiente: QA de **Mis juegos** y luego edición + nueva GameVersion + historial + rollback.
+
+---
+
 ## Pendiente canónico
 
 ### Etapa siguiente — Gestión de versiones
