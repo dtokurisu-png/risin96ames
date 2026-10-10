@@ -304,7 +304,11 @@
         requestId
       );
 
-      if (action === "game.create") {
+      if (
+        action === "game.create" ||
+        action === "developer.game.update" ||
+        action === "developer.version.activate"
+      ) {
         await sendCatalog(true);
       }
     } catch (error) {
