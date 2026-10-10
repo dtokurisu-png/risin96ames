@@ -17,6 +17,29 @@ Los siguientes bloques ya fueron probados y no deben reabrirse salvo regresión 
 
 Nota: los dos juegos usados en prueba presentan bloqueos propios del contenido/juego. Eso no se considera un fallo del flujo de publicación de Risin9 6ames.
 
+## Avance — Subetapa 1 de gestión de versiones — 2026-10-09
+
+**Estado técnico: implementado y publicado. QA humano de regresión pendiente.**
+
+Se creó `R96GameVersions` y se añadió `activeVersionId` a `R96Games`. Los dos juegos existentes fueron migrados a una primera versión activa `0.1.5` conservando sus builds originales. El backend publicado ahora crea Game + GameVersion para publicaciones nuevas, y catálogo/Jugar resuelven la versión activa.
+
+Compatibilidad: los campos antiguos de build/version permanecen temporalmente sincronizados en `R96Games` como caché de transición; no constituyen una segunda fuente de verdad.
+
+Commits:
+- Wix deployment: `ecf39e0ae9b90c4c1ae6b2fbeff05c4808406dea`
+- maestro: `22744849c6e5bb94062cca6de71f6083765f5fe1`
+- Publish Wix Site Code #468: success
+- Authentication Lock #173: success
+- Owner Locked Boundaries #67: success
+
+Siguiente: validar catálogo/ficha/Jugar y pasar a **Espacio del desarrollador**.
+
+### Backlog posterior que no debe perderse
+
+Después de la gestión de juego/versiones/permisos siguen pendientes las funciones de comunidad: **reseñas, comentarios y gestión del usuario sobre sus propias interacciones**, además de la gestión/moderación vinculada al creador del juego.
+
+---
+
 ## Pendiente canónico
 
 ### Etapa siguiente — Gestión de versiones
