@@ -86,6 +86,7 @@
     }
 
     if (
+      flow.authState === "READY" ||
       flow.authState === "SIGNED_OUT" ||
       flow.authState === "FAILED"
     ) {
