@@ -36,6 +36,7 @@
   let claimInFlight = false;
   let claimBlocked = false;
   let gameCapabilityInFlight = false;
+  let loginHandoffInFlight = false;
 
   function readSession(key) {
     try { return String(sessionStorage.getItem(key) || ""); }
@@ -345,6 +346,15 @@
   }
 
   function startCanonicalLogin() {
+    if (loginHandoffInFlight) return;
+
+    loginHandoffInFlight = true;
+
+    // The invitation overlay belongs to the access flow, not to Google/Wix
+    // authentication. Remove it before handing control to the canonical
+    // login so it cannot sit above the provider UI on mobile.
+    removeHostModal();
+
     const url = new URL(location.href);
 
     [
@@ -358,7 +368,13 @@
       Date.now().toString(36) + "-r96invite"
     );
 
-    location.assign(url.href);
+    try {
+      location.assign(url.href);
+    } catch (error) {
+      loginHandoffInFlight = false;
+      showInviteVerified();
+      throw error;
+    }
   }
 
   async function verifyInvite(code, submit, feedback) {
@@ -759,6 +775,10 @@
   const timer = setInterval(() => {
     captureTransientState();
     sendAccess(false);
+
+    // While the canonical login/provider UI owns the screen, never recreate
+    // the invitation modal from the pending invite stored in sessionStorage.
+    if (loginHandoffInFlight) return;
 
     const entryToken = readSession(ENTRY_STORAGE_KEY);
     const code = readSession(CODE_STORAGE_KEY);
