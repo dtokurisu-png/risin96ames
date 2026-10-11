@@ -12,6 +12,8 @@
   const ENTRY_STORAGE_KEY = "r96-invite-entry-v2";
   const CODE_STORAGE_KEY = "r96-invite-code-v3";
   const LEGACY_CLAIM_STORAGE_KEY = "r96-invite-claim-v2";
+  const LOGIN_HANDOFF_STORAGE_KEY = "r96-invite-login-handoff-v1";
+  const LOGIN_HANDOFF_TTL_MS = 10 * 60 * 1000;
   const FRAME_ORIGIN = "https://dtokurisu-png.github.io";
   const SOURCE_BRIDGE = "r96-access-bridge";
   const SOURCE_UI = "r96-access-ui";
@@ -48,6 +50,66 @@
       if (value) sessionStorage.setItem(key, value);
       else sessionStorage.removeItem(key);
     } catch (_) {}
+  }
+
+  function readLoginHandoffStartedAt() {
+    const value = Number(readSession(LOGIN_HANDOFF_STORAGE_KEY));
+    return Number.isFinite(value) && value > 0 ? value : 0;
+  }
+
+  function clearLoginHandoff() {
+    loginHandoffInFlight = false;
+    writeSession(LOGIN_HANDOFF_STORAGE_KEY, "");
+  }
+
+  function beginLoginHandoff() {
+    const startedAt = Date.now();
+    loginHandoffInFlight = true;
+    writeSession(LOGIN_HANDOFF_STORAGE_KEY, String(startedAt));
+  }
+
+  function restoreLoginHandoff() {
+    const startedAt = readLoginHandoffStartedAt();
+
+    if (
+      !startedAt ||
+      Date.now() - startedAt > LOGIN_HANDOFF_TTL_MS
+    ) {
+      clearLoginHandoff();
+      return false;
+    }
+
+    loginHandoffInFlight = true;
+    return true;
+  }
+
+  function syncLoginHandoffState() {
+    if (!loginHandoffInFlight) return false;
+
+    const query = new URLSearchParams(location.search);
+    const authState = String(query.get("nxa") || "").toUpperCase();
+    const state = accessState();
+
+    if (state.signedIn && actionCapability) {
+      clearLoginHandoff();
+      return false;
+    }
+
+    if (authState === "SIGNED_OUT" || authState === "FAILED") {
+      clearLoginHandoff();
+      return false;
+    }
+
+    const startedAt = readLoginHandoffStartedAt();
+    if (
+      !startedAt ||
+      Date.now() - startedAt > LOGIN_HANDOFF_TTL_MS
+    ) {
+      clearLoginHandoff();
+      return false;
+    }
+
+    return true;
   }
 
   function captureTransientState() {
@@ -348,11 +410,9 @@
   function startCanonicalLogin() {
     if (loginHandoffInFlight) return;
 
-    loginHandoffInFlight = true;
-
-    // The invitation overlay belongs to the access flow, not to Google/Wix
-    // authentication. Remove it before handing control to the canonical
-    // login so it cannot sit above the provider UI on mobile.
+    // Persist the handoff before navigation. Wix reloads the page to open the
+    // canonical provider login, so an in-memory flag is not sufficient.
+    beginLoginHandoff();
     removeHostModal();
 
     const url = new URL(location.href);
@@ -371,7 +431,7 @@
     try {
       location.assign(url.href);
     } catch (error) {
-      loginHandoffInFlight = false;
+      clearLoginHandoff();
       showInviteVerified();
       throw error;
     }
@@ -456,7 +516,10 @@
     if (!/^[A-Z0-9]{8}$/.test(code)) return;
 
     if (!state.signedIn || !actionCapability) {
-      if (!document.getElementById(MODAL_ID)) {
+      if (
+        !syncLoginHandoffState() &&
+        !document.getElementById(MODAL_ID)
+      ) {
         showInviteVerified();
       }
       return;
@@ -511,6 +574,7 @@
       writeSession(CODE_STORAGE_KEY, "");
       writeSession(ENTRY_STORAGE_KEY, "");
       writeSession(LEGACY_CLAIM_STORAGE_KEY, "");
+      clearLoginHandoff();
 
       roleOverride = String(data.access.roleKey || "developer");
       lastRole = "";
@@ -750,6 +814,8 @@
 
   writeSession(LEGACY_CLAIM_STORAGE_KEY, "");
   captureTransientState();
+  restoreLoginHandoff();
+  syncLoginHandoffState();
 
   if (
     /^[A-Z0-9]{8}$/.test(
@@ -760,14 +826,16 @@
     )
   ) {
     if (accessState().signedIn && actionCapability) {
+      clearLoginHandoff();
       tryClaimInvite();
-    } else {
+    } else if (!loginHandoffInFlight) {
       showInviteVerified();
     }
   } else if (
     /^[A-Za-z0-9_-]{40,80}$/.test(
       readSession(ENTRY_STORAGE_KEY)
-    )
+    ) &&
+    !loginHandoffInFlight
   ) {
     showInviteEntry();
   }
@@ -776,9 +844,12 @@
     captureTransientState();
     sendAccess(false);
 
-    // While the canonical login/provider UI owns the screen, never recreate
-    // the invitation modal from the pending invite stored in sessionStorage.
-    if (loginHandoffInFlight) return;
+    // The handoff survives page reloads. Keep the invitation overlay absent
+    // until Wix reports login failure/cancel or access is authenticated.
+    if (syncLoginHandoffState()) {
+      removeHostModal();
+      return;
+    }
 
     const entryToken = readSession(ENTRY_STORAGE_KEY);
     const code = readSession(CODE_STORAGE_KEY);
