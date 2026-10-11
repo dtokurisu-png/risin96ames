@@ -12,8 +12,8 @@
   const ENTRY_STORAGE_KEY = "r96-invite-entry-v2";
   const CODE_STORAGE_KEY = "r96-invite-code-v3";
   const LEGACY_CLAIM_STORAGE_KEY = "r96-invite-claim-v2";
-  const LOGIN_HANDOFF_STORAGE_KEY = "r96-invite-login-handoff-v1";
-  const LOGIN_HANDOFF_TTL_MS = 10 * 60 * 1000;
+  const LEGACY_LOGIN_HANDOFF_STORAGE_KEY = "r96-invite-login-handoff-v1";
+  const LOGIN_FLOW_PARAM = "r96ih";
   const FRAME_ORIGIN = "https://dtokurisu-png.github.io";
   const SOURCE_BRIDGE = "r96-access-bridge";
   const SOURCE_UI = "r96-access-ui";
@@ -38,7 +38,6 @@
   let claimInFlight = false;
   let claimBlocked = false;
   let gameCapabilityInFlight = false;
-  let loginHandoffInFlight = false;
 
   function readSession(key) {
     try { return String(sessionStorage.getItem(key) || ""); }
@@ -52,60 +51,45 @@
     } catch (_) {}
   }
 
-  function readLoginHandoffStartedAt() {
-    const value = Number(readSession(LOGIN_HANDOFF_STORAGE_KEY));
-    return Number.isFinite(value) && value > 0 ? value : 0;
-  }
-
-  function clearLoginHandoff() {
-    loginHandoffInFlight = false;
-    writeSession(LOGIN_HANDOFF_STORAGE_KEY, "");
-  }
-
-  function beginLoginHandoff() {
-    const startedAt = Date.now();
-    loginHandoffInFlight = true;
-    writeSession(LOGIN_HANDOFF_STORAGE_KEY, String(startedAt));
-  }
-
-  function restoreLoginHandoff() {
-    const startedAt = readLoginHandoffStartedAt();
-
-    if (
-      !startedAt ||
-      Date.now() - startedAt > LOGIN_HANDOFF_TTL_MS
-    ) {
-      clearLoginHandoff();
-      return false;
-    }
-
-    loginHandoffInFlight = true;
-    return true;
-  }
-
-  function syncLoginHandoffState() {
-    if (!loginHandoffInFlight) return false;
-
+  function loginFlowState() {
     const query = new URLSearchParams(location.search);
+    const marker = query.get(LOGIN_FLOW_PARAM) === "1";
     const authState = String(query.get("nxa") || "").toUpperCase();
+
+    return {
+      marker,
+      authState
+    };
+  }
+
+  function clearLoginFlowMarker() {
+    const url = new URL(location.href);
+    if (!url.searchParams.has(LOGIN_FLOW_PARAM)) return;
+
+    url.searchParams.delete(LOGIN_FLOW_PARAM);
+    history.replaceState(
+      history.state,
+      "",
+      url.pathname + url.search + url.hash
+    );
+  }
+
+  function loginFlowBlocksInviteModal() {
+    const flow = loginFlowState();
+    if (!flow.marker) return false;
+
     const state = accessState();
 
     if (state.signedIn && actionCapability) {
-      clearLoginHandoff();
+      clearLoginFlowMarker();
       return false;
     }
 
-    if (authState === "SIGNED_OUT" || authState === "FAILED") {
-      clearLoginHandoff();
-      return false;
-    }
-
-    const startedAt = readLoginHandoffStartedAt();
     if (
-      !startedAt ||
-      Date.now() - startedAt > LOGIN_HANDOFF_TTL_MS
+      flow.authState === "SIGNED_OUT" ||
+      flow.authState === "FAILED"
     ) {
-      clearLoginHandoff();
+      clearLoginFlowMarker();
       return false;
     }
 
@@ -408,11 +392,6 @@
   }
 
   function startCanonicalLogin() {
-    if (loginHandoffInFlight) return;
-
-    // Persist the handoff before navigation. Wix reloads the page to open the
-    // canonical provider login, so an in-memory flag is not sufficient.
-    beginLoginHandoff();
     removeHostModal();
 
     const url = new URL(location.href);
@@ -422,19 +401,17 @@
       "nexoCommandId",CAPABILITY_PARAM,INVITE_PARAM
     ].forEach((key) => url.searchParams.delete(key));
 
+    // This marker belongs only to the invitation UI handoff. It is not
+    // identity, role, capability, or session state. Wix preserves it while
+    // the canonical login command runs, so the invite overlay stays away.
+    url.searchParams.set(LOGIN_FLOW_PARAM, "1");
     url.searchParams.set("nexoAuth", "login");
     url.searchParams.set(
       "nexoCommandId",
       Date.now().toString(36) + "-r96invite"
     );
 
-    try {
-      location.assign(url.href);
-    } catch (error) {
-      clearLoginHandoff();
-      showInviteVerified();
-      throw error;
-    }
+    location.assign(url.href);
   }
 
   async function verifyInvite(code, submit, feedback) {
@@ -517,7 +494,7 @@
 
     if (!state.signedIn || !actionCapability) {
       if (
-        !syncLoginHandoffState() &&
+        !loginFlowBlocksInviteModal() &&
         !document.getElementById(MODAL_ID)
       ) {
         showInviteVerified();
@@ -574,7 +551,7 @@
       writeSession(CODE_STORAGE_KEY, "");
       writeSession(ENTRY_STORAGE_KEY, "");
       writeSession(LEGACY_CLAIM_STORAGE_KEY, "");
-      clearLoginHandoff();
+      clearLoginFlowMarker();
 
       roleOverride = String(data.access.roleKey || "developer");
       lastRole = "";
@@ -813,9 +790,8 @@
   });
 
   writeSession(LEGACY_CLAIM_STORAGE_KEY, "");
+  writeSession(LEGACY_LOGIN_HANDOFF_STORAGE_KEY, "");
   captureTransientState();
-  restoreLoginHandoff();
-  syncLoginHandoffState();
 
   if (
     /^[A-Z0-9]{8}$/.test(
@@ -826,16 +802,16 @@
     )
   ) {
     if (accessState().signedIn && actionCapability) {
-      clearLoginHandoff();
+      clearLoginFlowMarker();
       tryClaimInvite();
-    } else if (!loginHandoffInFlight) {
+    } else if (!loginFlowBlocksInviteModal()) {
       showInviteVerified();
     }
   } else if (
     /^[A-Za-z0-9_-]{40,80}$/.test(
       readSession(ENTRY_STORAGE_KEY)
     ) &&
-    !loginHandoffInFlight
+    !loginFlowBlocksInviteModal()
   ) {
     showInviteEntry();
   }
@@ -844,9 +820,7 @@
     captureTransientState();
     sendAccess(false);
 
-    // The handoff survives page reloads. Keep the invitation overlay absent
-    // until Wix reports login failure/cancel or access is authenticated.
-    if (syncLoginHandoffState()) {
+    if (loginFlowBlocksInviteModal()) {
       removeHostModal();
       return;
     }
