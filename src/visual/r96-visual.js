@@ -93,5 +93,11 @@
   developerScript.dataset.r96DeveloperUi = "1";
   document.head.appendChild(developerScript);
 
+  const communityScript = document.createElement("script");
+  communityScript.src = "./src/games/r96-community-ui.js?v=1.0.0";
+  communityScript.defer = true;
+  communityScript.dataset.r96CommunityUi = "1";
+  document.head.appendChild(communityScript);
+
 })();
 
