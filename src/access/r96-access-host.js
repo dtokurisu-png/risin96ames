@@ -14,6 +14,8 @@
   const LEGACY_CLAIM_STORAGE_KEY = "r96-invite-claim-v2";
   const LEGACY_LOGIN_HANDOFF_STORAGE_KEY = "r96-invite-login-handoff-v1";
   const LOGIN_FLOW_PARAM = "r96ih";
+  const LOGIN_HANDOFF_STORAGE_KEY = "r96-invite-login-handoff-v2";
+  const LOGIN_HANDOFF_TTL_MS = 10 * 60 * 1000;
   const FRAME_ORIGIN = "https://dtokurisu-png.github.io";
   const SOURCE_BRIDGE = "r96-access-bridge";
   const SOURCE_UI = "r96-access-ui";
@@ -51,6 +53,14 @@
     } catch (_) {}
   }
 
+  function handoffActive() {
+    const started = Number(readSession(LOGIN_HANDOFF_STORAGE_KEY));
+    if (!Number.isFinite(started) || started <= 0) return false;
+    if (Date.now() - started < LOGIN_HANDOFF_TTL_MS) return true;
+    writeSession(LOGIN_HANDOFF_STORAGE_KEY, "");
+    return false;
+  }
+
   function loginFlowState() {
     const query = new URLSearchParams(location.search);
     const marker = query.get(LOGIN_FLOW_PARAM) === "1";
@@ -76,12 +86,13 @@
 
   function loginFlowBlocksInviteModal() {
     const flow = loginFlowState();
-    if (!flow.marker) return false;
+    if (!flow.marker && !handoffActive()) return false;
 
     const state = accessState();
 
     if (state.signedIn && actionCapability) {
       clearLoginFlowMarker();
+      writeSession(LOGIN_HANDOFF_STORAGE_KEY, "");
       return false;
     }
 
@@ -388,6 +399,9 @@
   }
 
   function startCanonicalLogin() {
+    // Persist before navigation: Wix may replace URL/query parameters
+    // while opening the native Google login or returning to this page.
+    writeSession(LOGIN_HANDOFF_STORAGE_KEY, String(Date.now()));
     removeHostModal();
 
     const url = new URL(location.href);
@@ -548,6 +562,7 @@
       writeSession(ENTRY_STORAGE_KEY, "");
       writeSession(LEGACY_CLAIM_STORAGE_KEY, "");
       clearLoginFlowMarker();
+      writeSession(LOGIN_HANDOFF_STORAGE_KEY, "");
 
       roleOverride = String(data.access.roleKey || "developer");
       lastRole = "";
