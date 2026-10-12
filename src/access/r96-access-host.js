@@ -85,15 +85,10 @@
       return false;
     }
 
-    if (
-      flow.authState === "READY" ||
-      flow.authState === "SIGNED_OUT" ||
-      flow.authState === "FAILED"
-    ) {
-      clearLoginFlowMarker();
-      return false;
-    }
-
+    // A Wix auth result can arrive before the R96 member role/capability
+    // is synchronized. Keep the invitation handoff active until the user
+    // is actually recognized; otherwise the 150ms poll remounts the
+    // verified-invitation modal above the provider login.
     return true;
   }
 
