@@ -8,8 +8,8 @@
   const SOURCE_UI = "r96-community-ui";
   const SOURCE_BRIDGE = "r96-community-bridge";
   const PROTOCOL = 1;
-  const ROOT_ID = "r96-community-stage2";
-  const STYLE_ID = "r96-community-stage2-style";
+  const ROOT_ID = "r96-community-stage3";
+  const STYLE_ID = "r96-community-stage3-style";
 
   let games = [];
   let selectedGameId = "";
@@ -22,6 +22,12 @@
   let pending = new Map();
   let editingCommentId = "";
   let editingCommentBody = "";
+  let replyParentId = "";
+  let replyAuthor = "";
+  let reportTargetType = "";
+  let reportTargetId = "";
+  let reportTargetLabel = "";
+  let moderationReportStatusFilter = "open";
 
   function requestId() {
     if (globalThis.crypto?.randomUUID) {
@@ -128,6 +134,20 @@
       COMMENT_BODY_REQUIRED: "Escribe un comentario.",
       COMMENT_PERMISSION_REQUIRED:
         "Sólo puedes modificar tu propio comentario.",
+      REPORT_REASON_INVALID:
+        "Selecciona un motivo válido para el reporte.",
+      REPORT_TARGET_INVALID:
+        "Ese tipo de contenido no se puede reportar.",
+      REPORT_TARGET_NOT_FOUND:
+        "Ese aporte ya no está disponible para reportarlo.",
+      REPORT_OWN_CONTENT:
+        "No necesitas reportar tu propio aporte; puedes editarlo o eliminarlo.",
+      REPORT_ALREADY_OPEN:
+        "Ya tienes un reporte pendiente sobre este aporte.",
+      REPORT_NOT_FOUND:
+        "Ese reporte ya no existe.",
+      REPORT_ALREADY_CLOSED:
+        "Ese reporte ya fue atendido.",
       COMMUNITY_TARGET_NOT_FOUND:
         "Ese contenido ya no está disponible para moderación.",
       COMMUNITY_TIMEOUT:
@@ -366,6 +386,64 @@
       .r96-community-status[data-status="visible"]{
         color:#8dd7a7;
       }
+      .r96-community-thread{
+        display:grid;
+        gap:10px;
+      }
+      .r96-community-replies{
+        display:grid;
+        gap:10px;
+        margin-left:22px;
+        padding-left:12px;
+        border-left:1px solid var(--r96-line);
+      }
+      .r96-community-reply-note{
+        color:var(--r96-muted);
+        font-size:.75rem;
+        font-weight:800;
+      }
+      .r96-community-report-form{
+        display:grid;
+        gap:12px;
+        border:1px solid var(--r96-line);
+        border-radius:18px;
+        background:var(--r96-panel);
+        padding:18px;
+      }
+      .r96-community-report-form h3{
+        margin:0;
+      }
+      .r96-community-report-grid{
+        display:grid;
+        grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);
+        gap:12px;
+      }
+      .r96-community-report-grid select,
+      .r96-community-report-grid textarea{
+        width:100%;
+        box-sizing:border-box;
+        border:1px solid var(--r96-line);
+        border-radius:11px;
+        background:var(--r96-panel-strong);
+        color:var(--r96-text);
+        padding:11px 12px;
+        font:inherit;
+      }
+      .r96-community-report-grid textarea{
+        min-height:86px;
+        resize:vertical;
+      }
+      .r96-community-report-card{
+        display:grid;
+        gap:9px;
+        padding:14px;
+        border:1px solid var(--r96-line);
+        border-radius:14px;
+        background:var(--r96-bg-3);
+      }
+      .r96-community-report-reason{
+        font-weight:900;
+      }
       @media(max-width:820px){
         .r96-community-grid{
           grid-template-columns:1fr;
@@ -421,6 +499,10 @@
               <button class="r96-community-btn" type="button" data-review-edit="${esc(review.id)}">Editar</button>
               <button class="r96-community-btn r96-community-btn-danger" type="button" data-review-delete="${esc(review.id)}">Eliminar</button>
             </div>
+          ` : signedIn() ? `
+            <div class="r96-community-actions">
+              <button class="r96-community-btn" type="button" data-report-type="review" data-report-id="${esc(review.id)}" data-report-label="reseña de ${esc(review.authorDisplayName)}">Reportar</button>
+            </div>
           ` : ""}
         </article>
       `;
@@ -436,27 +518,100 @@
         "</div>";
     }
 
-    return comments.map(comment => {
+    const byParent = new Map();
+    comments.forEach(comment => {
+      const parentId = String(comment.parentCommentId || "");
+      const list = byParent.get(parentId) || [];
+      list.push(comment);
+      byParent.set(parentId, list);
+    });
+
+    function renderNode(comment, depth = 0, seen = new Set()) {
+      if (!comment || seen.has(comment.id)) return "";
+      const nextSeen = new Set(seen);
+      nextSeen.add(comment.id);
+
       const mine = comment.ownedByViewer === true;
-      return `
-        <article class="r96-community-card">
-          <div class="r96-community-card-head">
-            <span class="r96-community-author">${esc(comment.authorDisplayName)}</span>
-            <span class="r96-community-version">
-              ${comment.versionLabel ? "v" + esc(comment.versionLabel) + " · " : ""}
-              ${esc(dateLabel(comment.updatedAt || comment.createdAt))}
-            </span>
-          </div>
-          <p>${esc(comment.body)}</p>
-          ${mine ? `
+      const replies = byParent.get(String(comment.id || "")) || [];
+      const actions = signedIn()
+        ? mine
+          ? `
             <div class="r96-community-actions">
+              <button class="r96-community-btn" type="button" data-comment-reply="${esc(comment.id)}" data-comment-author="${esc(comment.authorDisplayName)}">Responder</button>
               <button class="r96-community-btn" type="button" data-comment-edit="${esc(comment.id)}">Editar</button>
               <button class="r96-community-btn r96-community-btn-danger" type="button" data-comment-delete="${esc(comment.id)}">Eliminar</button>
             </div>
+          `
+          : `
+            <div class="r96-community-actions">
+              <button class="r96-community-btn" type="button" data-comment-reply="${esc(comment.id)}" data-comment-author="${esc(comment.authorDisplayName)}">Responder</button>
+              <button class="r96-community-btn" type="button" data-report-type="comment" data-report-id="${esc(comment.id)}" data-report-label="comentario de ${esc(comment.authorDisplayName)}">Reportar</button>
+            </div>
+          `
+        : "";
+
+      return `
+        <div class="r96-community-thread">
+          <article class="r96-community-card" data-depth="${Math.min(depth, 6)}">
+            <div class="r96-community-card-head">
+              <span class="r96-community-author">${esc(comment.authorDisplayName)}</span>
+              <span class="r96-community-version">
+                ${comment.versionLabel ? "v" + esc(comment.versionLabel) + " · " : ""}
+                ${esc(dateLabel(comment.updatedAt || comment.createdAt))}
+              </span>
+            </div>
+            ${comment.parentCommentId ? '<div class="r96-community-reply-note">Respuesta en el hilo</div>' : ""}
+            <p>${esc(comment.body)}</p>
+            ${actions}
+          </article>
+          ${replies.length ? `
+            <div class="r96-community-replies">
+              ${replies.map(reply =>
+                renderNode(reply, depth + 1, nextSeen)
+              ).join("")}
+            </div>
           ` : ""}
-        </article>
+        </div>
       `;
-    }).join("");
+    }
+
+    const roots = comments.filter(comment =>
+      !comment.parentCommentId ||
+      !comments.some(candidate => candidate.id === comment.parentCommentId)
+    );
+
+    return roots.map(comment => renderNode(comment)).join("");
+  }
+
+  function renderReportForm() {
+    if (!reportTargetId || !signedIn()) return "";
+
+    return `
+      <form class="r96-community-report-form" data-report-form>
+        <div>
+          <h3>Reportar aporte</h3>
+          <p class="r96-community-muted">
+            ${esc(reportTargetLabel || "Contenido seleccionado")}. El reporte será privado para el creador del juego y Wonder.
+          </p>
+        </div>
+        <div class="r96-community-report-grid">
+          <select name="reason" required>
+            <option value="">Selecciona un motivo</option>
+            <option value="spam">Spam</option>
+            <option value="harassment">Acoso</option>
+            <option value="offensive">Contenido ofensivo</option>
+            <option value="spoiler">Spoiler no señalado</option>
+            <option value="impersonation">Suplantación</option>
+            <option value="other">Otro</option>
+          </select>
+          <textarea name="details" maxlength="500" placeholder="Detalle opcional para el moderador"></textarea>
+        </div>
+        <div class="r96-community-actions">
+          <button class="r96-community-btn r96-community-btn-primary" type="submit">Enviar reporte</button>
+          <button class="r96-community-btn" type="button" data-report-cancel>Cancelar</button>
+        </div>
+      </form>
+    `;
   }
 
   function moderationItems() {
@@ -535,6 +690,71 @@
     }).join("");
   }
 
+
+  function reportTargetPreview(report) {
+    const source = report.targetType === "review"
+      ? (moderation?.reviews || [])
+      : (moderation?.comments || []);
+    return source.find(item => item.id === report.targetId) || null;
+  }
+
+  function reportReasonLabel(reason) {
+    return {
+      spam: "Spam",
+      harassment: "Acoso",
+      offensive: "Contenido ofensivo",
+      spoiler: "Spoiler no señalado",
+      impersonation: "Suplantación",
+      other: "Otro"
+    }[String(reason || "")] || "Reporte";
+  }
+
+  function renderModerationReports() {
+    const reports = (moderation?.reports || [])
+      .filter(report =>
+        moderationReportStatusFilter === "all" ||
+        report.status === moderationReportStatusFilter
+      );
+
+    if (!reports.length) {
+      return '<div class="r96-community-empty r96-community-muted">' +
+        "No hay reportes que coincidan con este filtro." +
+        "</div>";
+    }
+
+    return reports.map(report => {
+      const target = reportTargetPreview(report);
+      const open = report.status === "open";
+
+      return `
+        <article class="r96-community-report-card">
+          <div class="r96-community-card-head">
+            <div>
+              <span class="r96-community-report-reason">${esc(reportReasonLabel(report.reason))}</span>
+              <div class="r96-community-version">
+                ${report.targetType === "review" ? "Reseña" : "Comentario"} ·
+                ${esc(dateLabel(report.createdAt))}
+              </div>
+            </div>
+            <span class="r96-community-status" data-status="${esc(report.status)}">
+              ${report.status === "open" ? "Pendiente" : report.status === "resolved" ? "Resuelto" : "Descartado"}
+            </span>
+          </div>
+          ${report.details ? '<p>' + esc(report.details) + '</p>' : ""}
+          <div class="r96-community-version">
+            Aporte: ${target ? esc(target.authorDisplayName) + " — " + esc(target.body).slice(0, 180) : "ya no está visible en la cola de contenido"}
+          </div>
+          ${open ? `
+            <div class="r96-community-actions">
+              <button class="r96-community-btn r96-community-btn-primary" type="button" data-report-resolve="${esc(report.id)}">Resolver</button>
+              <button class="r96-community-btn" type="button" data-report-dismiss="${esc(report.id)}">Descartar</button>
+            </div>
+          ` : ""}
+        </article>
+      `;
+    }).join("");
+  }
+
   function renderModeration() {
     if (!canModerate || !moderationOpen || !moderation) return "";
 
@@ -561,6 +781,8 @@
           <article><span>Reseñas ocultas</span><strong>${Number(summary.hiddenReviews || 0)}</strong></article>
           <article><span>Comentarios visibles</span><strong>${Number(summary.visibleComments || 0)}</strong></article>
           <article><span>Comentarios ocultos</span><strong>${Number(summary.hiddenComments || 0)}</strong></article>
+          <article><span>Reportes pendientes</span><strong>${Number(summary.openReports || 0)}</strong></article>
+          <article><span>Reportes resueltos</span><strong>${Number(summary.resolvedReports || 0)}</strong></article>
         </div>
 
         <div class="r96-community-filters">
@@ -584,6 +806,22 @@
 
         <div class="r96-community-list">
           ${renderModerationItems()}
+        </div>
+
+        <div class="r96-community-list">
+          <div class="r96-community-card-head">
+            <h3>Reportes</h3>
+            <label class="r96-community-filter">
+              Estado
+              <select data-report-status-filter>
+                <option value="open" ${moderationReportStatusFilter === "open" ? "selected" : ""}>Pendientes</option>
+                <option value="resolved" ${moderationReportStatusFilter === "resolved" ? "selected" : ""}>Resueltos</option>
+                <option value="dismissed" ${moderationReportStatusFilter === "dismissed" ? "selected" : ""}>Descartados</option>
+                <option value="all" ${moderationReportStatusFilter === "all" ? "selected" : ""}>Todos</option>
+              </select>
+            </label>
+          </div>
+          ${renderModerationReports()}
         </div>
       </section>
     `;
@@ -677,13 +915,14 @@
 
           <div class="r96-community-column">
             <form class="r96-community-form" data-comment-form>
-              <h3>${editingCommentId ? "Editar comentario" : "Nuevo comentario"}</h3>
+              <h3>${editingCommentId ? "Editar comentario" : replyParentId ? "Responder a " + esc(replyAuthor || "comentario") : "Nuevo comentario"}</h3>
+              ${replyParentId && !editingCommentId ? '<div class="r96-community-reply-note">Tu comentario quedará dentro del hilo seleccionado.</div>' : ""}
               <textarea name="body" maxlength="1500" placeholder="${isSignedIn ? "Escribe un comentario…" : "Inicia sesión para comentar."}" ${isSignedIn ? "" : "disabled"}>${esc(editingCommentBody)}</textarea>
               <div class="r96-community-actions">
                 <button class="r96-community-btn r96-community-btn-primary" type="submit" ${isSignedIn ? "" : "disabled"}>
                   ${editingCommentId ? "Guardar cambios" : "Publicar comentario"}
                 </button>
-                ${editingCommentId ? '<button class="r96-community-btn" type="button" data-comment-cancel>Cancelar</button>' : ""}
+                ${editingCommentId || replyParentId ? '<button class="r96-community-btn" type="button" data-comment-cancel>Cancelar</button>' : ""}
               </div>
             </form>
 
@@ -694,6 +933,7 @@
           </div>
         </div>
 
+        ${renderReportForm()}
         ${renderModeration()}
       ` : `
         <div class="r96-community-empty">
@@ -810,6 +1050,50 @@
     }
   }
 
+
+  async function createReport(reason, details) {
+    setFeedback("Enviando reporte…");
+    try {
+      await action("report.create", {
+        type: reportTargetType,
+        targetId: reportTargetId,
+        reason,
+        details
+      });
+      reportTargetType = "";
+      reportTargetId = "";
+      reportTargetLabel = "";
+      setFeedback("Reporte enviado al equipo de moderación.");
+      render();
+      if (canModerate) await loadModeration(true);
+    } catch (error) {
+      setFeedback(errorCopy(error?.message), true);
+    }
+  }
+
+  async function resolveReport(reportId, status) {
+    setFeedback(
+      status === "resolved"
+        ? "Resolviendo reporte…"
+        : "Descartando reporte…"
+    );
+    try {
+      const result = await action("report.resolve", {
+        reportId,
+        status
+      });
+      moderation = result?.data?.moderation || result?.moderation || moderation;
+      setFeedback(
+        status === "resolved"
+          ? "Reporte resuelto."
+          : "Reporte descartado."
+      );
+      render();
+    } catch (error) {
+      setFeedback(errorCopy(error?.message), true);
+    }
+  }
+
   function wire() {
     const mount = root();
     if (!mount) return;
@@ -819,6 +1103,11 @@
       selectedGameId = String(select.value || "");
       editingCommentId = "";
       editingCommentBody = "";
+      replyParentId = "";
+      replyAuthor = "";
+      reportTargetType = "";
+      reportTargetId = "";
+      reportTargetLabel = "";
       moderation = null;
       canModerate = false;
       moderationOpen = false;
@@ -856,6 +1145,53 @@
       ?.addEventListener("change", event => {
         moderationStatusFilter = String(event.target.value || "all");
         render();
+      });
+
+    mount.querySelector("[data-report-status-filter]")
+      ?.addEventListener("change", event => {
+        moderationReportStatusFilter = String(event.target.value || "open");
+        render();
+      });
+
+    mount.querySelectorAll("[data-report-resolve]").forEach(button => {
+      button.addEventListener("click", () => {
+        resolveReport(String(button.dataset.reportResolve || ""), "resolved");
+      });
+    });
+
+    mount.querySelectorAll("[data-report-dismiss]").forEach(button => {
+      button.addEventListener("click", () => {
+        resolveReport(String(button.dataset.reportDismiss || ""), "dismissed");
+      });
+    });
+
+    mount.querySelectorAll("[data-report-id]").forEach(button => {
+      button.addEventListener("click", () => {
+        reportTargetType = String(button.dataset.reportType || "");
+        reportTargetId = String(button.dataset.reportId || "");
+        reportTargetLabel = String(button.dataset.reportLabel || "");
+        render();
+        root()?.querySelector("[data-report-form]")
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+    });
+
+    mount.querySelector("[data-report-cancel]")
+      ?.addEventListener("click", () => {
+        reportTargetType = "";
+        reportTargetId = "";
+        reportTargetLabel = "";
+        render();
+      });
+
+    mount.querySelector("[data-report-form]")
+      ?.addEventListener("submit", event => {
+        event.preventDefault();
+        const data = new FormData(event.currentTarget);
+        createReport(
+          String(data.get("reason") || ""),
+          String(data.get("details") || "")
+        );
       });
 
     mount.querySelectorAll("[data-moderate-id]").forEach(button => {
@@ -954,11 +1290,14 @@
             })
           : await action("comment.create", {
               gameId: selectedGameId,
+              parentCommentId: replyParentId,
               body
             });
 
         editingCommentId = "";
         editingCommentBody = "";
+        replyParentId = "";
+        replyAuthor = "";
         await refreshAfterOwnMutation(
           result?.data?.feed || result?.feed,
           "Comentario guardado."
@@ -966,6 +1305,18 @@
       } catch (error) {
         setFeedback(errorCopy(error?.message), true);
       }
+    });
+
+    mount.querySelectorAll("[data-comment-reply]").forEach(button => {
+      button.addEventListener("click", () => {
+        editingCommentId = "";
+        editingCommentBody = "";
+        replyParentId = String(button.dataset.commentReply || "");
+        replyAuthor = String(button.dataset.commentAuthor || "");
+        render();
+        root()?.querySelector("[data-comment-form]")
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
     });
 
     mount.querySelectorAll("[data-comment-edit]").forEach(button => {
@@ -977,6 +1328,8 @@
 
         editingCommentId = comment.id;
         editingCommentBody = comment.body || "";
+        replyParentId = "";
+        replyAuthor = "";
         render();
         root()?.querySelector("[data-comment-form]")
           ?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -1007,6 +1360,8 @@
       ?.addEventListener("click", () => {
         editingCommentId = "";
         editingCommentBody = "";
+        replyParentId = "";
+        replyAuthor = "";
         render();
       });
   }
