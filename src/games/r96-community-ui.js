@@ -8,12 +8,17 @@
   const SOURCE_UI = "r96-community-ui";
   const SOURCE_BRIDGE = "r96-community-bridge";
   const PROTOCOL = 1;
-  const ROOT_ID = "r96-community-stage1";
-  const STYLE_ID = "r96-community-stage1-style";
+  const ROOT_ID = "r96-community-stage2";
+  const STYLE_ID = "r96-community-stage2-style";
 
   let games = [];
   let selectedGameId = "";
   let feed = null;
+  let moderation = null;
+  let canModerate = false;
+  let moderationOpen = false;
+  let moderationTypeFilter = "all";
+  let moderationStatusFilter = "all";
   let pending = new Map();
   let editingCommentId = "";
   let editingCommentBody = "";
@@ -54,11 +59,7 @@
         reject(new Error("COMMUNITY_TIMEOUT"));
       }, 12000);
 
-      pending.set(id, {
-        resolve,
-        reject,
-        timer
-      });
+      pending.set(id, { resolve, reject, timer });
 
       post(type, {
         ...payload,
@@ -116,6 +117,8 @@
         "La sesión de Comunidad necesita renovarse.",
       COMMUNITY_CAPABILITY_EXPIRED:
         "La sesión de Comunidad venció. Intenta de nuevo.",
+      COMMUNITY_MODERATION_REQUIRED:
+        "Esta cuenta no administra la comunidad de este juego.",
       GAME_NOT_FOUND: "El juego ya no está disponible.",
       RATING_INVALID: "Selecciona una puntuación de 1 a 5 estrellas.",
       REVIEW_BODY_REQUIRED:
@@ -125,6 +128,8 @@
       COMMENT_BODY_REQUIRED: "Escribe un comentario.",
       COMMENT_PERMISSION_REQUIRED:
         "Sólo puedes modificar tu propio comentario.",
+      COMMUNITY_TARGET_NOT_FOUND:
+        "Ese contenido ya no está disponible para moderación.",
       COMMUNITY_TIMEOUT:
         "La operación tardó demasiado. Intenta de nuevo."
     };
@@ -155,10 +160,11 @@
         border-radius:18px;
         background:var(--r96-panel);
       }
-      .r96-community-toolbar label{
+      .r96-community-toolbar label,
+      .r96-community-filter{
         display:grid;
         gap:7px;
-        min-width:min(100%,320px);
+        min-width:min(100%,240px);
         color:var(--r96-muted);
         font-size:.78rem;
         font-weight:800;
@@ -168,7 +174,8 @@
       .r96-community-toolbar select,
       .r96-community-form input,
       .r96-community-form select,
-      .r96-community-form textarea{
+      .r96-community-form textarea,
+      .r96-community-filter select{
         width:100%;
         box-sizing:border-box;
         border:1px solid var(--r96-line);
@@ -185,7 +192,7 @@
       .r96-community-summary{
         display:flex;
         flex-wrap:wrap;
-        gap:10px 18px;
+        gap:10px 14px;
         align-items:center;
       }
       .r96-community-score{
@@ -213,7 +220,8 @@
       }
       .r96-community-form,
       .r96-community-card,
-      .r96-community-empty{
+      .r96-community-empty,
+      .r96-community-moderation{
         border:1px solid var(--r96-line);
         border-radius:18px;
         background:var(--r96-panel);
@@ -224,7 +232,8 @@
         gap:10px;
       }
       .r96-community-form h3,
-      .r96-community-list h3{
+      .r96-community-list h3,
+      .r96-community-moderation h3{
         margin:0;
       }
       .r96-community-list{
@@ -234,6 +243,10 @@
       .r96-community-card{
         display:grid;
         gap:8px;
+      }
+      .r96-community-card[data-status="hidden"]{
+        border-style:dashed;
+        opacity:.82;
       }
       .r96-community-card-head{
         display:flex;
@@ -294,9 +307,71 @@
       .r96-community-feedback[data-error="1"]{
         color:#ff9b9b;
       }
+      .r96-community-moderation{
+        display:grid;
+        gap:16px;
+      }
+      .r96-community-moderation-head{
+        display:flex;
+        flex-wrap:wrap;
+        gap:12px;
+        align-items:flex-start;
+        justify-content:space-between;
+      }
+      .r96-community-moderation-head p{
+        margin:5px 0 0;
+      }
+      .r96-community-moderation-summary{
+        display:grid;
+        grid-template-columns:repeat(4,minmax(0,1fr));
+        gap:10px;
+      }
+      .r96-community-moderation-summary article{
+        padding:12px;
+        border:1px solid var(--r96-line);
+        border-radius:13px;
+        background:var(--r96-bg-3);
+      }
+      .r96-community-moderation-summary span{
+        display:block;
+        color:var(--r96-muted);
+        font-size:.68rem;
+        font-weight:800;
+      }
+      .r96-community-moderation-summary strong{
+        display:block;
+        margin-top:4px;
+        font-size:.95rem;
+      }
+      .r96-community-filters{
+        display:flex;
+        flex-wrap:wrap;
+        gap:10px;
+      }
+      .r96-community-status{
+        display:inline-flex;
+        align-items:center;
+        min-height:26px;
+        padding:0 9px;
+        border:1px solid var(--r96-line);
+        border-radius:999px;
+        font-size:.69rem;
+        font-weight:900;
+        text-transform:uppercase;
+        letter-spacing:.04em;
+      }
+      .r96-community-status[data-status="hidden"]{
+        color:#ffca75;
+      }
+      .r96-community-status[data-status="visible"]{
+        color:#8dd7a7;
+      }
       @media(max-width:820px){
         .r96-community-grid{
           grid-template-columns:1fr;
+        }
+        .r96-community-moderation-summary{
+          grid-template-columns:1fr 1fr;
         }
       }
     `;
@@ -308,9 +383,7 @@
   }
 
   function setFeedback(message, isError = false) {
-    const node = root()?.querySelector(
-      ".r96-community-feedback"
-    );
+    const node = root()?.querySelector(".r96-community-feedback");
     if (!node) return;
     node.textContent = String(message || "");
     node.dataset.error = isError ? "1" : "0";
@@ -386,6 +459,136 @@
     }).join("");
   }
 
+  function moderationItems() {
+    if (!moderation) return [];
+
+    const reviews = (moderation.reviews || []).map(item => ({
+      ...item,
+      moderationType: "review"
+    }));
+    const comments = (moderation.comments || []).map(item => ({
+      ...item,
+      moderationType: "comment"
+    }));
+
+    return reviews
+      .concat(comments)
+      .filter(item =>
+        moderationTypeFilter === "all" ||
+        item.moderationType === moderationTypeFilter
+      )
+      .filter(item =>
+        moderationStatusFilter === "all" ||
+        item.status === moderationStatusFilter
+      )
+      .sort((a, b) =>
+        new Date(b.updatedAt || b.createdAt || 0).getTime() -
+        new Date(a.updatedAt || a.createdAt || 0).getTime()
+      );
+  }
+
+  function renderModerationItems() {
+    const items = moderationItems();
+
+    if (!items.length) {
+      return '<div class="r96-community-empty r96-community-muted">' +
+        "No hay contenido que coincida con estos filtros." +
+        "</div>";
+    }
+
+    return items.map(item => {
+      const isReview = item.moderationType === "review";
+      const hidden = item.status === "hidden";
+      const nextStatus = hidden ? "visible" : "hidden";
+      const actionLabel = hidden ? "Restaurar" : "Ocultar";
+
+      return `
+        <article class="r96-community-card" data-status="${esc(item.status)}">
+          <div class="r96-community-card-head">
+            <div>
+              <span class="r96-community-author">${esc(item.authorDisplayName)}</span>
+              <div class="r96-community-version">
+                ${isReview ? "Reseña" : "Comentario"}
+                ${item.versionLabel ? " · v" + esc(item.versionLabel) : ""}
+                · ${esc(dateLabel(item.updatedAt || item.createdAt))}
+              </div>
+            </div>
+            <span class="r96-community-status" data-status="${esc(item.status)}">
+              ${hidden ? "Oculto" : "Visible"}
+            </span>
+          </div>
+          ${isReview ? '<div class="r96-community-stars">' + esc(stars(item.rating)) + '</div>' : ""}
+          ${isReview && item.title ? "<h4>" + esc(item.title) + "</h4>" : ""}
+          <p>${esc(item.body)}</p>
+          ${hidden && item.hiddenAt ? '<div class="r96-community-version">Ocultado: ' + esc(dateLabel(item.hiddenAt)) + '</div>' : ""}
+          <div class="r96-community-actions">
+            <button
+              class="r96-community-btn ${hidden ? "" : "r96-community-btn-danger"}"
+              type="button"
+              data-moderate-type="${esc(item.moderationType)}"
+              data-moderate-id="${esc(item.id)}"
+              data-moderate-status="${nextStatus}"
+            >${actionLabel}</button>
+          </div>
+        </article>
+      `;
+    }).join("");
+  }
+
+  function renderModeration() {
+    if (!canModerate || !moderationOpen || !moderation) return "";
+
+    const summary = moderation.summary || {};
+    const scopeLabel =
+      moderation.scope === "global"
+        ? "Wonder · administración global"
+        : "Propietario del juego";
+
+    return `
+      <section class="r96-community-moderation">
+        <div class="r96-community-moderation-head">
+          <div>
+            <h3>Moderación</h3>
+            <p class="r96-community-muted">
+              ${esc(scopeLabel)}. Puedes ocultar o restaurar aportes; no puedes editar el texto de otro usuario.
+            </p>
+          </div>
+          <button class="r96-community-btn" type="button" data-moderation-close>Cerrar</button>
+        </div>
+
+        <div class="r96-community-moderation-summary">
+          <article><span>Reseñas visibles</span><strong>${Number(summary.visibleReviews || 0)}</strong></article>
+          <article><span>Reseñas ocultas</span><strong>${Number(summary.hiddenReviews || 0)}</strong></article>
+          <article><span>Comentarios visibles</span><strong>${Number(summary.visibleComments || 0)}</strong></article>
+          <article><span>Comentarios ocultos</span><strong>${Number(summary.hiddenComments || 0)}</strong></article>
+        </div>
+
+        <div class="r96-community-filters">
+          <label class="r96-community-filter">
+            Tipo
+            <select data-moderation-type-filter>
+              <option value="all" ${moderationTypeFilter === "all" ? "selected" : ""}>Todo</option>
+              <option value="review" ${moderationTypeFilter === "review" ? "selected" : ""}>Reseñas</option>
+              <option value="comment" ${moderationTypeFilter === "comment" ? "selected" : ""}>Comentarios</option>
+            </select>
+          </label>
+          <label class="r96-community-filter">
+            Estado
+            <select data-moderation-status-filter>
+              <option value="all" ${moderationStatusFilter === "all" ? "selected" : ""}>Todos</option>
+              <option value="visible" ${moderationStatusFilter === "visible" ? "selected" : ""}>Visibles</option>
+              <option value="hidden" ${moderationStatusFilter === "hidden" ? "selected" : ""}>Ocultos</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="r96-community-list">
+          ${renderModerationItems()}
+        </div>
+      </section>
+    `;
+  }
+
   function render() {
     ensureStyle();
 
@@ -400,7 +603,9 @@
 
     let mount = root();
     if (!mount) {
-      const old = section.querySelector(".r96-two");
+      const old =
+        section.querySelector("#r96-community-stage1") ||
+        section.querySelector(".r96-two");
       mount = document.createElement("div");
       mount.id = ROOT_ID;
       mount.className = "r96-inner";
@@ -439,6 +644,7 @@
             ${activeVersion ? " · versión activa " + esc(activeVersion) : ""}
           </span>
           ${isSignedIn ? '<button class="r96-community-btn" type="button" data-community-mine>Mis aportes</button>' : ""}
+          ${canModerate ? '<button class="r96-community-btn r96-community-btn-primary" type="button" data-community-moderation>Moderación</button>' : ""}
         </div>
       </div>
 
@@ -487,6 +693,8 @@
             </div>
           </div>
         </div>
+
+        ${renderModeration()}
       ` : `
         <div class="r96-community-empty">
           Aún no hay juegos publicados para recibir feedback.
@@ -497,9 +705,43 @@
     wire();
   }
 
+  async function loadModeration(silent = true) {
+    if (!signedIn() || !selectedGameId) {
+      moderation = null;
+      canModerate = false;
+      moderationOpen = false;
+      render();
+      return;
+    }
+
+    try {
+      const result = await action("moderation.feed", {
+        gameId: selectedGameId
+      });
+      moderation = result?.data || result || null;
+      canModerate = Boolean(moderation?.game?.id);
+      render();
+    } catch (error) {
+      moderation = null;
+      canModerate = false;
+      moderationOpen = false;
+      render();
+
+      if (
+        !silent ||
+        String(error?.message || "") !== "COMMUNITY_MODERATION_REQUIRED"
+      ) {
+        setFeedback(errorCopy(error?.message), !silent);
+      }
+    }
+  }
+
   async function loadFeed(authenticated = false) {
     if (!selectedGameId) {
       feed = null;
+      moderation = null;
+      canModerate = false;
+      moderationOpen = false;
       render();
       return;
     }
@@ -507,20 +749,17 @@
     setFeedback("Cargando comunidad…");
 
     try {
-      let result;
-      if (authenticated) {
-        result = await action("feed", {
-          gameId: selectedGameId
-        });
-      } else {
-        result = await call("community-feed", {
-          gameId: selectedGameId
-        });
-      }
+      const result = authenticated
+        ? await action("feed", { gameId: selectedGameId })
+        : await call("community-feed", { gameId: selectedGameId });
 
       feed = result?.data || result || null;
       setFeedback("");
       render();
+
+      if (signedIn()) {
+        await loadModeration(true);
+      }
     } catch (error) {
       setFeedback(errorCopy(error?.message), true);
     }
@@ -538,6 +777,39 @@
     );
   }
 
+  async function refreshAfterOwnMutation(nextFeed, message) {
+    feed = nextFeed || feed;
+    setFeedback(message);
+    render();
+    if (signedIn()) await loadModeration(true);
+  }
+
+  async function moderate(type, targetId, status) {
+    setFeedback(
+      status === "hidden"
+        ? "Ocultando aporte…"
+        : "Restaurando aporte…"
+    );
+
+    try {
+      const result = await action("moderate", {
+        type,
+        targetId,
+        status
+      });
+
+      feed = result?.data?.feed || result?.feed || feed;
+      await loadModeration(false);
+      setFeedback(
+        status === "hidden"
+          ? "Aporte ocultado."
+          : "Aporte restaurado."
+      );
+    } catch (error) {
+      setFeedback(errorCopy(error?.message), true);
+    }
+  }
+
   function wire() {
     const mount = root();
     if (!mount) return;
@@ -547,6 +819,11 @@
       selectedGameId = String(select.value || "");
       editingCommentId = "";
       editingCommentBody = "";
+      moderation = null;
+      canModerate = false;
+      moderationOpen = false;
+      moderationTypeFilter = "all";
+      moderationStatusFilter = "all";
       loadFeed(false);
     });
 
@@ -554,6 +831,42 @@
       ?.addEventListener("click", () => {
         loadFeed(true);
       });
+
+    mount.querySelector("[data-community-moderation]")
+      ?.addEventListener("click", () => {
+        moderationOpen = true;
+        render();
+        root()?.querySelector(".r96-community-moderation")
+          ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+
+    mount.querySelector("[data-moderation-close]")
+      ?.addEventListener("click", () => {
+        moderationOpen = false;
+        render();
+      });
+
+    mount.querySelector("[data-moderation-type-filter]")
+      ?.addEventListener("change", event => {
+        moderationTypeFilter = String(event.target.value || "all");
+        render();
+      });
+
+    mount.querySelector("[data-moderation-status-filter]")
+      ?.addEventListener("change", event => {
+        moderationStatusFilter = String(event.target.value || "all");
+        render();
+      });
+
+    mount.querySelectorAll("[data-moderate-id]").forEach(button => {
+      button.addEventListener("click", () => {
+        moderate(
+          String(button.dataset.moderateType || ""),
+          String(button.dataset.moderateId || ""),
+          String(button.dataset.moderateStatus || "")
+        );
+      });
+    });
 
     const reviewForm = mount.querySelector("[data-review-form]");
     reviewForm?.addEventListener("submit", async event => {
@@ -574,9 +887,10 @@
           body: String(data.get("body") || "")
         });
 
-        feed = result?.data?.feed || result?.feed || feed;
-        setFeedback("Reseña guardada.");
-        render();
+        await refreshAfterOwnMutation(
+          result?.data?.feed || result?.feed,
+          "Reseña guardada."
+        );
       } catch (error) {
         setFeedback(errorCopy(error?.message), true);
       }
@@ -605,12 +919,11 @@
 
         setFeedback("Eliminando reseña…");
         try {
-          const result = await action("review.delete", {
-            reviewId
-          });
-          feed = result?.data?.feed || result?.feed || feed;
-          setFeedback("Reseña eliminada.");
-          render();
+          const result = await action("review.delete", { reviewId });
+          await refreshAfterOwnMutation(
+            result?.data?.feed || result?.feed,
+            "Reseña eliminada."
+          );
         } catch (error) {
           setFeedback(errorCopy(error?.message), true);
         }
@@ -644,11 +957,12 @@
               body
             });
 
-        feed = result?.data?.feed || result?.feed || feed;
         editingCommentId = "";
         editingCommentBody = "";
-        setFeedback("Comentario guardado.");
-        render();
+        await refreshAfterOwnMutation(
+          result?.data?.feed || result?.feed,
+          "Comentario guardado."
+        );
       } catch (error) {
         setFeedback(errorCopy(error?.message), true);
       }
@@ -660,6 +974,7 @@
           String(button.dataset.commentEdit || "")
         );
         if (!comment) return;
+
         editingCommentId = comment.id;
         editingCommentBody = comment.body || "";
         render();
@@ -675,14 +990,13 @@
 
         setFeedback("Eliminando comentario…");
         try {
-          const result = await action("comment.delete", {
-            commentId
-          });
-          feed = result?.data?.feed || result?.feed || feed;
+          const result = await action("comment.delete", { commentId });
           editingCommentId = "";
           editingCommentBody = "";
-          setFeedback("Comentario eliminado.");
-          render();
+          await refreshAfterOwnMutation(
+            result?.data?.feed || result?.feed,
+            "Comentario eliminado."
+          );
         } catch (error) {
           setFeedback(errorCopy(error?.message), true);
         }
@@ -754,7 +1068,20 @@
 
   const account = document.querySelector(".r96-account-visual");
   if (account) {
-    new MutationObserver(() => render()).observe(account, {
+    new MutationObserver(() => {
+      if (signedIn()) {
+        if (selectedGameId) {
+          loadFeed(true);
+        } else {
+          render();
+        }
+      } else {
+        moderation = null;
+        canModerate = false;
+        moderationOpen = false;
+        render();
+      }
+    }).observe(account, {
       attributes: true,
       attributeFilter: ["data-r96-auth-state"]
     });
