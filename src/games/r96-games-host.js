@@ -283,6 +283,66 @@
     }
   }
 
+  async function reviewSaveAction(message) {
+    const id = String(message.requestId || "");
+    const input = message.input || {};
+
+    try {
+      const response = await fetch(
+        SITE_BASE + "/_functions/r96GameReview",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          credentials: "same-origin",
+          cache: "no-store",
+          body: JSON.stringify({
+            gameId:String(input.gameId || "").trim(),
+            rating:Number(input.rating || 0),
+            body:String(input.body || "")
+          })
+        }
+      );
+
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok || !payload || payload.ok !== true) {
+        post(
+          "review-save-result",
+          {
+            ok:false,
+            error:String(
+              payload?.error || "REVIEW_SAVE_FAILED"
+            )
+          },
+          id
+        );
+        return;
+      }
+
+      post(
+        "review-save-result",
+        {
+          ok:true,
+          data:payload.data || {}
+        },
+        id
+      );
+
+      await sendCommunityOverview(true);
+    } catch (_) {
+      post(
+        "review-save-result",
+        {
+          ok:false,
+          error:"REVIEW_SAVE_FAILED"
+        },
+        id
+      );
+    }
+  }
+
   async function communityWriteAction(message) {
     const id = String(message.requestId || "");
     const action = String(message.action || "").trim();
@@ -514,6 +574,11 @@
 
     if (message.type === "community-detail-action") {
       communityDetailAction(message);
+      return;
+    }
+
+    if (message.type === "review-save-action") {
+      reviewSaveAction(message);
       return;
     }
 
