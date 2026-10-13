@@ -12,6 +12,7 @@
   const ADD_BUTTON_ID = "r96-add-game";
   const MODAL_ID = "r96-game-studio-modal";
   const DETAIL_MODAL_ID = "r96-game-detail-modal";
+  const REVIEW_MODAL_ID = "r96-game-review-modal";
 
   const carousel = document.querySelector("#games .r96-carousel");
   const titleCopy = document.querySelector("#games .r96-title-row > .r96-copy");
@@ -22,6 +23,11 @@
   let emptyNode = null;
   let studioObserver = null;
   let pending = new Map();
+  let lastCatalogPayload = { games: [], count: 0 };
+  let communityOverview = {
+    summaries: [],
+    recentActivity: []
+  };
 
   const STAGES = [
     ["concept", "Concept"],
@@ -686,10 +692,217 @@
       .r96-game-preview-panel .r96-card-actions .r96-primary{
         pointer-events:none;
       }
+      .r96-game-rating{
+        display:flex;
+        align-items:center;
+        gap:8px;
+        min-height:30px;
+        color:var(--r96-muted);
+        font-size:.76rem;
+        font-weight:850;
+      }
+      .r96-game-rating strong{
+        color:var(--r96-text);
+        font-size:.86rem;
+      }
+      .r96-game-rating-stars{
+        color:var(--r96-accent);
+        letter-spacing:.04em;
+      }
+      .r96-review-modal-backdrop{
+        position:fixed;
+        inset:0;
+        z-index:2147482700;
+        display:grid;
+        place-items:center;
+        padding:20px;
+        background:rgba(0,0,0,.72);
+        backdrop-filter:blur(10px);
+      }
+      .r96-review-modal{
+        width:min(560px,100%);
+        display:grid;
+        gap:16px;
+        padding:20px;
+        border:1px solid var(--r96-line);
+        border-radius:20px;
+        background:var(--r96-bg-2);
+        color:var(--r96-text);
+        box-shadow:0 30px 90px rgba(0,0,0,.48);
+      }
+      .r96-review-modal-head{
+        display:flex;
+        justify-content:space-between;
+        gap:16px;
+        align-items:center;
+      }
+      .r96-review-modal-head h3{margin:0}
+      .r96-review-modal-close{
+        width:36px;
+        height:36px;
+        border:1px solid var(--r96-line);
+        border-radius:10px;
+        background:var(--r96-panel);
+        color:var(--r96-text);
+        font:inherit;
+        cursor:pointer;
+      }
+      .r96-review-form{
+        display:grid;
+        gap:12px;
+      }
+      .r96-review-form label{
+        display:grid;
+        gap:7px;
+        color:var(--r96-muted);
+        font-size:.76rem;
+        font-weight:850;
+      }
+      .r96-review-form select,
+      .r96-review-form textarea,
+      .r96-game-comment-form textarea{
+        width:100%;
+        box-sizing:border-box;
+        border:1px solid var(--r96-line);
+        border-radius:12px;
+        background:var(--r96-panel);
+        color:var(--r96-text);
+        padding:11px 12px;
+        font:inherit;
+      }
+      .r96-review-form textarea,
+      .r96-game-comment-form textarea{
+        min-height:100px;
+        resize:vertical;
+      }
+      .r96-community-feedback{
+        min-height:20px;
+        color:var(--r96-muted);
+        font-size:.76rem;
+        line-height:1.45;
+      }
+      .r96-community-feedback[data-error="1"]{color:#ffb6b6}
+      .r96-game-community-detail{
+        display:grid;
+        gap:18px;
+        margin:0 26px 26px;
+        padding:20px;
+        border:1px solid var(--r96-line);
+        border-radius:18px;
+        background:color-mix(in srgb,var(--r96-panel) 74%,transparent);
+      }
+      .r96-game-community-head{
+        display:flex;
+        flex-wrap:wrap;
+        align-items:center;
+        justify-content:space-between;
+        gap:12px;
+      }
+      .r96-game-community-head h3{margin:0}
+      .r96-game-community-summary{
+        color:var(--r96-muted);
+        font-size:.8rem;
+        font-weight:800;
+      }
+      .r96-game-community-grid{
+        display:grid;
+        grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+        gap:18px;
+      }
+      .r96-game-community-column{
+        display:grid;
+        gap:10px;
+        align-content:start;
+      }
+      .r96-game-community-column h4{margin:0}
+      .r96-community-entry{
+        display:grid;
+        gap:7px;
+        padding:13px;
+        border:1px solid var(--r96-line);
+        border-radius:13px;
+        background:var(--r96-bg-2);
+      }
+      .r96-community-entry-head{
+        display:flex;
+        flex-wrap:wrap;
+        justify-content:space-between;
+        gap:8px 12px;
+        align-items:center;
+      }
+      .r96-community-entry-author{
+        font-weight:900;
+        font-size:.82rem;
+      }
+      .r96-community-entry-meta{
+        color:var(--r96-muted);
+        font-size:.68rem;
+      }
+      .r96-community-entry p{
+        margin:0;
+        color:var(--r96-text);
+        line-height:1.55;
+        white-space:pre-wrap;
+      }
+      .r96-game-comment-form{
+        display:grid;
+        gap:9px;
+        margin-bottom:2px;
+      }
+      .r96-community-empty{
+        margin:0;
+        padding:12px;
+        border:1px dashed var(--r96-line);
+        border-radius:12px;
+        color:var(--r96-muted);
+        font-size:.78rem;
+      }
+      #reviews .r96-community-feed{
+        display:grid;
+        gap:12px;
+      }
+      .r96-community-feed-item{
+        display:grid;
+        gap:8px;
+        padding:16px;
+        border:1px solid var(--r96-line);
+        border-radius:16px;
+        background:var(--r96-panel);
+      }
+      .r96-community-feed-top{
+        display:flex;
+        flex-wrap:wrap;
+        justify-content:space-between;
+        gap:10px;
+        align-items:center;
+      }
+      .r96-community-feed-kind{
+        display:inline-flex;
+        align-items:center;
+        min-height:26px;
+        padding:0 9px;
+        border:1px solid var(--r96-line);
+        border-radius:999px;
+        color:var(--r96-muted);
+        font-size:.67rem;
+        font-weight:900;
+        text-transform:uppercase;
+      }
+      .r96-community-game-link{
+        border:0;
+        background:transparent;
+        color:var(--r96-accent);
+        padding:0;
+        font:inherit;
+        font-weight:900;
+        cursor:pointer;
+        text-align:left;
+      }
       @media(max-width:820px){
         .r96-game-studio-grid{grid-template-columns:1fr}
         .r96-game-preview-panel{position:static}
         .r96-game-detail-body{grid-template-columns:1fr}
+        .r96-game-community-grid{grid-template-columns:1fr}
         .r96-game-detail-hero{aspect-ratio:16/10;min-height:240px}
       }
       @media(max-width:560px){
@@ -829,6 +1042,556 @@
     return meta;
   }
 
+  function signedIn() {
+    return document
+      .querySelector(".r96-account-visual")
+      ?.dataset?.r96AuthState === "signedIn";
+  }
+
+  function communitySummaryFor(gameId) {
+    const id = clean(gameId);
+    const rows = Array.isArray(communityOverview?.summaries)
+      ? communityOverview.summaries
+      : [];
+
+    return rows.find(row => clean(row?.gameId) === id) || {
+      gameId:id,
+      averageRating:0,
+      reviewCount:0
+    };
+  }
+
+  function gameForId(gameId) {
+    const id = clean(gameId);
+    const games = Array.isArray(lastCatalogPayload?.games)
+      ? lastCatalogPayload.games
+      : [];
+    return games.find(game => clean(game?.id) === id) || null;
+  }
+
+  function ratingStars(value) {
+    const rating = Math.max(
+      0,
+      Math.min(5, Math.round(Number(value || 0)))
+    );
+    return "★★★★★".slice(0, rating) +
+      "☆☆☆☆☆".slice(0, 5 - rating);
+  }
+
+  function communityError(code) {
+    const errors = {
+      AUTH_REQUIRED:t(
+        "Inicia sesión para publicar.",
+        "Sign in to post."
+      ),
+      GAME_NOT_FOUND:t(
+        "Este juego ya no está disponible.",
+        "This game is no longer available."
+      ),
+      REVIEW_RATING_INVALID:t(
+        "Selecciona una calificación de 1 a 5.",
+        "Choose a rating from 1 to 5."
+      ),
+      REVIEW_BODY_REQUIRED:t(
+        "Escribe una reseña de al menos 5 caracteres.",
+        "Write a review of at least 5 characters."
+      ),
+      COMMENT_BODY_REQUIRED:t(
+        "Escribe un comentario.",
+        "Write a comment."
+      )
+    };
+
+    return errors[clean(code)] || t(
+      "No se pudo completar la operación.",
+      "The operation could not be completed."
+    );
+  }
+
+  function communityDetailAction(gameId) {
+    const id = requestId();
+
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        pending.delete(id);
+        reject(new Error("GAME_COMMUNITY_TIMEOUT"));
+      }, 12000);
+
+      pending.set(id, { resolve, reject, timeout });
+
+      window.parent.postMessage({
+        source:SOURCE_UI,
+        protocol:PROTOCOL,
+        type:"community-detail-action",
+        requestId:id,
+        gameId:clean(gameId)
+      }, HOST_ORIGIN);
+    });
+  }
+
+  function communityWriteAction(action, input = {}) {
+    const id = requestId();
+
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        pending.delete(id);
+        reject(new Error("COMMUNITY_ACTION_TIMEOUT"));
+      }, 12000);
+
+      pending.set(id, { resolve, reject, timeout });
+
+      window.parent.postMessage({
+        source:SOURCE_UI,
+        protocol:PROTOCOL,
+        type:"community-write-action",
+        requestId:id,
+        action:clean(action),
+        input
+      }, HOST_ORIGIN);
+    });
+  }
+
+  function removeReviewModal() {
+    document.getElementById(REVIEW_MODAL_ID)?.remove();
+  }
+
+  function updateOpenGameCommunity(gameId, data) {
+    const section = document.querySelector(
+      "#" + DETAIL_MODAL_ID +
+      ' [data-r96-community-game="' +
+      CSS.escape(clean(gameId)) +
+      '"]'
+    );
+
+    const game = gameForId(gameId);
+    if (section && game && data) {
+      renderGameCommunitySection(game, data, section);
+    }
+  }
+
+  function openReviewComposer(game) {
+    ensureStyle();
+    removeReviewModal();
+
+    const backdrop = document.createElement("div");
+    backdrop.id = REVIEW_MODAL_ID;
+    backdrop.className = "r96-review-modal-backdrop";
+
+    const modal = document.createElement("section");
+    modal.className = "r96-review-modal";
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+
+    const head = document.createElement("div");
+    head.className = "r96-review-modal-head";
+
+    const title = document.createElement("h3");
+    title.textContent = t(
+      "Tu reseña · " + clean(game.title),
+      "Your review · " + clean(game.title)
+    );
+
+    const close = document.createElement("button");
+    close.className = "r96-review-modal-close";
+    close.type = "button";
+    close.textContent = "×";
+    close.addEventListener("click", removeReviewModal);
+
+    head.append(title, close);
+    modal.appendChild(head);
+
+    if (!signedIn()) {
+      const message = document.createElement("p");
+      message.className = "r96-community-empty";
+      message.textContent = t(
+        "Inicia sesión desde la barra superior para escribir una reseña.",
+        "Sign in from the top bar to write a review."
+      );
+      modal.appendChild(message);
+    } else {
+      const form = document.createElement("form");
+      form.className = "r96-review-form";
+
+      const ratingLabel = document.createElement("label");
+      ratingLabel.textContent = t("Calificación", "Rating");
+
+      const rating = document.createElement("select");
+      for (let value = 5; value >= 1; value -= 1) {
+        const option = document.createElement("option");
+        option.value = String(value);
+        option.textContent =
+          value + " ★" + (value === 1 ? "" : "");
+        rating.appendChild(option);
+      }
+      ratingLabel.appendChild(rating);
+
+      const bodyLabel = document.createElement("label");
+      bodyLabel.textContent = t("Reseña", "Review");
+
+      const body = document.createElement("textarea");
+      body.maxLength = 2500;
+      body.placeholder = t(
+        "¿Qué te pareció este juego?",
+        "What did you think of this game?"
+      );
+      bodyLabel.appendChild(body);
+
+      const feedback = document.createElement("div");
+      feedback.className = "r96-community-feedback";
+      feedback.setAttribute("aria-live", "polite");
+
+      const submit = document.createElement("button");
+      submit.className = "r96-primary";
+      submit.type = "submit";
+      submit.textContent = t("Guardar reseña", "Save review");
+
+      form.append(ratingLabel, bodyLabel, feedback, submit);
+
+      form.addEventListener("submit", async event => {
+        event.preventDefault();
+        feedback.dataset.error = "0";
+        feedback.textContent = t(
+          "Guardando reseña…",
+          "Saving review…"
+        );
+        submit.disabled = true;
+
+        try {
+          const data = await communityWriteAction(
+            "review.save",
+            {
+              gameId:clean(game.id),
+              rating:Number(rating.value || 0),
+              body:body.value
+            }
+          );
+
+          feedback.textContent = t(
+            "Reseña guardada.",
+            "Review saved."
+          );
+          updateOpenGameCommunity(game.id, data);
+
+          setTimeout(removeReviewModal, 300);
+        } catch (error) {
+          feedback.dataset.error = "1";
+          feedback.textContent = communityError(error?.message);
+          submit.disabled = false;
+        }
+      });
+
+      modal.appendChild(form);
+    }
+
+    backdrop.appendChild(modal);
+    document.body.appendChild(backdrop);
+
+    backdrop.addEventListener("click", event => {
+      if (event.target === backdrop) removeReviewModal();
+    });
+  }
+
+  function communityEntry(item, kind) {
+    const article = document.createElement("article");
+    article.className = "r96-community-entry";
+
+    const head = document.createElement("div");
+    head.className = "r96-community-entry-head";
+
+    const author = document.createElement("span");
+    author.className = "r96-community-entry-author";
+    author.textContent =
+      clean(item?.authorDisplayName) ||
+      t("Usuario Nexo", "Nexo user");
+
+    const meta = document.createElement("span");
+    meta.className = "r96-community-entry-meta";
+    const pieces = [];
+    if (kind === "review") {
+      pieces.push(ratingStars(item?.rating));
+    }
+    if (clean(item?.versionLabel)) {
+      pieces.push("v" + clean(item.versionLabel));
+    }
+    if (clean(item?.updatedAt || item?.createdAt)) {
+      pieces.push(formatDate(item.updatedAt || item.createdAt));
+    }
+    meta.textContent = pieces.join(" · ");
+
+    const body = document.createElement("p");
+    body.textContent = clean(item?.body);
+
+    head.append(author, meta);
+    article.append(head, body);
+    return article;
+  }
+
+  function renderGameCommunitySection(game, data, section) {
+    section.replaceChildren();
+    section.dataset.r96CommunityGame = clean(game.id);
+
+    const summary = data?.summary || {};
+
+    const head = document.createElement("div");
+    head.className = "r96-game-community-head";
+
+    const title = document.createElement("h3");
+    title.textContent = t(
+      "Reseñas y comentarios",
+      "Reviews and comments"
+    );
+
+    const summaryText = document.createElement("div");
+    summaryText.className = "r96-game-community-summary";
+    summaryText.textContent =
+      (
+        Number(summary.reviewCount || 0)
+          ? "★ " + Number(summary.averageRating || 0).toFixed(1)
+          : t("Sin calificación", "No rating")
+      ) +
+      " · " +
+      Number(summary.reviewCount || 0) +
+      " " +
+      t("reseñas", "reviews") +
+      " · " +
+      Number(summary.commentCount || 0) +
+      " " +
+      t("comentarios", "comments");
+
+    const reviewButton = document.createElement("button");
+    reviewButton.className = "r96-secondary";
+    reviewButton.type = "button";
+    reviewButton.textContent = t("Dar reseña", "Write review");
+    reviewButton.addEventListener("click", () => {
+      openReviewComposer(game);
+    });
+
+    head.append(title, summaryText, reviewButton);
+
+    const grid = document.createElement("div");
+    grid.className = "r96-game-community-grid";
+
+    const reviewsColumn = document.createElement("div");
+    reviewsColumn.className = "r96-game-community-column";
+
+    const reviewsTitle = document.createElement("h4");
+    reviewsTitle.textContent = t("Reseñas", "Reviews");
+    reviewsColumn.appendChild(reviewsTitle);
+
+    const reviews = Array.isArray(data?.reviews)
+      ? data.reviews
+      : [];
+
+    if (!reviews.length) {
+      const empty = document.createElement("p");
+      empty.className = "r96-community-empty";
+      empty.textContent = t(
+        "Este juego todavía no tiene reseñas.",
+        "This game has no reviews yet."
+      );
+      reviewsColumn.appendChild(empty);
+    } else {
+      reviews.forEach(review => {
+        reviewsColumn.appendChild(
+          communityEntry(review, "review")
+        );
+      });
+    }
+
+    const commentsColumn = document.createElement("div");
+    commentsColumn.className = "r96-game-community-column";
+
+    const commentsTitle = document.createElement("h4");
+    commentsTitle.textContent = t("Comentarios", "Comments");
+    commentsColumn.appendChild(commentsTitle);
+
+    if (signedIn()) {
+      const form = document.createElement("form");
+      form.className = "r96-game-comment-form";
+
+      const textarea = document.createElement("textarea");
+      textarea.maxLength = 1500;
+      textarea.placeholder = t(
+        "Escribe un comentario sobre este juego…",
+        "Write a comment about this game…"
+      );
+
+      const feedback = document.createElement("div");
+      feedback.className = "r96-community-feedback";
+      feedback.setAttribute("aria-live", "polite");
+
+      const submit = document.createElement("button");
+      submit.className = "r96-secondary";
+      submit.type = "submit";
+      submit.textContent = t(
+        "Publicar comentario",
+        "Post comment"
+      );
+
+      form.append(textarea, feedback, submit);
+
+      form.addEventListener("submit", async event => {
+        event.preventDefault();
+        feedback.dataset.error = "0";
+        feedback.textContent = t(
+          "Publicando…",
+          "Posting…"
+        );
+        submit.disabled = true;
+
+        try {
+          const nextData = await communityWriteAction(
+            "comment.create",
+            {
+              gameId:clean(game.id),
+              body:textarea.value
+            }
+          );
+          renderGameCommunitySection(game, nextData, section);
+        } catch (error) {
+          feedback.dataset.error = "1";
+          feedback.textContent = communityError(error?.message);
+          submit.disabled = false;
+        }
+      });
+
+      commentsColumn.appendChild(form);
+    }
+
+    const comments = Array.isArray(data?.comments)
+      ? data.comments
+      : [];
+
+    if (!comments.length) {
+      const empty = document.createElement("p");
+      empty.className = "r96-community-empty";
+      empty.textContent = t(
+        "Este juego todavía no tiene comentarios.",
+        "This game has no comments yet."
+      );
+      commentsColumn.appendChild(empty);
+    } else {
+      comments.forEach(comment => {
+        commentsColumn.appendChild(
+          communityEntry(comment, "comment")
+        );
+      });
+    }
+
+    grid.append(reviewsColumn, commentsColumn);
+    section.append(head, grid);
+  }
+
+  async function loadGameCommunitySection(game, section) {
+    section.replaceChildren();
+    section.dataset.r96CommunityGame = clean(game.id);
+
+    const loading = document.createElement("p");
+    loading.className = "r96-community-empty";
+    loading.textContent = t(
+      "Cargando reseñas y comentarios…",
+      "Loading reviews and comments…"
+    );
+    section.appendChild(loading);
+
+    try {
+      const data = await communityDetailAction(game.id);
+      renderGameCommunitySection(game, data, section);
+    } catch (_) {
+      loading.textContent = t(
+        "No se pudieron cargar las reseñas y comentarios.",
+        "Reviews and comments could not be loaded."
+      );
+    }
+  }
+
+  function renderRecentActivity() {
+    const section = document.getElementById("reviews");
+    if (!section) return;
+
+    const copy = section.querySelector(
+      ".r96-title-row > .r96-copy"
+    );
+    if (copy) {
+      copy.textContent = t(
+        "Aquí aparecen las reseñas y comentarios más recientes de todos los juegos.",
+        "The most recent reviews and comments from all games appear here."
+      );
+    }
+
+    const current =
+      section.querySelector(".r96-community-feed") ||
+      section.querySelector(".r96-two");
+
+    const feed = document.createElement("div");
+    feed.className = "r96-inner r96-community-feed";
+
+    const activity = Array.isArray(
+      communityOverview?.recentActivity
+    )
+      ? communityOverview.recentActivity
+      : [];
+
+    if (!activity.length) {
+      const empty = document.createElement("article");
+      empty.className = "r96-community-feed-item";
+      empty.textContent = t(
+        "Todavía no hay reseñas ni comentarios publicados.",
+        "No reviews or comments have been posted yet."
+      );
+      feed.appendChild(empty);
+    } else {
+      activity.forEach(item => {
+        const article = document.createElement("article");
+        article.className = "r96-community-feed-item";
+
+        const top = document.createElement("div");
+        top.className = "r96-community-feed-top";
+
+        const kind = document.createElement("span");
+        kind.className = "r96-community-feed-kind";
+        kind.textContent =
+          clean(item.type) === "review"
+            ? t("Reseña", "Review")
+            : t("Comentario", "Comment");
+
+        const gameButton = document.createElement("button");
+        gameButton.className = "r96-community-game-link";
+        gameButton.type = "button";
+        gameButton.textContent =
+          clean(item.gameTitle) ||
+          t("Juego", "Game");
+
+        const game = gameForId(item.gameId);
+        if (game) {
+          gameButton.addEventListener("click", () => {
+            openGameDetail(game);
+          });
+        } else {
+          gameButton.disabled = true;
+        }
+
+        top.append(kind, gameButton);
+
+        const entry = communityEntry(
+          item,
+          clean(item.type) === "review"
+            ? "review"
+            : "comment"
+        );
+
+        article.append(top, entry);
+        feed.appendChild(article);
+      });
+    }
+
+    if (current) {
+      current.replaceWith(feed);
+    } else {
+      section.appendChild(feed);
+    }
+  }
+
   function gameCard(game, index, previewMode = false, onEditPreview = null) {
     const article = document.createElement("article");
     article.className = "r96-card";
@@ -895,6 +1658,32 @@
 
     const meta = metaRow(game);
 
+    const rating = document.createElement("div");
+    rating.className = "r96-game-rating";
+
+    if (!previewMode) {
+      const summary = communitySummaryFor(game.id);
+
+      const stars = document.createElement("span");
+      stars.className = "r96-game-rating-stars";
+      stars.textContent = Number(summary.reviewCount || 0)
+        ? "★"
+        : "☆";
+
+      const score = document.createElement("strong");
+      score.textContent = Number(summary.reviewCount || 0)
+        ? Number(summary.averageRating || 0).toFixed(1)
+        : "—";
+
+      const count = document.createElement("span");
+      count.textContent =
+        Number(summary.reviewCount || 0) +
+        " " +
+        t("reseñas", "reviews");
+
+      rating.append(stars, score, count);
+    }
+
     const actions = document.createElement("div");
     actions.className = "r96-card-actions";
 
@@ -917,6 +1706,19 @@
 
     actions.appendChild(open);
 
+    if (!previewMode) {
+      const review = document.createElement("button");
+      review.className = "r96-secondary";
+      review.type = "button";
+      review.textContent = t("Dar reseña", "Write review");
+      review.addEventListener("click", event => {
+        event.preventDefault();
+        event.stopPropagation();
+        openReviewComposer(game);
+      });
+      actions.appendChild(review);
+    }
+
     if (
       !previewMode &&
       game.hasPlayableBuild === true
@@ -933,7 +1735,9 @@
       actions.appendChild(launch);
     }
 
-    body.append(tags, title, desc, meta, actions);
+    body.append(tags, title, desc, meta);
+    if (!previewMode) body.appendChild(rating);
+    body.appendChild(actions);
     article.append(thumb, body);
 
     return article;
@@ -1259,9 +2063,15 @@
 
     side.append(infoSection, playSection, versionSection);
     body.append(main, side);
-    detail.append(head, hero, body);
+
+    const communitySection = document.createElement("section");
+    communitySection.className = "r96-game-community-detail";
+    communitySection.dataset.r96CommunityGame = clean(game.id);
+
+    detail.append(head, hero, body, communitySection);
     backdrop.appendChild(detail);
     document.body.appendChild(backdrop);
+    loadGameCommunitySection(game, communitySection);
 
     backdrop.addEventListener("click", event => {
       if (event.target === backdrop) removeGameDetail();
@@ -1277,6 +2087,7 @@
 
   function renderCatalog(payload) {
     ensureStyle();
+    lastCatalogPayload = payload || { games: [], count: 0 };
 
     const games = Array.isArray(payload?.games)
       ? payload.games.filter((game) => game && clean(game.id) && clean(game.title))
@@ -2842,6 +3653,24 @@
       return;
     }
 
+    if (message.type === "community-overview") {
+      communityOverview = message.data || {
+        summaries: [],
+        recentActivity: []
+      };
+
+      if (Array.isArray(lastCatalogPayload?.games)) {
+        renderCatalog(lastCatalogPayload);
+      }
+      renderRecentActivity();
+      return;
+    }
+
+    if (message.type === "community-overview-error") {
+      renderRecentActivity();
+      return;
+    }
+
     if (message.type === "catalog-error") {
       ensureStyle();
       if (gamesStat) gamesStat.textContent = "0";
@@ -2854,7 +3683,9 @@
 
     if (
       message.type === "studio-result" ||
-      message.type === "launch-result"
+      message.type === "launch-result" ||
+      message.type === "community-detail-result" ||
+      message.type === "community-write-result"
     ) {
       const id = clean(message.requestId);
       const entry = pending.get(id);
@@ -2873,7 +3704,11 @@
               (
                 message.type === "launch-result"
                   ? "GAME_LAUNCH_FAILED"
-                  : "GAMES_ACTION_FAILED"
+                  : message.type === "community-detail-result"
+                    ? "GAME_COMMUNITY_FAILED"
+                    : message.type === "community-write-result"
+                      ? "COMMUNITY_ACTION_FAILED"
+                      : "GAMES_ACTION_FAILED"
               )
             )
           )
