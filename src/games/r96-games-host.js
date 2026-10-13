@@ -181,6 +181,148 @@
     }
   }
 
+  async function sendCommunityOverview() {
+    try {
+      const response = await fetch(
+        SITE_BASE + "/_functions/r96CommunityOverview",
+        {
+          method: "GET",
+          credentials: "same-origin",
+          cache: "no-store"
+        }
+      );
+
+      const payload = await response.json().catch(() => null);
+
+      if (
+        !response.ok ||
+        !payload ||
+        payload.ok !== true ||
+        !payload.data
+      ) {
+        throw new Error("COMMUNITY_OVERVIEW_FAILED");
+      }
+
+      post("community-overview", payload.data);
+    } catch (_) {
+      post("community-overview-error", {
+        error: "COMMUNITY_OVERVIEW_FAILED"
+      });
+    }
+  }
+
+  async function communityDetailAction(message) {
+    const id = String(message.requestId || "");
+    const gameId = String(message.gameId || "").trim();
+
+    try {
+      const response = await fetch(
+        SITE_BASE +
+          "/_functions/r96GameCommunity?gameId=" +
+          encodeURIComponent(gameId),
+        {
+          method: "GET",
+          credentials: "same-origin",
+          cache: "no-store"
+        }
+      );
+
+      const payload = await response.json().catch(() => null);
+
+      if (!payload || payload.ok !== true) {
+        post(
+          "community-detail-result",
+          {
+            ok: false,
+            error: String(
+              payload?.error || "GAME_COMMUNITY_FAILED"
+            )
+          },
+          id
+        );
+        return;
+      }
+
+      post(
+        "community-detail-result",
+        {
+          ok: true,
+          data: payload.data || {}
+        },
+        id
+      );
+    } catch (_) {
+      post(
+        "community-detail-result",
+        {
+          ok: false,
+          error: "GAME_COMMUNITY_FAILED"
+        },
+        id
+      );
+    }
+  }
+
+  async function communityWriteAction(message) {
+    const id = String(message.requestId || "");
+    const action = String(message.action || "").trim();
+    const input = message.input || {};
+
+    try {
+      const response = await fetch(
+        SITE_BASE + "/_functions/r96CommunityAction",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          credentials: "same-origin",
+          cache: "no-store",
+          body: JSON.stringify({
+            action,
+            input
+          })
+        }
+      );
+
+      const payload = await response.json().catch(() => null);
+
+      if (!payload || payload.ok !== true) {
+        post(
+          "community-write-result",
+          {
+            ok: false,
+            error: String(
+              payload?.error || "COMMUNITY_ACTION_FAILED"
+            )
+          },
+          id
+        );
+        return;
+      }
+
+      post(
+        "community-write-result",
+        {
+          ok: true,
+          data: payload.data || {}
+        },
+        id
+      );
+
+      await sendCommunityOverview();
+    } catch (_) {
+      post(
+        "community-write-result",
+        {
+          ok: false,
+          error: "COMMUNITY_ACTION_FAILED"
+        },
+        id
+      );
+    }
+  }
+
   async function callStudioAction(action, input, forceCapability = false) {
     const capability = await acquireGameCapability(forceCapability);
 
@@ -341,11 +483,22 @@
 
     if (message.type === "ready") {
       sendCatalog();
+      sendCommunityOverview();
       return;
     }
 
     if (message.type === "studio-action") {
       studioAction(message);
+      return;
+    }
+
+    if (message.type === "community-detail-action") {
+      communityDetailAction(message);
+      return;
+    }
+
+    if (message.type === "community-write-action") {
+      communityWriteAction(message);
       return;
     }
 
