@@ -709,6 +709,21 @@
         color:var(--r96-accent);
         letter-spacing:.04em;
       }
+      .r96-card-actions{
+        align-self:end;
+        display:flex;
+        flex-wrap:wrap;
+        gap:12px 14px;
+        padding-top:8px;
+      }
+      .r96-card-actions .r96-primary{
+        width:100%;
+        opacity:.72;
+      }
+      .r96-card-actions .r96-secondary{
+        flex:1 1 132px;
+        min-width:0;
+      }
       .r96-review-modal-backdrop{
         position:fixed;
         inset:0;
@@ -899,6 +914,11 @@
         text-align:left;
       }
       @media(max-width:820px){
+        .r96-card-actions .r96-primary,
+        .r96-card-actions .r96-secondary{
+          width:100%;
+          flex-basis:100%;
+        }
         .r96-game-studio-grid{grid-template-columns:1fr}
         .r96-game-preview-panel{position:static}
         .r96-game-detail-body{grid-template-columns:1fr}
@@ -1129,6 +1149,31 @@
     });
   }
 
+  function saveReviewAction(input = {}) {
+    const id = requestId();
+
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        pending.delete(id);
+        reject(new Error("REVIEW_SAVE_TIMEOUT"));
+      }, 12000);
+
+      pending.set(id, { resolve, reject, timeout });
+
+      window.parent.postMessage({
+        source:SOURCE_UI,
+        protocol:PROTOCOL,
+        type:"review-save-action",
+        requestId:id,
+        input:{
+          gameId:clean(input.gameId),
+          rating:Number(input.rating || 0),
+          body:String(input.body || "")
+        }
+      }, HOST_ORIGIN);
+    });
+  }
+
   function communityWriteAction(action, input = {}) {
     const id = requestId();
 
@@ -1259,14 +1304,11 @@
         submit.disabled = true;
 
         try {
-          const data = await communityWriteAction(
-            "review.save",
-            {
-              gameId:clean(game.id),
-              rating:Number(rating.value || 0),
-              body:body.value
-            }
-          );
+          const data = await saveReviewAction({
+            gameId:clean(game.id),
+            rating:Number(rating.value || 0),
+            body:body.value
+          });
 
           feedback.textContent = t(
             "Reseña guardada.",
@@ -3688,6 +3730,7 @@
       message.type === "studio-result" ||
       message.type === "launch-result" ||
       message.type === "community-detail-result" ||
+      message.type === "review-save-result" ||
       message.type === "community-write-result"
     ) {
       const id = clean(message.requestId);
@@ -3709,6 +3752,8 @@
                   ? "GAME_LAUNCH_FAILED"
                   : message.type === "community-detail-result"
                     ? "GAME_COMMUNITY_FAILED"
+                    : message.type === "review-save-result"
+                    ? "REVIEW_SAVE_FAILED"
                     : message.type === "community-write-result"
                       ? "COMMUNITY_ACTION_FAILED"
                       : "GAMES_ACTION_FAILED"
