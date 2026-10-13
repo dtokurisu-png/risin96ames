@@ -18,6 +18,8 @@
   let frameWindow = null;
   let catalogPromise = null;
   let cachedCatalog = null;
+  let communityOverviewPromise = null;
+  let cachedCommunityOverview = null;
   let gameCapability = "";
   let gameCapabilityExpiresAt = "";
   let gameCapabilityPromise = null;
@@ -181,8 +183,12 @@
     }
   }
 
-  async function sendCommunityOverview() {
-    try {
+  async function loadCommunityOverview(force = false) {
+    if (force) cachedCommunityOverview = null;
+    if (cachedCommunityOverview) return cachedCommunityOverview;
+    if (communityOverviewPromise) return communityOverviewPromise;
+
+    communityOverviewPromise = (async () => {
       const response = await fetch(
         SITE_BASE + "/_functions/r96CommunityOverview",
         {
@@ -203,7 +209,21 @@
         throw new Error("COMMUNITY_OVERVIEW_FAILED");
       }
 
-      post("community-overview", payload.data);
+      cachedCommunityOverview = payload.data;
+      return cachedCommunityOverview;
+    })();
+
+    try {
+      return await communityOverviewPromise;
+    } finally {
+      communityOverviewPromise = null;
+    }
+  }
+
+  async function sendCommunityOverview(force = false) {
+    try {
+      const data = await loadCommunityOverview(force);
+      post("community-overview", data);
     } catch (_) {
       post("community-overview-error", {
         error: "COMMUNITY_OVERVIEW_FAILED"
@@ -310,7 +330,7 @@
         id
       );
 
-      await sendCommunityOverview();
+      await sendCommunityOverview(true);
     } catch (_) {
       post(
         "community-write-result",
