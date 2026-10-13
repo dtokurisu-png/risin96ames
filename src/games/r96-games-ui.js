@@ -713,8 +713,10 @@
         align-self:end;
         display:flex;
         flex-wrap:wrap;
-        gap:12px 14px;
-        padding-top:8px;
+        row-gap:18px;
+        column-gap:20px;
+        padding-top:12px;
+        margin-top:4px;
       }
       .r96-card-actions .r96-primary{
         width:100%;
@@ -723,6 +725,7 @@
       .r96-card-actions .r96-secondary{
         flex:1 1 132px;
         min-width:0;
+        min-height:44px;
       }
       .r96-review-modal-backdrop{
         position:fixed;
