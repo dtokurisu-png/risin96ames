@@ -9,13 +9,9 @@
   const FRAME_ORIGIN = "https://dtokurisu-png.github.io";
   const SOURCE_BRIDGE = "r96-games-bridge";
   const SOURCE_UI = "r96-games-ui";
-  const SOURCE_COMMUNITY_BRIDGE = "r96-community-bridge";
-  const SOURCE_COMMUNITY_UI = "r96-community-ui";
   const PROTOCOL = 1;
   const GAME_CAP_REQUEST_EVENT = "r96:game-capability-request";
   const GAME_CAP_RESPONSE_EVENT = "r96:game-capability-response";
-  const COMMUNITY_CAP_REQUEST_EVENT = "r96:community-capability-request";
-  const COMMUNITY_CAP_RESPONSE_EVENT = "r96:community-capability-response";
 
   if (location.pathname.replace(/\/+$/, "") !== PATH) return;
 
@@ -25,9 +21,6 @@
   let gameCapability = "";
   let gameCapabilityExpiresAt = "";
   let gameCapabilityPromise = null;
-  let communityCapability = "";
-  let communityCapabilityExpiresAt = "";
-  let communityCapabilityPromise = null;
 
 
   function tokenValid() {
@@ -138,107 +131,6 @@
       requestId,
       data
     }, FRAME_ORIGIN);
-  }
-
-  function postCommunity(type, data = {}, requestId = "") {
-    if (!frameWindow) return;
-
-    frameWindow.postMessage({
-      source: SOURCE_COMMUNITY_BRIDGE,
-      protocol: PROTOCOL,
-      type,
-      requestId,
-      data
-    }, FRAME_ORIGIN);
-  }
-
-  function communityTokenValid() {
-    if (!/^[A-Za-z0-9_-]{40,80}$/.test(communityCapability)) {
-      return false;
-    }
-
-    const expiresAt = new Date(communityCapabilityExpiresAt || 0);
-    return Number.isFinite(expiresAt.getTime()) &&
-      expiresAt.getTime() > Date.now() + 5000;
-  }
-
-  function clearCommunityCapability() {
-    communityCapability = "";
-    communityCapabilityExpiresAt = "";
-  }
-
-  function acquireCommunityCapability(force = false) {
-    if (!force && communityTokenValid()) {
-      return Promise.resolve(communityCapability);
-    }
-
-    if (communityCapabilityPromise) {
-      return communityCapabilityPromise;
-    }
-
-    communityCapabilityPromise = new Promise((resolve, reject) => {
-      const id = requestId();
-
-      const timeout = setTimeout(() => {
-        window.removeEventListener(
-          COMMUNITY_CAP_RESPONSE_EVENT,
-          onResponse
-        );
-        communityCapabilityPromise = null;
-        reject(new Error("COMMUNITY_CAPABILITY_TIMEOUT"));
-      }, 10000);
-
-      function onResponse(event) {
-        const detail = event?.detail || {};
-        if (String(detail.requestId || "") !== id) return;
-
-        clearTimeout(timeout);
-        window.removeEventListener(
-          COMMUNITY_CAP_RESPONSE_EVENT,
-          onResponse
-        );
-        communityCapabilityPromise = null;
-
-        if (detail.ok !== true) {
-          clearCommunityCapability();
-          reject(
-            new Error(
-              String(
-                detail.error ||
-                "COMMUNITY_CAPABILITY_CREATE_FAILED"
-              )
-            )
-          );
-          return;
-        }
-
-        const token = String(detail.capability || "");
-        const expiresAt = String(detail.expiresAt || "");
-
-        if (!/^[A-Za-z0-9_-]{40,80}$/.test(token)) {
-          clearCommunityCapability();
-          reject(new Error("COMMUNITY_CAPABILITY_INVALID"));
-          return;
-        }
-
-        communityCapability = token;
-        communityCapabilityExpiresAt = expiresAt;
-        resolve(communityCapability);
-      }
-
-      window.addEventListener(
-        COMMUNITY_CAP_RESPONSE_EVENT,
-        onResponse
-      );
-
-      window.dispatchEvent(
-        new CustomEvent(COMMUNITY_CAP_REQUEST_EVENT, {
-          detail: { requestId: id }
-        })
-      );
-    });
-
-    return communityCapabilityPromise;
   }
 
   async function loadCatalog(force = false) {
@@ -433,210 +325,32 @@
     }
   }
 
-  async function communityFeedAction(message) {
-    const id = String(message.requestId || "");
-    const gameId = String(message.gameId || "").trim();
-
-    try {
-      const response = await fetch(
-        SITE_BASE + "/_functions/r96CommunityFeed?gameId=" +
-          encodeURIComponent(gameId),
-        {
-          method: "GET",
-          credentials: "same-origin",
-          cache: "no-store"
-        }
-      );
-
-      const payload = await response.json().catch(() => null);
-      if (!payload || payload.ok !== true) {
-        postCommunity(
-          "community-feed-result",
-          {
-            ok: false,
-            error: String(
-              payload?.error || "COMMUNITY_FEED_FAILED"
-            )
-          },
-          id
-        );
-        return;
-      }
-
-      postCommunity(
-        "community-feed-result",
-        {
-          ok: true,
-          data: payload.data || {}
-        },
-        id
-      );
-    } catch (_) {
-      postCommunity(
-        "community-feed-result",
-        {
-          ok: false,
-          error: "COMMUNITY_FEED_FAILED"
-        },
-        id
-      );
-    }
-  }
-
-  async function callCommunityAction(
-    action,
-    input,
-    forceCapability = false
-  ) {
-    const capability = await acquireCommunityCapability(
-      forceCapability
-    );
-
-    const response = await fetch(
-      SITE_BASE + "/_functions/r96CommunityAction",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        credentials: "same-origin",
-        cache: "no-store",
-        body: JSON.stringify({
-          action,
-          capability,
-          input: input || {}
-        })
-      }
-    );
-
-    const payload = await response.json().catch(() => null);
-
-    if (
-      payload?.error === "COMMUNITY_CAPABILITY_INVALID" ||
-      payload?.error === "COMMUNITY_CAPABILITY_EXPIRED"
-    ) {
-      clearCommunityCapability();
-    }
-
-    return payload;
-  }
-
-  async function communityAction(message) {
-    const id = String(message.requestId || "");
-    const action = String(message.action || "").trim();
-    const input = message.input || {};
-
-    try {
-      let payload = await callCommunityAction(
-        action,
-        input,
-        false
-      );
-
-      if (
-        payload?.ok !== true &&
-        (
-          payload?.error === "COMMUNITY_CAPABILITY_INVALID" ||
-          payload?.error === "COMMUNITY_CAPABILITY_EXPIRED"
-        )
-      ) {
-        payload = await callCommunityAction(
-          action,
-          input,
-          true
-        );
-      }
-
-      if (!payload || payload.ok !== true) {
-        postCommunity(
-          "community-action-result",
-          {
-            ok: false,
-            error: String(
-              payload?.error || "COMMUNITY_ACTION_FAILED"
-            )
-          },
-          id
-        );
-        return;
-      }
-
-      postCommunity(
-        "community-action-result",
-        {
-          ok: true,
-          data: payload.data || {}
-        },
-        id
-      );
-    } catch (error) {
-      postCommunity(
-        "community-action-result",
-        {
-          ok: false,
-          error: String(
-            error?.message || "COMMUNITY_ACTION_FAILED"
-          )
-        },
-        id
-      );
-    }
-  }
-
-  async function sendCommunityCatalog() {
-    try {
-      const data = await loadCatalog();
-      postCommunity("community-catalog", {
-        games: Array.isArray(data?.games) ? data.games : [],
-        count: Number(data?.count || 0)
-      });
-    } catch (_) {
-      postCommunity("community-catalog", {
-        games: [],
-        count: 0
-      });
-    }
-  }
-
   addEventListener("message", (event) => {
     if (event.origin !== FRAME_ORIGIN) return;
 
     const message = event.data;
-    if (!message || message.protocol !== PROTOCOL) return;
-
-    frameWindow = event.source;
-
-    if (message.source === SOURCE_UI) {
-      if (message.type === "ready") {
-        sendCatalog();
-        return;
-      }
-
-      if (message.type === "studio-action") {
-        studioAction(message);
-        return;
-      }
-
-      if (message.type === "launch-action") {
-        launchAction(message);
-      }
+    if (
+      !message ||
+      message.source !== SOURCE_UI ||
+      message.protocol !== PROTOCOL
+    ) {
       return;
     }
 
-    if (message.source === SOURCE_COMMUNITY_UI) {
-      if (message.type === "community-ready") {
-        sendCommunityCatalog();
-        return;
-      }
+    frameWindow = event.source;
 
-      if (message.type === "community-feed") {
-        communityFeedAction(message);
-        return;
-      }
+    if (message.type === "ready") {
+      sendCatalog();
+      return;
+    }
 
-      if (message.type === "community-action") {
-        communityAction(message);
-      }
+    if (message.type === "studio-action") {
+      studioAction(message);
+      return;
+    }
+
+    if (message.type === "launch-action") {
+      launchAction(message);
     }
   });
 })();
