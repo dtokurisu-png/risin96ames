@@ -3650,6 +3650,7 @@
 
     if (message.type === "catalog") {
       renderCatalog(message.data || {});
+      renderRecentActivity();
       return;
     }
 
