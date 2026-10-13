@@ -24,8 +24,6 @@
   const STYLE_ID = "r96-host-invite-style";
   const GAME_CAP_REQUEST_EVENT = "r96:game-capability-request";
   const GAME_CAP_RESPONSE_EVENT = "r96:game-capability-response";
-  const COMMUNITY_CAP_REQUEST_EVENT = "r96:community-capability-request";
-  const COMMUNITY_CAP_RESPONSE_EVENT = "r96:community-capability-response";
   const LEGACY_PARAMS = [
     "r96a1","r96cmd","r96req","r96result","r96iid",
     "r96token","r96code","r96exp","r96err"
@@ -42,7 +40,6 @@
   let claimInFlight = false;
   let claimBlocked = false;
   let gameCapabilityInFlight = false;
-  let communityCapabilityInFlight = false;
 
   function readSession(key) {
     try { return String(sessionStorage.getItem(key) || ""); }
@@ -778,130 +775,6 @@
     onGameCapabilityRequest
   );
 
-  function emitCommunityCapability(detail) {
-    window.dispatchEvent(
-      new CustomEvent(COMMUNITY_CAP_RESPONSE_EVENT, {
-        detail
-      })
-    );
-  }
-
-  async function issueCommunityCapability(requestId) {
-    const safeRequestId = String(requestId || "").trim();
-
-    if (!/^[A-Za-z0-9_-]{16,100}$/.test(safeRequestId)) {
-      emitCommunityCapability({
-        requestId: safeRequestId,
-        ok: false,
-        error: "INVALID_REQUEST_ID"
-      });
-      return;
-    }
-
-    if (communityCapabilityInFlight) {
-      emitCommunityCapability({
-        requestId: safeRequestId,
-        ok: false,
-        error: "COMMUNITY_CAPABILITY_BUSY"
-      });
-      return;
-    }
-
-    captureTransientState();
-
-    if (accessState().signedIn !== true) {
-      emitCommunityCapability({
-        requestId: safeRequestId,
-        ok: false,
-        error: "AUTH_REQUIRED"
-      });
-      return;
-    }
-
-    if (!actionCapability) {
-      emitCommunityCapability({
-        requestId: safeRequestId,
-        ok: false,
-        error: "ACTION_CAPABILITY_MISSING"
-      });
-      return;
-    }
-
-    communityCapabilityInFlight = true;
-
-    try {
-      const response = await fetch(
-        SITE_BASE + "/_functions/r96AccessAction",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "same-origin",
-          cache: "no-store",
-          body: JSON.stringify({
-            action: "createCommunityCapability",
-            capability: actionCapability
-          })
-        }
-      );
-
-      const payload = await response.json().catch(() => null);
-
-      if (!payload || payload.ok !== true || !payload.data) {
-        const error = String(
-          payload?.error ||
-          "COMMUNITY_CAPABILITY_CREATE_FAILED"
-        );
-
-        if (
-          error === "CAPABILITY_INVALID" ||
-          error === "CAPABILITY_EXPIRED"
-        ) {
-          actionCapability = "";
-        }
-
-        emitCommunityCapability({
-          requestId: safeRequestId,
-          ok: false,
-          error
-        });
-        return;
-      }
-
-      const data = payload.data;
-      actionCapability = String(
-        data.nextActionCapability || ""
-      );
-
-      emitCommunityCapability({
-        requestId: safeRequestId,
-        ok: true,
-        capability: String(
-          data.communityCapability || ""
-        ),
-        expiresAt: String(
-          data.communityCapabilityExpiresAt || ""
-        )
-      });
-    } catch (_) {
-      emitCommunityCapability({
-        requestId: safeRequestId,
-        ok: false,
-        error: "COMMUNITY_CAPABILITY_CREATE_FAILED"
-      });
-    } finally {
-      communityCapabilityInFlight = false;
-    }
-  }
-
-  function onCommunityCapabilityRequest(event) {
-    issueCommunityCapability(event?.detail?.requestId);
-  }
-
-  window.addEventListener(
-    COMMUNITY_CAP_REQUEST_EVENT,
-    onCommunityCapabilityRequest
-  );
-
   addEventListener("message", (event) => {
     if (event.origin !== FRAME_ORIGIN) return;
 
@@ -989,10 +862,6 @@
       window.removeEventListener(
         GAME_CAP_REQUEST_EVENT,
         onGameCapabilityRequest
-      );
-      window.removeEventListener(
-        COMMUNITY_CAP_REQUEST_EVENT,
-        onCommunityCapabilityRequest
       );
     },
     { once: true }
