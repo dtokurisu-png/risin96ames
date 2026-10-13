@@ -1157,14 +1157,16 @@
 
   function updateOpenGameCommunity(gameId, data) {
     const section = document.querySelector(
-      "#" + DETAIL_MODAL_ID +
-      ' [data-r96-community-game="' +
-      CSS.escape(clean(gameId)) +
-      '"]'
+      "#" + DETAIL_MODAL_ID + " .r96-game-community-detail"
     );
 
     const game = gameForId(gameId);
-    if (section && game && data) {
+    if (
+      section &&
+      clean(section.dataset.r96CommunityGame) === clean(gameId) &&
+      game &&
+      data
+    ) {
       renderGameCommunitySection(game, data, section);
     }
   }
@@ -1220,7 +1222,7 @@
         const option = document.createElement("option");
         option.value = String(value);
         option.textContent =
-          value + " ★" + (value === 1 ? "" : "");
+          value + " · " + ratingStars(value);
         rating.appendChild(option);
       }
       ratingLabel.appendChild(rating);
