@@ -464,8 +464,6 @@ button[aria-disabled="true"]:active{transform:none!important}
   font-size:.78rem;
 }
 .r96-meta strong{color:var(--r96-text)}
-.r96-card-actions{align-self:end;padding-top:2px}
-.r96-card-actions .r96-primary{width:100%;opacity:.72}
 
 .r96-two{
   display:grid;
