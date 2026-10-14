@@ -284,62 +284,47 @@
   }
 
   async function reviewSaveAction(message) {
-    const id = String(message.requestId || "");
+    const requestId = String(message.requestId || "");
     const input = message.input || {};
+    const body = {
+      gameId: String(input.gameId || "").trim(),
+      rating: Number(input.rating),
+      body: String(input.body || "").trim()
+    };
 
+    let result;
     try {
-      const response = await fetch(
-        SITE_BASE + "/_functions/r96GameReview",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          credentials: "same-origin",
-          cache: "no-store",
-          body: JSON.stringify({
-            gameId:String(input.gameId || "").trim(),
-            rating:Number(input.rating || 0),
-            body:String(input.body || "")
-          })
-        }
-      );
-
+      const response = await fetch(SITE_BASE + "/_functions/r96GameReview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        cache: "no-store",
+        body: JSON.stringify(body)
+      });
       const payload = await response.json().catch(() => null);
-
-      if (!response.ok || !payload || payload.ok !== true) {
-        post(
-          "review-save-result",
-          {
-            ok:false,
-            error:String(
-              payload?.error || (response.status === 404 ? "REVIEW_ENDPOINT_NOT_FOUND" : response.status === 401 || response.status === 403 ? "AUTH_REQUIRED" : !payload ? "REVIEW_RESPONSE_INVALID" : "REVIEW_SAVE_FAILED")
-            )
-          },
-          id
-        );
-        return;
+      if (!response.ok || payload?.ok !== true) {
+        result = {
+          ok: false,
+          error: String(payload?.error ||
+            (response.status === 404 ? "REVIEW_ENDPOINT_NOT_FOUND" :
+              response.status === 401 || response.status === 403 ? "AUTH_REQUIRED" :
+                "REVIEW_SAVE_FAILED"))
+        };
+      } else {
+        result = { ok: true, data: payload.data || {} };
       }
-
-      post(
-        "review-save-result",
-        {
-          ok:true,
-          data:payload.data || {}
-        },
-        id
-      );
-
-      await sendCommunityOverview(true);
     } catch (_) {
-      post(
-        "review-save-result",
-        {
-          ok:false,
-          error:"REVIEW_NETWORK_FAILED"
-        },
-        id
-      );
+      result = { ok: false, error: "REVIEW_NETWORK_FAILED" };
+    }
+
+    // One request receives exactly one result. Refreshing the feed is independent.
+    post("review-save-result", result, requestId);
+    if (result.ok) {
+      try {
+        await sendCommunityOverview(true);
+      } catch (_) {
+        // A failed refresh must never turn a saved review into a save error.
+      }
     }
   }
 
