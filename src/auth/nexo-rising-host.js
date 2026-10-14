@@ -216,12 +216,14 @@
         }
 
         const data = await response.json();
-        if (!response.ok || !data.ok || !data.member?.id || !/^[a-f0-9]{64}$/.test(String(data.reviewSessionToken || ""))) {
+        if (!response.ok || !data.ok || !data.member?.id) {
           throw new Error("AUTH_REQUIRED");
         }
 
         member = data.member;
-        reviewSessionToken = data.reviewSessionToken;
+        reviewSessionToken = /^[a-f0-9]{64}$/.test(String(data.reviewSessionToken || ""))
+          ? data.reviewSessionToken
+          : "";
         status = "signedIn";
       } catch (_) {
         status = "error";
