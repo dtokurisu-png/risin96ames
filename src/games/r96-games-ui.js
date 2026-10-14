@@ -1107,6 +1107,14 @@
         "Inicia sesión para publicar.",
         "Sign in to post."
       ),
+      REVIEW_SESSION_UNAVAILABLE:t(
+        "Tu cuenta está conectada, pero Wix no entregó la credencial necesaria para guardar la reseña.",
+        "You're signed in, but Wix did not provide the credential required to save the review."
+      ),
+      SESSION_EXPIRED:t(
+        "La sesión de escritura de Wix ha caducado.",
+        "Your Wix write session has expired."
+      ),
       REVIEW_ENDPOINT_NOT_FOUND:t(
         "El servicio de reseñas no está publicado en Wix.",
         "The review service is not deployed on Wix."
