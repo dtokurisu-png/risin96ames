@@ -1173,7 +1173,7 @@
     });
   }
 
-  function saveReviewAction(input = {}) {
+  function submitReview(input = {}) {
     const id = requestId();
 
     return new Promise((resolve, reject) => {
@@ -1187,7 +1187,7 @@
       window.parent.postMessage({
         source:SOURCE_UI,
         protocol:PROTOCOL,
-        type:"review-save-action",
+        type:"review-submit-action",
         requestId:id,
         input:{
           gameId:clean(input.gameId),
@@ -1328,7 +1328,7 @@
         submit.disabled = true;
 
         try {
-          const data = await saveReviewAction({
+          const data = await submitReview({
             gameId:clean(game.id),
             rating:Number(rating.value || 0),
             body:body.value
