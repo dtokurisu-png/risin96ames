@@ -115,8 +115,12 @@
       type: "review-submit-result", requestId, data
     }, ORIGIN);
 
-    if (status !== "signedIn" || !uiSessionToken) {
+    if (status !== "signedIn" || !member?.id) {
       reply({ ok: false, error: "AUTH_REQUIRED" });
+      return;
+    }
+    if (!uiSessionToken) {
+      reply({ ok: false, error: "REVIEW_SESSION_UNAVAILABLE" });
       return;
     }
     try {
