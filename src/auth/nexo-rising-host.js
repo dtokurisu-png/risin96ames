@@ -41,7 +41,6 @@
   let commandSequence = 0;
   let navigating = false;
   let member = null;
-  let uiSessionToken = "";
   let status = "connecting";
   let consumed = "";
   let exchanging = false;
@@ -205,17 +204,14 @@
     if (state === "SIGNED_OUT") {
       status = "signedOut";
       member = null;
-      uiSessionToken = "";
       clearResultState();
     } else if (state === "FAILED") {
       status = "error";
       member = null;
-      uiSessionToken = "";
       clearResultState();
     } else if (state === "LOGIN") {
       status = "signingIn";
       member = null;
-      uiSessionToken = "";
     } else if (
       state === "READY" &&
       query.get("nxb") &&
@@ -256,9 +252,6 @@
         }
 
         member = data.member;
-        uiSessionToken = /^[a-f0-9]{64}$/.test(String(data.sessionToken || ""))
-          ? data.sessionToken
-          : "";
         status = "signedIn";
       } catch (_) {
         status = "error";
