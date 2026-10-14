@@ -109,11 +109,58 @@
     location.assign(url.href);
   }
 
+  async function saveGameReview(message) {
+    const requestId = String(message.requestId || "");
+    const input = message.input || {};
+    const reply = (result) => {
+      frame.contentWindow?.postMessage({
+        source: "r96-games-bridge",
+        protocol: 1,
+        type: "review-save-result",
+        requestId,
+        data: result
+      }, ORIGIN);
+    };
+
+    if (status !== "signedIn" || !reviewSessionToken) {
+      reply({ ok: false, error: "AUTH_REQUIRED" });
+      return;
+    }
+
+    try {
+      const response = await fetch("/my-site-1/_functions/r96GameReview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        cache: "no-store",
+        body: JSON.stringify({
+          sessionToken: reviewSessionToken,
+          gameId: String(input.gameId || "").trim(),
+          rating: Number(input.rating),
+          body: String(input.body || "").trim()
+        })
+      });
+      const payload = await response.json().catch(() => null);
+      reply(response.ok && payload?.ok === true
+        ? { ok: true, data: payload.data || {} }
+        : { ok: false, error: String(payload?.error || "REVIEW_SAVE_FAILED") });
+    } catch (_) {
+      reply({ ok: false, error: "REVIEW_NETWORK_FAILED" });
+    }
+  }
+
   function receive(event) {
     if (navigating) return;
     if (event.source !== frame.contentWindow || event.origin !== ORIGIN) return;
 
     const data = event.data;
+    if (data?.source === "r96-games-ui" &&
+        data.protocol === 1 &&
+        data.type === "review-save-action" &&
+        typeof data.requestId === "string") {
+      saveGameReview(data);
+      return;
+    }
     // Display preference only: never cache identity, membership, or auth state.
     if (data?.source === "r96-visual" && data.type === "r96-theme") {
       if (data.theme !== "light" && data.theme !== "dark") return;
