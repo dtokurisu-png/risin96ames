@@ -1107,6 +1107,27 @@
         "Inicia sesión para publicar.",
         "Sign in to post."
       ),
+      REVIEW_ENDPOINT_NOT_FOUND:t(
+        "El servicio de reseñas no está publicado en Wix.",
+        "The review service is not deployed on Wix."
+      ),
+      REVIEW_RESPONSE_INVALID:t(
+        "Wix devolvió una respuesta inválida al guardar.",
+        "Wix returned an invalid save response."
+      ),
+      REVIEW_NETWORK_FAILED:t(
+        "No se pudo conectar con el servicio de reseñas.",
+        "Could not connect to the review service."
+      ),
+      REVIEW_SAVE_TIMEOUT:t(
+        "El guardado agotó el tiempo de espera.",
+        "Saving the review timed out."
+      ),
+      REVIEW_SAVE_FAILED:t(
+        "El servicio de Wix rechazó el guardado de la reseña.",
+        "The Wix service failed to save the review."
+      ),
+
       GAME_NOT_FOUND:t(
         "Este juego ya no está disponible.",
         "This game is no longer available."
