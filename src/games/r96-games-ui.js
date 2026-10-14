@@ -3754,7 +3754,7 @@
       message.type === "studio-result" ||
       message.type === "launch-result" ||
       message.type === "community-detail-result" ||
-      message.type === "review-save-result" ||
+      message.type === "review-submit-result" ||
       message.type === "community-write-result"
     ) {
       const id = clean(message.requestId);
@@ -3776,7 +3776,7 @@
                   ? "GAME_LAUNCH_FAILED"
                   : message.type === "community-detail-result"
                     ? "GAME_COMMUNITY_FAILED"
-                    : message.type === "review-save-result"
+                    : message.type === "review-submit-result"
                     ? "REVIEW_SAVE_FAILED"
                     : message.type === "community-write-result"
                       ? "COMMUNITY_ACTION_FAILED"
