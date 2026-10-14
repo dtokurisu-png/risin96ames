@@ -283,57 +283,6 @@
     }
   }
 
-  async function reviewSaveAction(message) {
-    const requestId = String(message.requestId || "");
-    const input = message.input || {};
-    const sessionToken = window.__r96GetReviewSessionToken?.() || "";
-    if (!sessionToken) {
-      post("review-save-result", {ok:false, error:"AUTH_REQUIRED"}, requestId);
-      return;
-    }
-    const body = {
-      sessionToken,
-      gameId: String(input.gameId || "").trim(),
-      rating: Number(input.rating),
-      body: String(input.body || "").trim()
-    };
-
-    let result;
-    try {
-      const response = await fetch(SITE_BASE + "/_functions/r96GameReview", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "same-origin",
-        cache: "no-store",
-        body: JSON.stringify(body)
-      });
-      const payload = await response.json().catch(() => null);
-      if (!response.ok || payload?.ok !== true) {
-        result = {
-          ok: false,
-          error: String(payload?.error ||
-            (response.status === 404 ? "REVIEW_ENDPOINT_NOT_FOUND" :
-              response.status === 401 || response.status === 403 ? "AUTH_REQUIRED" :
-                "REVIEW_SAVE_FAILED"))
-        };
-      } else {
-        result = { ok: true, data: payload.data || {} };
-      }
-    } catch (_) {
-      result = { ok: false, error: "REVIEW_NETWORK_FAILED" };
-    }
-
-    // One request receives exactly one result. Refreshing the feed is independent.
-    post("review-save-result", result, requestId);
-    if (result.ok) {
-      try {
-        await sendCommunityOverview(true);
-      } catch (_) {
-        // A failed refresh must never turn a saved review into a save error.
-      }
-    }
-  }
-
   async function communityWriteAction(message) {
     const id = String(message.requestId || "");
     const action = String(message.action || "").trim();
@@ -565,11 +514,6 @@
 
     if (message.type === "community-detail-action") {
       communityDetailAction(message);
-      return;
-    }
-
-    if (message.type === "review-save-action") {
-      reviewSaveAction(message);
       return;
     }
 
