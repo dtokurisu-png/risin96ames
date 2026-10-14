@@ -287,13 +287,13 @@
     const id = String(message.requestId || "");
     try {
       const response = await fetch(
-        SITE_BASE + "/_functions/r96GameReview",
+        SITE_BASE + "/_functions/nexoRisingUi",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "same-origin",
           cache: "no-store",
-          body: JSON.stringify({ input: message.input || {} })
+          body: JSON.stringify({ action: "review.save", ...(message.input || {}) })
         }
       );
       const payload = await response.json().catch(() => null);
