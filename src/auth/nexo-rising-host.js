@@ -149,7 +149,7 @@
     const data = event.data;
     if (data?.source === "r96-games-ui" &&
         data.protocol === 1 &&
-        data.type === "review-save-action" &&
+        data.type === "review-submit-action" &&
         typeof data.requestId === "string") {
       submitReview(data);
       return;
@@ -261,8 +261,8 @@
         }
 
         member = data.member;
-        uiSessionToken = /^[a-f0-9]{64}$/.test(String(data.uiSessionToken || ""))
-          ? data.uiSessionToken
+        uiSessionToken = /^[a-f0-9]{64}$/.test(String(data.sessionToken || ""))
+          ? data.sessionToken
           : "";
         status = "signedIn";
       } catch (_) {
