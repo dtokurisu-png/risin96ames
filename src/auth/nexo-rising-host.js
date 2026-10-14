@@ -115,14 +115,6 @@
       type: "review-submit-result", requestId, data
     }, ORIGIN);
 
-    if (status !== "signedIn" || !member?.id) {
-      reply({ ok: false, error: "AUTH_REQUIRED" });
-      return;
-    }
-    if (!uiSessionToken) {
-      reply({ ok: false, error: "REVIEW_SESSION_UNAVAILABLE" });
-      return;
-    }
     try {
       const response = await fetch("/my-site-1/_functions/nexoRisingUi", {
         method: "POST",
@@ -131,7 +123,6 @@
         cache: "no-store",
         body: JSON.stringify({
           action: "review.save",
-          sessionToken: uiSessionToken,
           gameId: String(input.gameId || "").trim(),
           rating: Number(input.rating),
           body: String(input.body || "").trim()
