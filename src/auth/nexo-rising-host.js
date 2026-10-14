@@ -112,7 +112,7 @@
     const input = message.input || {};
     const reply = (data) => frame.contentWindow?.postMessage({
       source: "r96-games-bridge", protocol: 1,
-      type: "review-save-result", requestId, data
+      type: "review-submit-result", requestId, data
     }, ORIGIN);
 
     if (status !== "signedIn" || !uiSessionToken) {
