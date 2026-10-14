@@ -313,7 +313,7 @@
           {
             ok:false,
             error:String(
-              payload?.error || "REVIEW_SAVE_FAILED"
+              payload?.error || (response.status === 404 ? "REVIEW_ENDPOINT_NOT_FOUND" : response.status === 401 || response.status === 403 ? "AUTH_REQUIRED" : !payload ? "REVIEW_RESPONSE_INVALID" : "REVIEW_SAVE_FAILED")
             )
           },
           id
@@ -336,7 +336,7 @@
         "review-save-result",
         {
           ok:false,
-          error:"REVIEW_SAVE_FAILED"
+          error:"REVIEW_NETWORK_FAILED"
         },
         id
       );
