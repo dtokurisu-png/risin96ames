@@ -283,6 +283,38 @@
     }
   }
 
+  async function reviewSubmitAction(message) {
+    const id = String(message.requestId || "");
+    try {
+      const response = await fetch(
+        SITE_BASE + "/_functions/r96GameReview",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          cache: "no-store",
+          body: JSON.stringify({ input: message.input || {} })
+        }
+      );
+      const payload = await response.json().catch(() => null);
+      post("review-submit-result", {
+        ok: response.ok && payload?.ok === true,
+        data: payload?.data || {},
+        error: String(payload?.error || (response.status === 404
+          ? "REVIEW_ENDPOINT_NOT_FOUND"
+          : "REVIEW_RESPONSE_INVALID"))
+      }, id);
+      if (response.ok && payload?.ok === true) {
+        await sendCommunityOverview(true);
+      }
+    } catch (error) {
+      post("review-submit-result", {
+        ok: false,
+        error: String(error?.message || "REVIEW_NETWORK_FAILED")
+      }, id);
+    }
+  }
+
   async function communityWriteAction(message) {
     const id = String(message.requestId || "");
     const action = String(message.action || "").trim();
@@ -514,6 +546,11 @@
 
     if (message.type === "community-detail-action") {
       communityDetailAction(message);
+      return;
+    }
+
+    if (message.type === "review-submit-action") {
+      reviewSubmitAction(message);
       return;
     }
 
