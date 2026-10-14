@@ -1302,7 +1302,7 @@
       const body = document.createElement("textarea");
       body.maxLength = 2500;
       body.placeholder = t(
-        "¿Qué te pareció este juego? prueba de funcionalidad de texto de reseña",
+        "¿Qué te pareció este juego?",
         "What did you think of this game?"
       );
       bodyLabel.appendChild(body);
