@@ -41,6 +41,9 @@
   let commandSequence = 0;
   let navigating = false;
   let member = null;
+  let reviewSessionToken = "";
+  // Only scripts in the Wix page origin may access this ephemeral credential.
+  window.__r96GetReviewSessionToken = () => status === "signedIn" ? reviewSessionToken : "";
   let status = "connecting";
   let consumed = "";
   let exchanging = false;
@@ -167,14 +170,17 @@
     if (state === "SIGNED_OUT") {
       status = "signedOut";
       member = null;
+      reviewSessionToken = "";
       clearResultState();
     } else if (state === "FAILED") {
       status = "error";
       member = null;
+      reviewSessionToken = "";
       clearResultState();
     } else if (state === "LOGIN") {
       status = "signingIn";
       member = null;
+      reviewSessionToken = "";
     } else if (
       state === "READY" &&
       query.get("nxb") &&
@@ -210,11 +216,12 @@
         }
 
         const data = await response.json();
-        if (!response.ok || !data.ok || !data.member?.id) {
+        if (!response.ok || !data.ok || !data.member?.id || !/^[a-f0-9]{64}$/.test(String(data.reviewSessionToken || ""))) {
           throw new Error("AUTH_REQUIRED");
         }
 
         member = data.member;
+        reviewSessionToken = data.reviewSessionToken;
         status = "signedIn";
       } catch (_) {
         status = "error";
