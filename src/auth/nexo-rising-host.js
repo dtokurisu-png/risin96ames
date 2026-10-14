@@ -42,8 +42,6 @@
   let navigating = false;
   let member = null;
   let reviewSessionToken = "";
-  // Only scripts in the Wix page origin may access this ephemeral credential.
-  window.__r96GetReviewSessionToken = () => status === "signedIn" ? reviewSessionToken : "";
   let status = "connecting";
   let consumed = "";
   let exchanging = false;
