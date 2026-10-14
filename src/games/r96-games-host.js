@@ -286,7 +286,13 @@
   async function reviewSaveAction(message) {
     const requestId = String(message.requestId || "");
     const input = message.input || {};
+    const sessionToken = window.__r96GetReviewSessionToken?.() || "";
+    if (!sessionToken) {
+      post("review-save-result", {ok:false, error:"AUTH_REQUIRED"}, requestId);
+      return;
+    }
     const body = {
+      sessionToken,
       gameId: String(input.gameId || "").trim(),
       rating: Number(input.rating),
       body: String(input.body || "").trim()
