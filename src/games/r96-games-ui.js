@@ -1279,15 +1279,6 @@
     head.append(title, close);
     modal.appendChild(head);
 
-    if (!signedIn()) {
-      const message = document.createElement("p");
-      message.className = "r96-community-empty";
-      message.textContent = t(
-        "Inicia sesión desde la barra superior para escribir una reseña.",
-        "Sign in from the top bar to write a review."
-      );
-      modal.appendChild(message);
-    } else {
       const form = document.createElement("form");
       form.className = "r96-review-form";
 
@@ -1357,7 +1348,6 @@
       });
 
       modal.appendChild(form);
-    }
 
     backdrop.appendChild(modal);
     document.body.appendChild(backdrop);
