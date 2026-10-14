@@ -1142,10 +1142,8 @@
       )
     };
 
-    return errors[clean(code)] || t(
-      "No se pudo completar la operación.",
-      "The operation could not be completed."
-    );
+    // Show the actual error returned by Wix when no translation is defined.
+    return errors[clean(code)] || clean(code) || "UNKNOWN_REVIEW_ERROR";
   }
 
   function communityDetailAction(gameId) {
