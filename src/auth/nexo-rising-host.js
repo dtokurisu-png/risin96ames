@@ -41,7 +41,7 @@
   let commandSequence = 0;
   let navigating = false;
   let member = null;
-  let reviewSessionToken = "";
+  let uiSessionToken = "";
   let status = "connecting";
   let consumed = "";
   let exchanging = false;
@@ -107,39 +107,34 @@
     location.assign(url.href);
   }
 
-  async function saveGameReview(message) {
+  async function submitReview(message) {
     const requestId = String(message.requestId || "");
     const input = message.input || {};
-    const reply = (result) => {
-      frame.contentWindow?.postMessage({
-        source: "r96-games-bridge",
-        protocol: 1,
-        type: "review-save-result",
-        requestId,
-        data: result
-      }, ORIGIN);
-    };
+    const reply = (data) => frame.contentWindow?.postMessage({
+      source: "r96-games-bridge", protocol: 1,
+      type: "review-save-result", requestId, data
+    }, ORIGIN);
 
-    if (status !== "signedIn" || !reviewSessionToken) {
+    if (status !== "signedIn" || !uiSessionToken) {
       reply({ ok: false, error: "AUTH_REQUIRED" });
       return;
     }
-
     try {
-      const response = await fetch("/my-site-1/_functions/r96GameReview", {
+      const response = await fetch("/my-site-1/_functions/nexoRisingUi", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
         cache: "no-store",
         body: JSON.stringify({
-          sessionToken: reviewSessionToken,
+          action: "review.save",
+          sessionToken: uiSessionToken,
           gameId: String(input.gameId || "").trim(),
           rating: Number(input.rating),
           body: String(input.body || "").trim()
         })
       });
       const payload = await response.json().catch(() => null);
-      reply(response.ok && payload?.ok === true
+      reply(response.ok && payload?.ok
         ? { ok: true, data: payload.data || {} }
         : { ok: false, error: String(payload?.error || "REVIEW_SAVE_FAILED") });
     } catch (_) {
@@ -156,7 +151,7 @@
         data.protocol === 1 &&
         data.type === "review-save-action" &&
         typeof data.requestId === "string") {
-      saveGameReview(data);
+      submitReview(data);
       return;
     }
     // Display preference only: never cache identity, membership, or auth state.
@@ -215,17 +210,17 @@
     if (state === "SIGNED_OUT") {
       status = "signedOut";
       member = null;
-      reviewSessionToken = "";
+      uiSessionToken = "";
       clearResultState();
     } else if (state === "FAILED") {
       status = "error";
       member = null;
-      reviewSessionToken = "";
+      uiSessionToken = "";
       clearResultState();
     } else if (state === "LOGIN") {
       status = "signingIn";
       member = null;
-      reviewSessionToken = "";
+      uiSessionToken = "";
     } else if (
       state === "READY" &&
       query.get("nxb") &&
@@ -266,8 +261,8 @@
         }
 
         member = data.member;
-        reviewSessionToken = /^[a-f0-9]{64}$/.test(String(data.reviewSessionToken || ""))
-          ? data.reviewSessionToken
+        uiSessionToken = /^[a-f0-9]{64}$/.test(String(data.uiSessionToken || ""))
+          ? data.uiSessionToken
           : "";
         status = "signedIn";
       } catch (_) {
