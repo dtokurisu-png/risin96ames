@@ -290,21 +290,34 @@
     if (!id || feedbackInFlight.has(id)) return;
     feedbackInFlight.add(id);
     try {
-      const response = await fetch(
-        SITE_BASE + "/_functions/r96CommunityAction",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "same-origin",
-          cache: "no-store",
-          body: JSON.stringify({
-            action,
-            input: message.input || {}
-          })
+      let payload;
+      if (action === "comment.create") {
+        // Nexo keeps the member session inside the same-origin account host.
+        // Never copy its credential into the cross-origin game iframe.
+        if (typeof window.__r96PostSignedComment !== "function") {
+          throw new Error("AUTH_REQUIRED");
         }
-      );
-      const payload = await response.json().catch(() => null);
-      if (!response.ok || payload?.ok !== true) {
+        payload = await window.__r96PostSignedComment(message.input || {});
+      } else {
+        const response = await fetch(
+          SITE_BASE + "/_functions/r96CommunityAction",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "same-origin",
+            cache: "no-store",
+            body: JSON.stringify({
+              action,
+              input: message.input || {}
+            })
+          }
+        );
+        payload = await response.json().catch(() => null);
+        if (!response.ok && payload?.ok === true) {
+          payload = { ok: false, error: "FEEDBACK_SAVE_FAILED" };
+        }
+      }
+      if (payload?.ok !== true) {
         post(resultType, {
           ok: false,
           error: String(payload?.error || "FEEDBACK_SAVE_FAILED")
