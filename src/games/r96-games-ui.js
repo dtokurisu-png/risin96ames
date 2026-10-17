@@ -1494,10 +1494,17 @@
     commentsTitle.textContent = t("Comentarios", "Comments");
     commentsColumn.appendChild(commentsTitle);
 
-    // The comment form is always visible. Authentication is checked when
-    // publishing, so delayed account initialization cannot hide the controls.
+    // Public comments, including visitors without a Nexo account.
     const form = document.createElement("form");
     form.className = "r96-game-comment-form";
+
+    const authorLabel = document.createElement("label");
+    authorLabel.textContent = t("Tu nombre (opcional)", "Your name (optional)");
+    const authorInput = document.createElement("input");
+    authorInput.type = "text";
+    authorInput.maxLength = 100;
+    authorInput.placeholder = t("Invitado", "Guest");
+    authorLabel.appendChild(authorInput);
 
     const textarea = document.createElement("textarea");
     textarea.maxLength = 1500;
@@ -1515,24 +1522,12 @@
     submit.type = "submit";
     submit.textContent = t("Publicar comentario", "Post comment");
 
-    form.append(textarea, feedback, submit);
+    form.append(authorLabel, textarea, feedback, submit);
 
     let posting = false;
     form.addEventListener("submit", async event => {
       event.preventDefault();
       if (posting) return;
-
-      if (!signedIn()) {
-        feedback.dataset.error = "1";
-        feedback.textContent = t(
-          "Inicia sesión en Nexo Group para publicar comentarios.",
-          "Sign in to Nexo Group to post comments."
-        );
-        // Use the existing Nexo login, never start a second auth flow.
-        const loginButton = document.querySelector("#r96-login");
-        if (loginButton && !loginButton.disabled) loginButton.click();
-        return;
-      }
 
       posting = true;
       feedback.dataset.error = "0";
@@ -1542,7 +1537,8 @@
       try {
         const nextData = await communityWriteAction("comment.create", {
           gameId: clean(game.id),
-          body: textarea.value
+          body: textarea.value,
+          authorDisplayName: authorInput.value.trim()
         });
         renderGameCommunitySection(game, nextData, section);
       } catch (error) {
