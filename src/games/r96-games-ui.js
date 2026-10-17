@@ -1119,6 +1119,14 @@
         "El guardado agotó el tiempo de espera.",
         "Saving the review timed out."
       ),
+      FEEDBACK_SAVE_FAILED:t(
+        "No se pudo guardar. Verifica que el backend actualizado esté publicado.",
+        "Could not save. Verify the updated backend is published."
+      ),
+      FEEDBACK_NETWORK_FAILED:t(
+        "No se pudo conectar al servicio.",
+        "Could not connect to the service."
+      ),
       REVIEW_SAVE_FAILED:t(
         "El servicio de Wix rechazó el guardado de la reseña.",
         "The Wix service failed to save the review."
@@ -1186,7 +1194,8 @@
         input:{
           gameId:clean(input.gameId),
           rating:Number(input.rating || 0),
-          body:String(input.body || "")
+          body:String(input.body || ""),
+          authorDisplayName:clean(input.authorDisplayName).slice(0, 100)
         }
       }, HOST_ORIGIN);
     });
@@ -1281,6 +1290,15 @@
       }
       ratingLabel.appendChild(rating);
 
+      const guest = !signedIn();
+      const nameLabel = document.createElement("label");
+      nameLabel.textContent = t("Tu nombre (opcional)", "Your name (optional)");
+      const authorNameInput = document.createElement("input");
+      authorNameInput.type = "text";
+      authorNameInput.maxLength = 100;
+      authorNameInput.placeholder = t("Invitado", "Guest");
+      nameLabel.appendChild(authorNameInput);
+
       const bodyLabel = document.createElement("label");
       bodyLabel.textContent = t("Reseña", "Review");
 
@@ -1301,10 +1319,14 @@
       submit.type = "submit";
       submit.textContent = t("Guardar reseña", "Save review");
 
+      if (guest) form.appendChild(nameLabel);
       form.append(ratingLabel, bodyLabel, feedback, submit);
 
+      let saving = false;
       form.addEventListener("submit", async event => {
         event.preventDefault();
+        if (saving) return;
+        saving = true;
         feedback.dataset.error = "0";
         feedback.textContent = t(
           "Guardando reseña…",
@@ -1316,7 +1338,8 @@
           const data = await submitReview({
             gameId:clean(game.id),
             rating:Number(rating.value || 0),
-            body:body.value
+            body:body.value,
+            authorDisplayName:guest ? authorNameInput.value : ""
           });
 
           feedback.textContent = t(
@@ -1329,6 +1352,7 @@
         } catch (error) {
           feedback.dataset.error = "1";
           feedback.textContent = communityError(error?.message);
+          saving = false;
           submit.disabled = false;
         }
       });
@@ -1349,6 +1373,19 @@
 
     const head = document.createElement("div");
     head.className = "r96-community-entry-head";
+
+    const photoUrl = safeUrl(item?.authorPhoto);
+    if (photoUrl) {
+      const photo = document.createElement("img");
+      photo.src = photoUrl;
+      photo.alt = "";
+      photo.loading = "lazy";
+      photo.referrerPolicy = "no-referrer";
+      photo.width = 32;
+      photo.height = 32;
+      photo.style.cssText = "width:32px;height:32px;object-fit:cover;border-radius:50%;flex:none";
+      head.appendChild(photo);
+    }
 
     const author = document.createElement("span");
     author.className = "r96-community-entry-author";
