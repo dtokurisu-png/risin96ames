@@ -1065,12 +1065,6 @@
     return meta;
   }
 
-  function signedIn() {
-    return document
-      .querySelector(".r96-account-visual")
-      ?.dataset?.r96AuthState === "signedIn";
-  }
-
   function communitySummaryFor(gameId) {
     const id = clean(gameId);
     const rows = Array.isArray(communityOverview?.summaries)
