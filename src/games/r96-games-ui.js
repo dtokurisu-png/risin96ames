@@ -1494,58 +1494,66 @@
     commentsTitle.textContent = t("Comentarios", "Comments");
     commentsColumn.appendChild(commentsTitle);
 
-    if (signedIn()) {
-      const form = document.createElement("form");
-      form.className = "r96-game-comment-form";
+    // The comment form is always visible. Authentication is checked when
+    // publishing, so delayed account initialization cannot hide the controls.
+    const form = document.createElement("form");
+    form.className = "r96-game-comment-form";
 
-      const textarea = document.createElement("textarea");
-      textarea.maxLength = 1500;
-      textarea.placeholder = t(
-        "Escribe un comentario sobre este juego…",
-        "Write a comment about this game…"
-      );
+    const textarea = document.createElement("textarea");
+    textarea.maxLength = 1500;
+    textarea.placeholder = t(
+      "Escribe un comentario sobre este juego…",
+      "Write a comment about this game…"
+    );
 
-      const feedback = document.createElement("div");
-      feedback.className = "r96-community-feedback";
-      feedback.setAttribute("aria-live", "polite");
+    const feedback = document.createElement("div");
+    feedback.className = "r96-community-feedback";
+    feedback.setAttribute("aria-live", "polite");
 
-      const submit = document.createElement("button");
-      submit.className = "r96-secondary";
-      submit.type = "submit";
-      submit.textContent = t(
-        "Publicar comentario",
-        "Post comment"
-      );
+    const submit = document.createElement("button");
+    submit.className = "r96-secondary";
+    submit.type = "submit";
+    submit.textContent = t("Publicar comentario", "Post comment");
 
-      form.append(textarea, feedback, submit);
+    form.append(textarea, feedback, submit);
 
-      form.addEventListener("submit", async event => {
-        event.preventDefault();
-        feedback.dataset.error = "0";
+    let posting = false;
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+      if (posting) return;
+
+      if (!signedIn()) {
+        feedback.dataset.error = "1";
         feedback.textContent = t(
-          "Publicando…",
-          "Posting…"
+          "Inicia sesión en Nexo Group para publicar comentarios.",
+          "Sign in to Nexo Group to post comments."
         );
-        submit.disabled = true;
+        // Use the existing Nexo login, never start a second auth flow.
+        const loginButton = document.querySelector("#r96-login");
+        if (loginButton && !loginButton.disabled) loginButton.click();
+        return;
+      }
 
-        try {
-          const nextData = await communityWriteAction(
-            "comment.create",
-            {
-              gameId:clean(game.id),
-              body:textarea.value
-            }
-          );
-          renderGameCommunitySection(game, nextData, section);
-        } catch (error) {
-          feedback.dataset.error = "1";
-          feedback.textContent = communityError(error?.message);
-          submit.disabled = false;
-        }
-      });
+      posting = true;
+      feedback.dataset.error = "0";
+      feedback.textContent = t("Publicando…", "Posting…");
+      submit.disabled = true;
 
-      commentsColumn.appendChild(form);
-    }
+      try {
+        const nextData = await communityWriteAction("comment.create", {
+          gameId: clean(game.id),
+          body: textarea.value
+        });
+        renderGameCommunitySection(game, nextData, section);
+      } catch (error) {
+        feedback.dataset.error = "1";
+        feedback.textContent = communityError(error?.message);
+        posting = false;
+        submit.disabled = false;
+      }
+    });
+
+    commentsColumn.appendChild(form);
 
     const comments = Array.isArray(data?.comments)
       ? data.comments
