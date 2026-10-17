@@ -257,14 +257,15 @@
         }
 
         const data = await response.json();
-        if (
-          !response.ok || !data.ok || !data.member?.id ||
-          !/^[a-f0-9]{64}$/.test(String(data.sessionToken || ""))
-        ) {
+        if (!response.ok || !data.ok || !data.member?.id) {
           throw new Error("AUTH_REQUIRED");
         }
 
-        sessionToken = data.sessionToken;
+        // Older deployments may not yet return a session token. Keep
+        // the user signed in; comments will wait for the backend deployment.
+        sessionToken = /^[a-f0-9]{64}$/.test(String(data.sessionToken || ""))
+          ? data.sessionToken
+          : "";
         member = data.member;
         status = "signedIn";
       } catch (_) {
