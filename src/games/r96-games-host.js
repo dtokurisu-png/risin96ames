@@ -283,96 +283,58 @@
     }
   }
 
-  async function reviewSubmitAction(message) {
+  // The only write bridge for both feedback types.
+  const feedbackInFlight = new Set();
+  async function submitFeedback(message, action, resultType) {
     const id = String(message.requestId || "");
-    try {
-      const response = await fetch(
-        SITE_BASE + "/_functions/nexoRisingUi",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "same-origin",
-          cache: "no-store",
-          body: JSON.stringify({ action: "review.save", ...(message.input || {}) })
-        }
-      );
-      const payload = await response.json().catch(() => null);
-      post("review-submit-result", {
-        ok: response.ok && payload?.ok === true,
-        data: payload?.data || {},
-        error: String(payload?.error || (response.status === 404
-          ? "REVIEW_ENDPOINT_NOT_FOUND"
-          : "REVIEW_RESPONSE_INVALID"))
-      }, id);
-      if (response.ok && payload?.ok === true) {
-        await sendCommunityOverview(true);
-      }
-    } catch (error) {
-      post("review-submit-result", {
-        ok: false,
-        error: String(error?.message || "REVIEW_NETWORK_FAILED")
-      }, id);
-    }
-  }
-
-  async function communityWriteAction(message) {
-    const id = String(message.requestId || "");
-    const action = String(message.action || "").trim();
-    const input = message.input || {};
-
+    if (!id || feedbackInFlight.has(id)) return;
+    feedbackInFlight.add(id);
     try {
       const response = await fetch(
         SITE_BASE + "/_functions/r96CommunityAction",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
+          headers: { "Content-Type": "application/json" },
           credentials: "same-origin",
           cache: "no-store",
           body: JSON.stringify({
             action,
-            input
+            input: message.input || {}
           })
         }
       );
-
       const payload = await response.json().catch(() => null);
-
-      if (!payload || payload.ok !== true) {
-        post(
-          "community-write-result",
-          {
-            ok: false,
-            error: String(
-              payload?.error || "COMMUNITY_ACTION_FAILED"
-            )
-          },
-          id
-        );
+      if (!response.ok || payload?.ok !== true) {
+        post(resultType, {
+          ok: false,
+          error: String(payload?.error || "FEEDBACK_SAVE_FAILED")
+        }, id);
         return;
       }
 
-      post(
-        "community-write-result",
-        {
-          ok: true,
-          data: payload.data || {}
-        },
-        id
-      );
-
+      post(resultType, { ok: true, data: payload.data || {} }, id);
       await sendCommunityOverview(true);
-    } catch (_) {
-      post(
-        "community-write-result",
-        {
-          ok: false,
-          error: "COMMUNITY_ACTION_FAILED"
-        },
-        id
-      );
+    } catch (error) {
+      post(resultType, {
+        ok: false,
+        error: String(error?.message || "FEEDBACK_NETWORK_FAILED")
+      }, id);
+    } finally {
+      feedbackInFlight.delete(id);
     }
+  }
+
+  function reviewSubmitAction(message) {
+    return submitFeedback(message, "review.create", "review-submit-result");
+  }
+
+  function communityWriteAction(message) {
+    if (String(message.action || "") !== "comment.create") {
+      post("community-write-result", { ok: false, error: "INVALID_ACTION" },
+        String(message.requestId || ""));
+      return;
+    }
+    return submitFeedback(message, "comment.create", "community-write-result");
   }
 
   async function callStudioAction(action, input, forceCapability = false) {
