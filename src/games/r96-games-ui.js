@@ -1290,7 +1290,6 @@
       }
       ratingLabel.appendChild(rating);
 
-      const guest = !signedIn();
       const nameLabel = document.createElement("label");
       nameLabel.textContent = t("Tu nombre (opcional)", "Your name (optional)");
       const authorNameInput = document.createElement("input");
@@ -1319,8 +1318,7 @@
       submit.type = "submit";
       submit.textContent = t("Guardar reseña", "Save review");
 
-      if (guest) form.appendChild(nameLabel);
-      form.append(ratingLabel, bodyLabel, feedback, submit);
+      form.append(nameLabel, ratingLabel, bodyLabel, feedback, submit);
 
       let saving = false;
       form.addEventListener("submit", async event => {
@@ -1339,7 +1337,7 @@
             gameId:clean(game.id),
             rating:Number(rating.value || 0),
             body:body.value,
-            authorDisplayName:guest ? authorNameInput.value : ""
+            authorDisplayName:authorNameInput.value
           });
 
           feedback.textContent = t(
