@@ -41,6 +41,8 @@
   let commandSequence = 0;
   let navigating = false;
   let member = null;
+  // Authenticated, server-issued Nexo session: never sent to the iframe.
+  let sessionToken = "";
   let status = "connecting";
   let consumed = "";
   let exchanging = false;
@@ -76,6 +78,48 @@
       ORIGIN
     );
   }
+
+  // One first-party bridge for signed-in comments.
+  // The session stays inside this host closure, not in DOM, storage or the game iframe.
+  window.__r96PostSignedComment = async function(input = {}) {
+    if (status !== "signedIn" || !/^[a-f0-9]{64}$/.test(sessionToken)) {
+      return { ok: false, error: "AUTH_REQUIRED" };
+    }
+
+    try {
+      const response = await fetch("/my-site-1/_functions/r96CommunityAction", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        cache: "no-store",
+        body: JSON.stringify({
+          action: "comment.create",
+          input: {
+            gameId: String(input.gameId || ""),
+            body: String(input.body || "")
+          },
+          sessionToken
+        })
+      });
+      const data = await response.json().catch(() => null);
+      if (data?.error === "SESSION_EXPIRED" || data?.error === "AUTH_REQUIRED") {
+        sessionToken = "";
+        status = "signedOut";
+        member = null;
+        send();
+      }
+      return {
+        ok: response.ok && data?.ok === true,
+        data: data?.data || {},
+        error: String(data?.error || "FEEDBACK_SAVE_FAILED")
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        error: String(error?.message || "FEEDBACK_NETWORK_FAILED")
+      };
+    }
+  };
 
   function navigateAccountAction(kind, value) {
     const url = new URL(location.href);
@@ -167,14 +211,17 @@
     if (state === "SIGNED_OUT") {
       status = "signedOut";
       member = null;
+      sessionToken = "";
       clearResultState();
     } else if (state === "FAILED") {
       status = "error";
       member = null;
+      sessionToken = "";
       clearResultState();
     } else if (state === "LOGIN") {
       status = "signingIn";
       member = null;
+      sessionToken = "";
     } else if (
       state === "READY" &&
       query.get("nxb") &&
@@ -210,15 +257,20 @@
         }
 
         const data = await response.json();
-        if (!response.ok || !data.ok || !data.member?.id) {
+        if (
+          !response.ok || !data.ok || !data.member?.id ||
+          !/^[a-f0-9]{64}$/.test(String(data.sessionToken || ""))
+        ) {
           throw new Error("AUTH_REQUIRED");
         }
 
+        sessionToken = data.sessionToken;
         member = data.member;
         status = "signedIn";
       } catch (_) {
         status = "error";
         member = null;
+        sessionToken = "";
       } finally {
         clearResultState();
         exchanging = false;
@@ -229,9 +281,11 @@
     ) {
       status = "connecting";
       member = null;
+      sessionToken = "";
     } else if (status === "connecting" && Date.now() - started > 25000) {
       status = "error";
       member = null;
+      sessionToken = "";
     }
 
     send();
@@ -258,6 +312,8 @@
     document.documentElement.removeAttribute("data-nexo-rising-surface");
     document.documentElement.style.removeProperty("--nexo-rising-surface");
     frame.remove();
+    sessionToken = "";
+    delete window.__r96PostSignedComment;
     window.__nexoRisingHost = false;
   }
 
