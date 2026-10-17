@@ -106,48 +106,11 @@
     location.assign(url.href);
   }
 
-  async function submitReview(message) {
-    const requestId = String(message.requestId || "");
-    const input = message.input || {};
-    const reply = (data) => frame.contentWindow?.postMessage({
-      source: "r96-games-bridge", protocol: 1,
-      type: "review-submit-result", requestId, data
-    }, ORIGIN);
-
-    try {
-      const response = await fetch("/my-site-1/_functions/nexoRisingUi", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "same-origin",
-        cache: "no-store",
-        body: JSON.stringify({
-          action: "review.save",
-          gameId: String(input.gameId || "").trim(),
-          rating: Number(input.rating),
-          body: String(input.body || "").trim()
-        })
-      });
-      const payload = await response.json().catch(() => null);
-      reply(response.ok && payload?.ok
-        ? { ok: true, data: payload.data || {} }
-        : { ok: false, error: String(payload?.error || "REVIEW_SAVE_FAILED") });
-    } catch (_) {
-      reply({ ok: false, error: "REVIEW_NETWORK_FAILED" });
-    }
-  }
-
   function receive(event) {
     if (navigating) return;
     if (event.source !== frame.contentWindow || event.origin !== ORIGIN) return;
 
     const data = event.data;
-    if (data?.source === "r96-games-ui" &&
-        data.protocol === 1 &&
-        data.type === "review-submit-action" &&
-        typeof data.requestId === "string") {
-      submitReview(data);
-      return;
-    }
     // Display preference only: never cache identity, membership, or auth state.
     if (data?.source === "r96-visual" && data.type === "r96-theme") {
       if (data.theme !== "light" && data.theme !== "dark") return;
