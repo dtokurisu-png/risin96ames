@@ -82,7 +82,7 @@
   }
 
   const gamesScript = document.createElement("script");
-  gamesScript.src = "./src/games/r96-games-ui.js?v=5.4.0";
+  gamesScript.src = "./src/games/r96-games-ui.js?v=5.4.1";
   gamesScript.defer = true;
   gamesScript.dataset.r96GamesUi = "1";
   document.head.appendChild(gamesScript);
