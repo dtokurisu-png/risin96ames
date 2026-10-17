@@ -33,6 +33,7 @@
   let createInFlight = false;
   let accessWaitStarted = 0;
   let accessWaitFailed = false;
+  let accessOverride = null;
 
   function frame() {
     return document.getElementById("nexo-rising-app");
