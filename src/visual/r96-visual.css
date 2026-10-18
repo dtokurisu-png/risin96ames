@@ -535,26 +535,12 @@ button[aria-disabled="true"]:active{transform:none!important}
 .r96-footer p{margin:0;color:var(--r96-muted);font-size:.76rem}
 
 
-/* R96 global-header migration: preserve the legacy identity centered beneath
-   the canonical Nexo header until the shared bar has been verified live. */
+/* Keep the original auth controller DOM alive for role/capability checks,
+   but remove the legacy R96 header from the visible page and layout once
+   Nexo's shared header has mounted. If loading fails, fallback remains visible. */
 .r96-stats{display:none!important}
-.r96-app[data-r96-shared-header="ready"] .r96-header{
-  position:relative;top:auto;z-index:5;
-  background:var(--r96-bg);border-bottom:1px solid var(--r96-line)
-}
-.r96-app[data-r96-shared-header="ready"] .r96-nav{
-  justify-content:center;min-height:54px;width:min(1200px,calc(100vw - 22px))
-}
-.r96-app[data-r96-shared-header="ready"] .r96-nav-left{
-  width:100%;justify-content:center;min-width:0
-}
-.r96-app[data-r96-shared-header="ready"] .r96-brand{
-  justify-content:center;margin-inline:auto
-}
-.r96-app[data-r96-shared-header="ready"] .r96-menu-wrap,
-.r96-app[data-r96-shared-header="ready"] .r96-nav-right{
-  display:none!important
-}
+.r96-app[data-r96-shared-header="ready"] .r96-header{display:none!important}
+.r96-app[data-r96-shared-header="ready"] main{margin-top:0}
 
 @media(max-width:1180px){
   .r96-stats{display:none}
