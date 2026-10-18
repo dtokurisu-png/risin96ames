@@ -29,9 +29,9 @@
 #nexo-global-header-runtime-host[data-variant="r96"] .ngh-utils{gap:4px}
 #nexo-global-header-runtime-host[data-variant="r96"] .ngh-direct-setting{padding:0 7px}
 /* Original Yester geometry from R96's original vector wordmark. */
-#nexo-global-header-runtime-host[data-variant="r96"] .ngh-product-mark.ngh-r96-original-mark{font-size:0;position:relative;overflow:hidden}
+#nexo-global-header-runtime-host[data-variant="r96"] .ngh-product-mark.ngh-r96-original-mark{font-size:0;position:relative;overflow:hidden;display:grid;place-items:center;line-height:0;padding:0;isolation:isolate}
 #nexo-global-header-runtime-host[data-variant="r96"] .ngh-product-mark.ngh-r96-original-mark::before{
- content:"";display:block;width:32px;height:28px;background:#071017;
+ content:"";position:absolute;inset:0;margin:auto;display:block;width:32px;height:24px;background:#071017;
  -webkit-mask:url("https://dtokurisu-png.github.io/risin96ames/src/visual/r96-header-mark.svg") center / contain no-repeat;
  mask:url("https://dtokurisu-png.github.io/risin96ames/src/visual/r96-header-mark.svg") center / contain no-repeat
 }
@@ -121,6 +121,7 @@
   const originalMark=header.querySelector(".ngh-product-mark");
   if(originalMark){
    originalMark.classList.add("ngh-r96-original-mark");
+   originalMark.textContent="";
    originalMark.setAttribute("aria-label","R96");
   }
   const originalWordmark=header.querySelector(".ngh-brand-copy strong");
