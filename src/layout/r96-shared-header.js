@@ -28,6 +28,29 @@
 #nexo-global-header-runtime-host[data-variant="r96"] .ngh-nav-btn{font-size:11px}
 #nexo-global-header-runtime-host[data-variant="r96"] .ngh-utils{gap:4px}
 #nexo-global-header-runtime-host[data-variant="r96"] .ngh-direct-setting{padding:0 7px}
+/* Original Yester geometry from R96's original vector wordmark. */
+#nexo-global-header-runtime-host[data-variant="r96"] .ngh-product-mark.ngh-r96-original-mark{font-size:0;position:relative;overflow:hidden}
+#nexo-global-header-runtime-host[data-variant="r96"] .ngh-product-mark.ngh-r96-original-mark::before{
+ content:"";display:block;width:32px;height:28px;background:#071017;
+ -webkit-mask:url("https://dtokurisu-png.github.io/risin96ames/src/visual/r96-header-mark.svg") center / contain no-repeat;
+ mask:url("https://dtokurisu-png.github.io/risin96ames/src/visual/r96-header-mark.svg") center / contain no-repeat
+}
+#nexo-global-header-runtime-host[data-variant="r96"] .ngh-brand-copy strong.ngh-r96-original-wordmark{
+ display:block;width:clamp(128px,12vw,158px);height:27px;line-height:0;font-size:0;
+ color:transparent;background:var(--ngh-text);
+ -webkit-mask:url("https://dtokurisu-png.github.io/risin96ames/src/visual/r96-header-wordmark.svg") left center / contain no-repeat;
+ mask:url("https://dtokurisu-png.github.io/risin96ames/src/visual/r96-header-wordmark.svg") left center / contain no-repeat
+}
+#nexo-global-header-runtime-host[data-variant="r96"] .ngh-brand-copy{gap:1px}
+#nexo-global-header-runtime-host[data-variant="r96"] .ngh-brand-copy small{font-size:9px;margin-top:0}
+@media(max-width:560px){
+ #nexo-global-header-runtime-host[data-variant="r96"] .ngh-brand-copy:has(.ngh-r96-original-wordmark){display:grid}
+ #nexo-global-header-runtime-host[data-variant="r96"] .ngh-r96-original-wordmark{width:92px!important;height:21px!important}
+ #nexo-global-header-runtime-host[data-variant="r96"] .ngh-brand-copy small{display:none}
+ #nexo-global-header-runtime-host[data-variant="r96"] .ngh-brand{min-width:0}
+ #nexo-global-header-runtime-host[data-variant="r96"] .ngh-product-mark.ngh-r96-original-mark{width:36px;height:36px}
+ #nexo-global-header-runtime-host[data-variant="r96"] .ngh-product-mark.ngh-r96-original-mark::before{width:27px;height:25px}
+}
 #nexo-global-header-runtime-host[data-variant="r96"] .ngh-mobile-r96{display:none;position:relative}
 #nexo-global-header-runtime-host[data-variant="r96"] .ngh-r96-menu-btn{height:38px;padding:0 12px;display:flex;align-items:center;gap:8px;border:1px solid var(--ngh-panel-border);border-radius:11px;color:var(--ngh-text);background:transparent;font:800 11px Inter,Arial,sans-serif;cursor:pointer}
 #nexo-global-header-runtime-host[data-variant="r96"] .ngh-r96-panel{display:none;position:absolute;top:calc(100% + 10px);left:0;width:min(310px,calc(100vw - 20px));max-height:70dvh;overflow:auto;padding:8px;background:var(--ngh-surface);border:1px solid var(--ngh-panel-border);border-radius:14px;box-shadow:0 14px 40px var(--ngh-shadow)}
@@ -93,6 +116,20 @@
    onSwitchAccount:()=>accountAction(signedIn?"switch":"login"),
    onLogout:()=>accountAction(signedIn?"logout":"login")
   });
+  // Apply the actual original R96 / Risin9 6ames Yester vector lettering.
+  // Only the logo DOM changes; the canonical Nexo global header stays shared.
+  const originalMark=header.querySelector(".ngh-product-mark");
+  if(originalMark){
+   originalMark.classList.add("ngh-r96-original-mark");
+   originalMark.setAttribute("aria-label","R96");
+  }
+  const originalWordmark=header.querySelector(".ngh-brand-copy strong");
+  if(originalWordmark){
+   originalWordmark.classList.add("ngh-r96-original-wordmark");
+   originalWordmark.setAttribute("role","img");
+   originalWordmark.setAttribute("aria-label","Risin9 6ames");
+   originalWordmark.textContent="";
+  }
   if (!signedIn) {
    header.querySelector("[data-switch]")?.remove();
    header.querySelector("[data-logout]")?.remove();
