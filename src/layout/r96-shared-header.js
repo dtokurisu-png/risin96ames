@@ -32,8 +32,8 @@
 #nexo-global-header-runtime-host[data-variant="r96"] .ngh-product-mark.ngh-r96-original-mark{font-size:0;position:relative;overflow:hidden;display:grid;place-items:center;line-height:0;padding:0;isolation:isolate}
 #nexo-global-header-runtime-host[data-variant="r96"] .ngh-product-mark.ngh-r96-original-mark::before{
  content:"";position:absolute;inset:0;margin:auto;display:block;width:32px;height:24px;background:#071017;
- -webkit-mask:url("https://dtokurisu-png.github.io/risin96ames/src/visual/r96-header-mark.svg") center / contain no-repeat;
- mask:url("https://dtokurisu-png.github.io/risin96ames/src/visual/r96-header-mark.svg") center / contain no-repeat
+ -webkit-mask:url("https://dtokurisu-png.github.io/risin96ames/src/visual/r96-header-mark.svg?v=2") center / contain no-repeat;
+ mask:url("https://dtokurisu-png.github.io/risin96ames/src/visual/r96-header-mark.svg?v=2") center / contain no-repeat
 }
 #nexo-global-header-runtime-host[data-variant="r96"] .ngh-brand-copy strong.ngh-r96-original-wordmark{
  display:block;width:clamp(128px,12vw,158px);height:27px;line-height:0;font-size:0;
