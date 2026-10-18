@@ -25,7 +25,7 @@
   const frame = document.createElement("iframe");
   frame.id = "nexo-rising-app";
   frame.title = "Rising Games · Nexo Group";
-  frame.src = ORIGIN + "/risin96ames/?v=6.2.0";
+  frame.src = ORIGIN + "/risin96ames/?v=6.2.1";
   frame.referrerPolicy = "no-referrer";
   frame.style.cssText =
     "position:fixed;inset:0;width:100%;height:100dvh;border:0;z-index:100;" +
@@ -283,7 +283,7 @@
   // Start separately so account/game UI still load if the shared component fails.
   const sharedScript = document.createElement("script");
   sharedScript.id = "r96-shared-header-loader";
-  sharedScript.src = ORIGIN + "/risin96ames/src/layout/r96-shared-header.js?v=1.0.1";
+  sharedScript.src = ORIGIN + "/risin96ames/src/layout/r96-shared-header.js?v=1.0.2";
   sharedScript.addEventListener("load", () => {
     window.R96_SHARED_HEADER?.bootstrap(frame)
       .then(ready => {
