@@ -36,6 +36,7 @@
 #nexo-global-header-runtime-host[data-variant="r96"] .ngh-r96-panel button:hover{background:var(--ngh-surface2)}
 @media(max-width:1350px){#nexo-global-header-runtime-host[data-variant="r96"] .ngh-product-nav{gap:8px}#nexo-global-header-runtime-host[data-variant="r96"] .ngh-nav-btn{font-size:10px}#nexo-global-header-runtime-host[data-variant="r96"] .ngh-bar{gap:8px}}
 @media(max-width:1130px){#nexo-global-header-runtime-host[data-variant="r96"] .ngh-product-nav{display:none}#nexo-global-header-runtime-host[data-variant="r96"] .ngh-mobile-r96{display:block}#nexo-global-header-runtime-host[data-variant="r96"] .ngh-nav{flex:0 0 auto}#nexo-global-header-runtime-host[data-variant="r96"] .ngh-brand{margin-right:auto}}
+@media(max-width:760px){#nexo-global-header-runtime-host[data-variant="r96"] .ngh-nav{overflow:visible!important}}
 @media(max-width:560px){#nexo-global-header-runtime-host[data-variant="r96"] .ngh-brand-copy{display:none}#nexo-global-header-runtime-host[data-variant="r96"] .ngh-user{display:none}#nexo-global-header-runtime-host[data-variant="r96"] .ngh-account{min-height:38px}#nexo-global-header-runtime-host[data-variant="r96"] .ngh-r96-menu-btn{padding:0 9px}}
 `;
   document.head.appendChild(style);
@@ -82,7 +83,7 @@
    productActive:active,hideGlobalNavigation:true,
    theme:theme==="light"?"day":"night",language:lang,contextLabel:"Risin9 6ames",
    navigation:{personal:{name:"Mi espacio",tools:[]},workspaces:[]},
-   profile:{displayName:signedIn?(member.displayName||"Usuario Nexo"):"Invitado",email:""},
+   profile:{displayName:signedIn?(member.displayName||"Usuario Nexo"):"Iniciar sesión",email:""},
    roleLabel:signedIn?"Miembro":"Público",
    onHome:()=>{navigate("explore");return false},
    onProductNav:key=>{navigate(key);return false},
@@ -92,6 +93,14 @@
    onSwitchAccount:()=>accountAction(signedIn?"switch":"login"),
    onLogout:()=>accountAction(signedIn?"logout":"login")
   });
+  if (!signedIn) {
+   header.querySelector("[data-switch]")?.remove();
+   header.querySelector("[data-logout]")?.remove();
+   const accountButton=header.querySelector("[data-account]");
+   accountButton?.addEventListener("click",event=>{
+    event.preventDefault();event.stopImmediatePropagation();accountAction("login");
+   },{capture:true});
+  }
   mobileNav(header);mounted=true;
   document.documentElement.style.setProperty("--nexo-global-header-height","68px");
   send("ready",true);
