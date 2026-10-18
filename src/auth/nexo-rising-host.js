@@ -53,7 +53,10 @@
       rect && rect.width > 0 && rect.height > 0
         ? Math.max(0, Math.ceil(rect.bottom))
         : 0;
-    const top = offset + "px";
+    // Keep the shared Nexo header above the R96 iframe, like Camino.
+    // If it cannot load, the original R96 header remains fully available.
+    const headerHeight = window.R96_SHARED_HEADER?.position(offset) || 0;
+    const top = offset + headerHeight + "px";
 
     if (frame.style.top !== top) {
       frame.style.top = top;
@@ -117,6 +120,11 @@
       const color = data.theme === "light" ? "#f5fbff" : "#070912";
       document.documentElement.style.setProperty("--nexo-rising-surface", color);
       try { sessionStorage.setItem("nexo-rising-display-theme", data.theme); } catch (_) {}
+      window.R96_SHARED_HEADER?.handleFrameMessage(data);
+      return;
+    }
+    if (data?.source === "r96-header-state" && data.type === "section") {
+      window.R96_SHARED_HEADER?.handleFrameMessage(data);
       return;
     }
     if (
@@ -234,6 +242,7 @@
       member = null;
     }
 
+    window.R96_SHARED_HEADER?.setAccount(status, member);
     send();
   }
 
@@ -257,6 +266,7 @@
     window.removeEventListener("pageshow", restore);
     document.documentElement.removeAttribute("data-nexo-rising-surface");
     document.documentElement.style.removeProperty("--nexo-rising-surface");
+    window.R96_SHARED_HEADER?.destroy();
     frame.remove();
     window.__nexoRisingHost = false;
   }
@@ -268,6 +278,30 @@
 
   positionFrame();
   document.body.appendChild(frame);
+
+  // Reuse the same shared header runtime as Camino Editorial.
+  // Start separately so account/game UI still load if the shared component fails.
+  const sharedScript = document.createElement("script");
+  sharedScript.id = "r96-shared-header-loader";
+  sharedScript.src = ORIGIN + "/risin96ames/src/layout/r96-shared-header.js?v=1.0.0";
+  sharedScript.addEventListener("load", () => {
+    window.R96_SHARED_HEADER?.bootstrap(frame)
+      .then(ready => {
+        if (ready) {
+          window.R96_SHARED_HEADER?.setAccount(status, member);
+          positionFrame();
+        }
+      })
+      .catch(error => console.error("[R96 shared header]", error));
+  }, {once:true});
+  sharedScript.addEventListener("error", () => console.error("[R96] Shared header failed to load"), {once:true});
+  document.head.appendChild(sharedScript);
+
+  frame.addEventListener("load", () => {
+    if (window.R96_SHARED_HEADER?.mounted) {
+      window.R96_SHARED_HEADER.bootstrap(frame).catch(() => {});
+    }
+  });
 
   const timer = setInterval(poll, 500);
   poll();
