@@ -9,6 +9,13 @@
   if (!app) return;
 
   const THEME_KEY = "r96-visual-theme";
+  const LANG_KEY = "r96-language";
+  try {
+    const storedLanguage = localStorage.getItem(LANG_KEY);
+    if (storedLanguage === "es" || storedLanguage === "en") {
+      document.documentElement.lang = storedLanguage;
+    }
+  } catch (_) {}
 
   const applyTheme = (theme) => {
     const next = theme === "light" ? "light" : "dark";
@@ -65,6 +72,76 @@
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") setMenu(false);
+  });
+
+  // Only the same-origin Wix host can control this iframe navigation.
+  // It reuses existing protected developer controls rather than bypassing auth.
+  const HOST_ORIGIN = "https://dtokurisu.wixstudio.com";
+  const SECTIONS = {explore:"home",games:"games",reviews:"reviews",community:"community"};
+  const PROTECTED = {invite:"r96-invite-developer",add:"r96-add-game",mine:"r96-my-games"};
+
+  function announceSection(section) {
+    if (window.parent === window) return;
+    window.parent.postMessage({
+      source:"r96-header-state",type:"section",section
+    }, HOST_ORIGIN);
+  }
+
+  function navigateFromSharedHeader(key) {
+    if (Object.prototype.hasOwnProperty.call(SECTIONS,key)) {
+      const section = SECTIONS[key];
+      const element = document.getElementById(section);
+      if (element) {
+        location.hash = "#" + section;
+        element.scrollIntoView({behavior:"smooth",block:"start"});
+      }
+      announceSection(key);
+      return;
+    }
+    if (!Object.prototype.hasOwnProperty.call(PROTECTED,key)) return;
+    const control = document.getElementById(PROTECTED[key]);
+    if (control) {
+      control.click();
+      announceSection(key);
+      return;
+    }
+    const status = document.querySelector(".r96-account-visual")?.dataset?.r96AuthState;
+    if (status !== "signedIn") {
+      const login = document.getElementById("r96-login");
+      if (login && !login.disabled) login.click();
+      else alert("Inicia sesión en Nexo Group para acceder a las herramientas de desarrollo.");
+      return;
+    }
+    alert("Tu cuenta no tiene autorización para realizar esa acción de desarrollador.");
+  }
+
+  window.addEventListener("message", event => {
+    if (event.source !== window.parent || event.origin !== HOST_ORIGIN) return;
+    const message = event.data;
+    if (!message || message.source !== "r96-global-header" || message.protocol !== 1) return;
+
+    if (message.type === "ready") {
+      app.dataset.r96SharedHeader = "ready";
+      announceSection(location.hash === "#games" ? "games" :
+        location.hash === "#reviews" ? "reviews" :
+        location.hash === "#community" ? "community" : "explore");
+    } else if (message.type === "navigate") {
+      navigateFromSharedHeader(String(message.value || ""));
+    } else if (message.type === "theme" && ["light","dark"].includes(message.value)) {
+      applyTheme(message.value);
+      try { localStorage.setItem(THEME_KEY,message.value) } catch (_) {}
+    } else if (message.type === "language" && ["es","en"].includes(message.value)) {
+      if (document.documentElement.lang !== message.value) {
+        try { localStorage.setItem(LANG_KEY,message.value) } catch (_) {}
+        document.documentElement.lang = message.value;
+        location.reload();
+      }
+    }
+  });
+  window.addEventListener("hashchange", () => {
+    const section = location.hash.slice(1);
+    announceSection(section === "home" ? "explore" :
+      ["games","reviews","community"].includes(section) ? section : "explore");
   });
 
   const accessScript = document.createElement("script");
