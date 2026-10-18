@@ -283,7 +283,7 @@
   // Start separately so account/game UI still load if the shared component fails.
   const sharedScript = document.createElement("script");
   sharedScript.id = "r96-shared-header-loader";
-  sharedScript.src = ORIGIN + "/risin96ames/src/layout/r96-shared-header.js?v=1.0.2";
+  sharedScript.src = ORIGIN + "/risin96ames/src/layout/r96-shared-header.js?v=1.0.3";
   sharedScript.addEventListener("load", () => {
     window.R96_SHARED_HEADER?.bootstrap(frame)
       .then(ready => {
