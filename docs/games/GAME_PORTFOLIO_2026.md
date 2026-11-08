@@ -19,3 +19,7 @@
 - MiniMundos: diseño v0.1 con ampliación v0.2; issue de desarrollo #5.
 - RING: LEGACY: ficha conceptual inicial.
 - WILDBOUND: ficha conceptual inicial.
+
+
+## Estrategia comercial y conceptos adicionales — 2026-11-08
+Ver [roadmap comercial a junio de 2027](ROADMAP_COMERCIAL_2026_2027.md): ECHOES: Guardianes del Eclipse (idle RPG táctico 2D), Guardianes del Jardín (defensa de plantas/animales), ARENA: Cien Noches (roguelite de una arena), SHADOW GARDEN (sigilo, alquimia y refugio), proyecto futuro de colosos y compañero. Se comparan con MiniMundos, R.O.K., RING: LEGACY y WILDBOUND. Son candidatos de producción, sin garantía de ventas ni fechas comerciales cerradas.
