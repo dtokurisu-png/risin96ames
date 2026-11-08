@@ -112,3 +112,70 @@ Un único sector 3D estilizado, un jardín editable y guardado local, un avatar,
 - Cooperativo online: modo servidor/autoritativo, sincronización y políticas infantiles.
 - Reglas finales de genética cosmética, crianza, intercambio y moderación.
 - Diseño comercial y fecha realista de monetización.
+
+
+---
+
+# Visión ampliada v0.2 — 2026-11-08 (decisiones y propuestas nuevas)
+
+**Esta sección actualiza el alcance creativo anterior y prevalece cuando existe una discrepancia.** El objetivo es un **universo de minijuegos conectados** por un mismo jardín, edificios, mascotas, inventario y progresión. No es un juego de una sola mecánica ni una colección de minijuegos desconectados.
+
+## Principio de diseño
+- Un primer mundo central **completo y rejugable**: islas mágicas conectables, hogar/jardín, edificios que se construyen y mejoran, exploración, crianza/cuidado de mascotas, plantas, recursos y actividades muy distintas.
+- Cada isla futura puede introducir **un tipo de actividad nuevo** y versiones/niveles de motores existentes, con combinaciones, enemigos, objetivos y recompensas nuevos.
+- Progresión transversal: mejoras permanentes de edificios, máquinas, jardín, mascotas, semillas, naves o herramientas; desbloqueos por misiones. Los mundos no reinician arbitrariamente el progreso.
+- Se puede jugar solo, con bots de apoyo, o en familia/amigos con actividades simultáneas adecuadas a cada jugador. **No hay competitividad en el juego base.**
+- Identidad visual propia y mecánicas originales. Juegos conocidos sirven de referencias de experiencia, no de copiar niveles, personajes, arte, nombres, música ni código.
+
+## Inspiraciones y motores potenciales (referencias, no clones)
+1. **Jardín estratégico vivo** (referencia: atractivo de cuidar plantas y defenderlas en Plants vs. Zombies): conseguir semillas en expediciones; sembrar, alimentar con nutrientes, crecer, mejorar, mover plantas para defender sus bancales de insectos; plantas de aspecto original y personalidad visual; distintos insectos (escarabajos, orugas, polillas y otros, incluidas abejas únicamente si encajan con ecosistema) y roles tácticos. **Plantas existentes permanecen**, no se replantan durante cada ataque. Dificultad de oleadas por perfil y desempeño. Prevención de daños permanentes frustrantes y de pagos forzados.
+2. **Carrera de obstáculos cooperativa** (inspiración abstracta en endless runners como Subway Surfers): todos recorren el mismo trayecto en equipo, esquivan obstáculos y consiguen recursos. Sin copia de trenes/escenarios reconocibles. Aportes por jugador con ayuda adaptativa.
+3. **Acción/plataformas ligera cooperativa** (referencia de ritmo y variedad: Metal Slug): misiones en ruinas, planeta alienígena u otros biomas, plataformas y combate simplificado, armas y habilidades descubiertas/mejoradas a través del juego.
+4. **Defensa arcade de satélite/nave** (referencia de estructura: Galaga): proteger instalaciones, enemigos en patrones, mejoras persistentes de nave y equipamiento, niveles y oleadas diferentes.
+5. **Exploración de hordas**: mantener una posición/activar mecanismos mientras criaturas atacan; mascotas con aportes al combate y búsqueda.
+6. **Misterios cooperativos y tareas sociales** (inspiración abstracta de la coordinación de Among Us): encontrar anomalías, reparar sistemas, intercambiar pistas; evitar engaños obligatorios, expulsión o chat abierto para mantener carácter familiar.
+7. **Conexión de circuitos / rutas**: fuente de energía y generadores, desafíos simples/avanzados por perfil, cooperativo simultáneo.
+8. **Patrones y memoria**: señales, luces, secuencias; dificultad graduada.
+9. **Combinación de piezas**: puzzles de agrupación con objetivos y obstáculos propios; estética/objetivos exclusivos.
+10. **Recolección/cuidado**: pesca, búsqueda de semillas, limpieza de jardines y hallazgo de tesoros con ayuda de mascota.
+11. **Construcción y reparación**: organizar piezas, arreglar puentes, satélites, talleres o invernaderos.
+12. **Rutas y laberintos**: cartografía y exploración con secretos y ayuda de mascota.
+
+**Meta creativa sugerida por el usuario:** **10–15 minijuegos diferentes en el primer mundo** y una expansión/un nuevo mundo aproximadamente cada mes. **Riesgo de producción:** con ~16 h/semana y una fecha de enero de 2027, esto es una meta ambiciosa, no un compromiso viable sin recortar el alcance o reutilizar mucho contenido ya existente. Antes de codificar se debe priorizar 3–4 motores realmente sólidos para el primer prototipo y planificar el catálogo completo mediante iteraciones. El primer mundo debe sentirse completo aunque no contenga 15 mecánicas distintas.
+
+## Jardín estratégico de plantas: diseño preliminar
+- Se encuentran semillas en mundos/actividades y también se cultivan variedades libres.
+- Cada planta tiene familia, rango de crecimiento, aspecto, alimentación/nutrientes, resistencia, tipo de defensa y personalidad animada (caras opcionales; no copiar personajes de terceros).
+- El jardín es **persistente**: las plantas cultivadas continúan existiendo, pueden moverse entre bancales, crecer, cambiar su posición defensiva y participar en alertas de insectos.
+- Evento de insectos: aviso visible; el usuario elige si reorganizar plantas o usar herramientas/mascota; las oleadas tienen objetivos claros, variabilidad de rutas y tipos, contador limitado y dificultad adaptable. Sesiones infantiles menos punitivas.
+- En dificultad alta, los enemigos requieren planificación, sin convertir la actividad en requisito universal para avanzar.
+- Recompensas: semillas, materiales, apariencias, nutrientes obtenibles jugando y mejoras del terreno. **Monetización propuesta por usuario:** paquetes de semillas y nutrientes; **condición de diseño**: no vender ventajas exclusivas o nutrientes obligatorios, ni hacer que el mantenimiento de plantas dependa de pagos. Los paquetes de pago deberán ser cosméticos o equivalentes a obtención gratuita y claramente especificados.
+- Necesita playtesting: defensa automática que sea fácil para principiantes y estratégica para veteranos.
+
+## Mascotas como tejido conectivo de todo MiniMundos
+- Las mascotas son persistentes, interactivas tipo Tamagotchi: hambre, energía, vínculo, salud no punitiva, crecimiento, cuidado, alimentación, enfermedades curables con recursos de juego.
+- Acompañan minijuegos: ayudan en combate, revelan secretos, rastrean objetos, detectan rutas, apoyan puzzles, buscan semillas o alertan insectos. Las capacidades se consiguen con progreso.
+- Crianza/reproducción y cambio entre amigos son sistemas futuros, con consentimiento, controles de seguridad infantil y anti-duplicación; no deben bloquear MVP.
+- Variedad: criaturas épicas y tiernas; animaciones y accesorios vendibles sin ventajas injustas.
+
+## Dificultad individual adaptable
+- El jugador aporta al configurar el perfil una franja de edad apropiada y elige o ajusta dificultad; el sistema debe ofrecer asistencia y recalibrarse según desempeño.
+- La **misma isla/estación** muestra circuitos, patrones, volumen de enemigos, velocidad y daño acorde con el jugador que realiza esa actividad. El resto de participantes puede estar en otro grado de desafío sin quedar bloqueado.
+- Evitar inferir que todos los adultos desean dificultad extrema o que todos los niños necesitan nivel bajo. Permitir sobrescritura y mantener el reto atractivo.
+- Las recompensas esenciales están disponibles en todas las dificultades. Sin marcadores competitivos obligatorios.
+
+## Metaprogresión, economía y expansión
+- **Mundo 1**: jardín/hogar central, edificios y mejoras, semillas, mascota inicial, actividades diferenciadas, guardianes y conexiones entre sectores. Debe enseñar el juego sin abrumar.
+- Los materiales, planos y tecnologías obtenidos en los minijuegos impulsan construcción, mejoras y acceso a nuevos sectores.
+- Ejemplos: expedición a planeta → materiales para nave; defensa de satélite → piezas permanentes; mundo boscoso → semillas/plantas; puzzle de energía → puente/isla; nuevo edificio → funcionalidad nueva.
+- Misiones principales, proyectos de colección y actividades libres sostienen distintas sesiones sin cronómetros de presión.
+- Expansión mensual como **objetivo de cadencia**, condicionado a contenido y QA. Datos modulares, parámetros por mundo, catálogos de prefabs, reglas de recompensa y versiones de guardado.
+
+## Monetización, menores y originalidad
+- Base gratuita y jugable indefinidamente. Venta opcional: apariencias de mascotas y avatares, decoración, especies/semillas cosméticas, nutrientes visuales/opcionales sin ventajas desproporcionadas, edificios temáticos, animaciones y hábitats.
+- Cualquier paquete funcional de semillas/nutrientes debe ser también obtenible mediante juego normal, sin enfermedades o plagas artificialmente intensificadas para presionar compras.
+- Cuentas infantiles: compras bajo control parental, privacidad por diseño, comunicación e intercambio limitados según normas de plataforma; no mecánicas aleatorias de pago con probabilidades opacas.
+- Todo homenaje a un clásico debe reinterpretarse con mecánica, arte, UI, audio y denominaciones propias.
+
+## Decisión pendiente de producción
+Definir plataforma inicial y si se prioriza **(a) una primera versión de 3–4 motores pulidos** o **(b) una compilación de 10–15 prototipos superficiales**. Recomendación técnica: (a), sin abandonar el objetivo comercial de expandir a 10–15 actividades. El soporte multijugador real, infraestructura remota y tienda pueden incrementar mucho el calendario.
