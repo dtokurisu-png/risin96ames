@@ -179,3 +179,7 @@ Un único sector 3D estilizado, un jardín editable y guardado local, un avatar,
 
 ## Decisión pendiente de producción
 Definir plataforma inicial y si se prioriza **(a) una primera versión de 3–4 motores pulidos** o **(b) una compilación de 10–15 prototipos superficiales**. Recomendación técnica: (a), sin abandonar el objetivo comercial de expandir a 10–15 actividades. El soporte multijugador real, infraestructura remota y tienda pueden incrementar mucho el calendario.
+
+
+## Enlace a diseño de jardín y hogar v0.3 — 2026-11-08
+**Actualización que prevalece sobre el diseño anterior del jardín defensivo:** [Sistemas de jardín, granja, animales defensores, plantas de apoyo y casa editable](SISTEMAS_JARDIN_HOGAR_V0_3.md). Las plantas no lanzan ataques directos: proveen auras, sanación y control; los animales de granja combaten a los invasores. Mascotas de compañía y animales defensores son entidades distintas. Jardín/casa persistentes y decorables, actividades familiares simultáneas, sin bloqueos de energía ni obligación de salir por falta de actividades.
