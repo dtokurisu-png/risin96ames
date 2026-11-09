@@ -65,3 +65,7 @@ Entrar en una jungla, localizar y sustraer **huevos de criaturas**, decidir cuá
 3. Crear escenario único y prototipo de sigilo/robo de un huevo/extracción; probar diversión.
 4. Construir red cooperativa con servidor autoritativo y sincronización desde temprano; no permitir que el cliente otorgue huevos.
 5. Añadir compañero funcional y progresión y solo después comercio/monetización.
+
+
+## Bestiario de fauna salvaje — 2026-11-09
+Terminología acordada: **Guardianes** = criaturas coleccionables que acompañan, protegen y evolucionan con el jugador; **criaturas salvajes** = fauna de los bosques y nidos (no necesariamente capturable). Consultar [Bestiario del bosque v0.1](CRIATURAS_SALVAJES_BOSQUE_V0_1.md) para las 10 propuestas, roles, interacciones ecológicas y alcance de implementación. Este catálogo es conceptual; iniciar con roles de IA reutilizables y especies limitadas en el primer lanzamiento.
